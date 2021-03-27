@@ -7,7 +7,7 @@ pub fn size_range_with_step(start: f64, end: f64, step: f64) -> usize {
     if start + size as f64 * step < end {
         size += 1;
     }
-    size
+    size + 1
 }
 
 /// Create a vector from `start` to `end` with `step`. The last step might be smaller
@@ -17,7 +17,7 @@ where
     T: RealField,
 {
     let size = size_range_with_step(start, end, step);
-    let mut vector = Matrix1xX::from_fn(size, |i, _| convert(start + step * i as f64));
+    let mut vector = Matrix1xX::from_fn(size, |_, j| convert(start + step * j as f64));
     if vector[size - 1] > convert(end) {
         vector[size - 1] = convert(end);
     }
