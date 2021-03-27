@@ -7,10 +7,7 @@ Cargo.lock
 rust-spice
 
 # resources
-rsc/cast/*
 rsc/img/*
-rsc/obj/*
-rsc/data/*
 rsc/log/*
 
 # resources exceptions
