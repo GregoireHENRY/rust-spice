@@ -1,0 +1,18 @@
+# default
+TODO
+target/
+Cargo.lock
+
+# binary
+rust-spice
+
+# resources
+rsc/cast/*
+rsc/img/*
+rsc/obj/*
+rsc/data/*
+rsc/log/*
+
+# resources exceptions
+## images
+!rsc/img/rust-spice-logo.png
