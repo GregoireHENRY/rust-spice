@@ -11,22 +11,10 @@
 
 ---
 
-[In Action](#in-action) |
 [Installation](#installation) |
 [License](#license)
 
 ---
-
-## In action
-
-```rust
-// src/main.rs
-
-fn main() {
-    println!("Hello, world!");
-}
-
-```
 
 ## Installation
 
@@ -35,7 +23,7 @@ Add the dependency **rust-spice** to your `Cargo.toml`:
 ```toml
 ...
 [dependencies]
-rust-spice = "0.1.0"
+rust-spice = "0.2.0"
 ```
 
 ## License

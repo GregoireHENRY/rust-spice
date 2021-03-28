@@ -9,6 +9,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2021-03-28
+
+### Added
+
++ cspice submodule (fork of official code)
++ some lib test
+
+### Changed
+
++ spicetools submodule (refer to v0.2.0 in spicetools CHANGELOG)
++ cspice lib name
++ build script to correctly link with spice and spicetools functions
+
 ## [0.1.0] - 2021-03-27
+
++ version not working, I was trying to understand concepts of wrapping and
+  binding with bindgen.
+
+### Added
 
 + Initial commit

@@ -9,7 +9,7 @@ Simply add the following to your `Cargo.toml` file:
 
 ```.ignore
 [dependencies]
-rust-spice = "0.1.0"
+rust-spice = "0.2.0"
 ```
 
 Useful functionalities of **rust-spice** are grouped in the root module `spice::`.
@@ -22,6 +22,12 @@ use spice;
 
 You can also read other [examples](https://github.com/GregoireHENRY/rust-spice/examples).
 */
+
+#![allow(non_upper_case_globals)]
+#![allow(non_camel_case_types)]
+#![allow(non_snake_case)]
+
+include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
 
 extern crate itertools;
 extern crate log;

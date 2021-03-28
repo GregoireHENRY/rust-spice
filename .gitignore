@@ -8,8 +8,9 @@ rust-spice
 
 # resources
 rsc/img/*
+rsc/data/*
 rsc/log/*
 
 # resources exceptions
-## images
 !rsc/img/rust-spice-logo.png
+!rsc/data/hera_PO_EMA_2024.tm

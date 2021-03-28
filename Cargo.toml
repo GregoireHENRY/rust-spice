@@ -1,6 +1,6 @@
 [package]
 name = "rust-spice"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["Greg Henry <contact@greghenry.xyz>"]
 edition = "2018"
 description = "NASA/NAIF Spice toolkit usable on Rust"
@@ -16,8 +16,10 @@ path = "src/lib.rs"
 [profile.release]
 lto = true
 
-[dependencies]
+[build-dependencies]
 bindgen = "0.57.0"
+
+[dependencies]
 itertools = "0.10.0"
 nalgebra = {version = "0.24.0", features = ["serde-serialize"]}
 approx = "0.4.0"

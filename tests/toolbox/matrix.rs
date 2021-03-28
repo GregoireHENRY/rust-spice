@@ -1,6 +1,6 @@
 use itertools::multizip;
 use na::{Matrix1xX, Matrix3xX};
-use spice::{dot_vectors, linspace, size_range_with_step};
+use spice::{dot_vectors, linspace};
 
 #[test]
 fn test_size_range_with_step() {
@@ -9,7 +9,7 @@ fn test_size_range_with_step() {
     let step = 2.0;
     let expected_size = 6;
 
-    let size = size_range_with_step(start, end, step);
+    let size = spice::toolbox::size_range_with_step(start, end, step);
 
     assert_eq!(size, expected_size);
 }
@@ -21,7 +21,7 @@ fn test_size_range_with_step_odd() {
     let step = 2.0;
     let expected_size = 7;
 
-    let size = size_range_with_step(start, end, step);
+    let size = spice::toolbox::size_range_with_step(start, end, step);
 
     assert_eq!(size, expected_size);
 }
