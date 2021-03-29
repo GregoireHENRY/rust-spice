@@ -60,8 +60,15 @@ warmly welcome.
 
 The Rust layer is being built in real time as I face the need of it. Raise an
 issue with the need of a function/struct and we will work on it immediately.
-Any time a function is not wrapper for safe code, you can still use the unsafe
-code to call it.
+Any time a function is not wrapped inside safe code, you can still use the
+unsafe code to call it.
+
+Apparently the documentation is not building online, but in local it is working
+perfectly. The header cspice/include/SpiceUser.h is not in PATH obviously.
+Locally it works because in build.rs I use `.clang_arg()` on the the
+`bindgen:Builder` to tell Rust where to find the header. And it should work
+online also. Any help is appreciated to solve this issue!! I can send you the
+offline documentation in the meantime if you want.
 
 ## Installation
 

@@ -1,4 +1,4 @@
-use na::Matrix3x1;
+use na::{Matrix1xX, Matrix3x1};
 use std::convert::TryInto;
 use std::ffi::{CStr, CString};
 use std::vec::Vec;
@@ -101,6 +101,21 @@ impl crate::System {
             crate::system_get_number_points(self, time_step)
                 .try_into()
                 .unwrap()
+        }
+    }
+
+    pub fn times_formatted(&mut self, time_step: f64) -> Matrix1xX<&'static str> {
+        let size = self.number_points(time_step);
+        unsafe {
+            let ptr = crate::system_get_times_formatted(self, time_step);
+            let times = Vec::from_raw_parts(ptr, size, size);
+            Matrix1xX::from_iterator(
+                size,
+                times
+                    .iter()
+                    .cloned()
+                    .map(|time| CStr::from_ptr(time).to_str().unwrap()),
+            )
         }
     }
 }

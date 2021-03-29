@@ -1,7 +1,7 @@
 // TODO: redo these tests with kernels that won't change
 
 use itertools::multizip;
-use na::Matrix3x1;
+use na::{Matrix1xX, Matrix3x1};
 
 #[test]
 #[serial]
@@ -158,6 +158,34 @@ fn number_points() {
     let number = system.number_points(time_step);
 
     assert_eq!(number, expected_number);
+
+    system.unload();
+}
+
+#[test]
+#[serial]
+fn times_formatted() {
+    let mut system = spice::System::new(
+        "rsc/data/hera_PO_EMA_2024.tm", // kernel
+        "J2000",                        // frame
+        "HERA",                         // observer
+        "DIMORPHOS",                    // target
+        "2027-MAR-23 16:00:00",         // start date
+        3.0 * spice::get_DAY(),         // duration
+        "NONE",                         // aberration correction
+    );
+    let time_step = 1.0 * spice::get_DAY();
+    let expected_times = Matrix1xX::from_column_slice(&[
+        "2027-MAR-23 16:00:00",
+        "2027-MAR-24 16:00:00",
+        "2027-MAR-25 16:00:00",
+    ]);
+
+    let times = system.times_formatted(time_step);
+
+    for (time, expected_time) in multizip((times.iter(), expected_times.iter())) {
+        assert_eq!(time, expected_time);
+    }
 
     system.unload();
 }

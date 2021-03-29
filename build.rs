@@ -17,6 +17,9 @@ impl bindgen::callbacks::ParseCallbacks for IgnoreMacros {
 }
 
 fn main() {
+    println!("cargo:rerun-if-changed=wrapper.h");
+    println!("cargo:rerun-if-changed=spicetools/src/spicetools.c");
+
     let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
     let out_path_str = out_path.clone().into_os_string().into_string().unwrap();
 
@@ -32,8 +35,6 @@ fn main() {
     // spicetools
     println!("cargo:rustc-link-search=native=spicetools/lib");
     println!("cargo:rustc-link-lib=static=spicetools");
-
-    println!("cargo:rerun-if-changed=wrapper.h");
 
     let ignored_macros = IgnoreMacros(
         vec![
