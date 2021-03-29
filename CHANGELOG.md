@@ -7,7 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## TODO
 
++ allow users to specify already existing cspice path on their computer to
+  avoid downloading it
++ improve Rust interface
+
 ## [Unreleased]
+
+## [0.3.2] - 2021-03-29
+
++ moved cspice to OUT_DIR, I don't like it because wget procs on every build of
+  every single different target, didn't find a workaround yet
 
 ## [0.3.1] - 2021-03-29
 

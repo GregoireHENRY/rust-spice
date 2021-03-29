@@ -50,11 +50,6 @@ Many thanks to the [author][author spice-sys] of the crate
 upload, I included your script copyrighted under your MIT license and added some
 modifications that I listed carefully.
 
-## Incoming work
-
-The full API is already accessible (see tests/libs.rs for example on loading
-kernel) but the Rust interface is currently in development.
-
 ## Installation
 
 Add the dependency **rust-spice** to your `Cargo.toml`:
