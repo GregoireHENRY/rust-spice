@@ -9,12 +9,12 @@ Simply add the following to your `Cargo.toml` file:
 
 ```.ignore
 [dependencies]
-rust-spice = "0.3.3"
+rust-spice = "0.3.4"
 ```
 
 Useful functionalities of **rust-spice** are grouped in the root module `spice::`.
 
-## **rust-spice** in action
+## **rust-spice** basics
 
 ```.ignore
 use spice;
@@ -29,6 +29,48 @@ unsafe {
     spice::c::furnsh_c(kernel.as_ptr() as *mut _);
     spice::c::unload_c(kernel.as_ptr() as *mut _);
 }
+```
+
+## In action
+
+With this code, you can get the evolution of the distance in the system.
+
+```.ignore
+use itertools::multizip;
+use spice;
+
+// Define the system.
+// The metakernel is automatically loaded.
+let mut system = spice::System::new(
+    "rsc/data/hera_PO_EMA_2024.tm", // kernel
+    "J2000",                        // frame
+    "HERA",                         // observer
+    "DIMORPHOS",                    // target
+    "2027-MAR-23 16:00:00",         // start date
+    129.0 * spice::DAY(),           // duration
+    "NONE",                         // aberration correction
+);
+
+// Define the time step.
+let time_step = 1.0 * spice::DAY();
+
+// Get all the times string-formatted.
+let times = system.times_formatted(time_step);
+
+// Get all the positions at the times.
+let mut positions = system.positions(time_step);
+
+// Get the distances from the positions.
+let distances = spice::compute_distances(&mut positions);
+
+// Display
+for (time, distance) in multizip((times.iter(), distances.iter())) {
+    println!("{} -> {:.2} km", time, distance);
+}
+
+// Always unload the kernels.
+system.unload();
+
 ```
 
 You can also read other [examples](https://github.com/GregoireHENRY/rust-spice/examples).

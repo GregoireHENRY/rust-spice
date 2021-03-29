@@ -76,7 +76,7 @@ Add the dependency **rust-spice** to your `Cargo.toml`:
 ```toml
 ...
 [dependencies]
-rust-spice = "0.3.3"
+rust-spice = "0.3.4"
 ```
 
 ## License
