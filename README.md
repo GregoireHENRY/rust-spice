@@ -84,12 +84,12 @@ rust-spice = "0.3.4"
 Licensed under the [Apache License, Version 2.0][license link].
 
 [repository link]: https://github.com/GregoireHENRY/rust-spice
-[logo image]: https://github.com/GregoireHENRY/rust-spice/blop/main/rsc/img/rust-spice-logo.png
+[logo image]: https://github.com/GregoireHENRY/rust-spice/blob/main/rsc/img/rust-spice-logo.png
 [crate link]: https://crates.io/crates/rust-spice
 [crate badge]: https://meritbadge.herokuapp.com/rust-spice?style=flat-square
 [doc link]: https://docs.rs/rust-spice
 [doc badge]: https://docs.rs/rust-spice/badge.svg
-[license link]: https://github.com/GregoireHENRY/rust-spice/blop/main/LICENSE
+[license link]: https://github.com/GregoireHENRY/rust-spice/blob/main/LICENSE
 [license badge]: https://img.shields.io/badge/License-Apache%202.0-blue.svg
 [pre-commit link]: https://pre-commit.com
 [pre-commit badge]: https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white
