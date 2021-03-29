@@ -8,6 +8,9 @@ license = "Apache-2.0"
 repository = "https://github.com/GregoireHENRY/rust-spice"
 keywords = ["space", "spice", "nasa", "trajectories", "kernels"]
 categories = ["algorithms", "api-bindings", "science"]
+exclude = [
+    "cspice/*",
+]
 
 [lib]
 name = "spice"
