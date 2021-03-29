@@ -1,6 +1,6 @@
 [package]
 name = "rust-spice"
-version = "0.3.1"
+version = "0.3.2"
 authors = ["Greg Henry <contact@greghenry.xyz>"]
 edition = "2018"
 description = "NASA/NAIF Spice toolkit actually usable on Rust"
