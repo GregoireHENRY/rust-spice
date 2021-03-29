@@ -17,13 +17,16 @@ impl bindgen::callbacks::ParseCallbacks for IgnoreMacros {
 }
 
 fn main() {
+    let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
+    let out_path_str = out_path.clone().into_os_string().into_string().unwrap();
+
     Command::new("sh")
         .arg("scripts/getspice.sh")
         .output()
         .expect("Failed to get cspice");
 
     // cspice
-    println!("cargo:rustc-link-search=native=cspice/lib");
+    println!("cargo:rustc-link-search=native={}/cspice/lib", out_path_str);
     println!("cargo:rustc-link-lib=static=cspice");
 
     // spicetools
@@ -47,13 +50,12 @@ fn main() {
 
     let bindings = bindgen::Builder::default()
         .header("wrapper.h")
-        .clang_arg("-Icspice/include")
+        .clang_arg(format!("-I{}/cspice/include", out_path_str))
         .parse_callbacks(Box::new(ignored_macros))
         .rustfmt_bindings(true)
         .generate()
         .expect("Unable to generate bindings");
 
-    let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
     bindings
         .write_to_file(out_path.join("bindings.rs"))
         .expect("Couldn't write bindings!");
