@@ -1,14 +1,14 @@
 # default
-target/
+/target/
 Cargo.lock
 
 # resources
-rsc/img/*
-rsc/data/*
-rsc/log/*
+/rsc/img/
+/rsc/data/
+/rsc/log/
 
 # cspice library
-cspice/
+/cspice/
 
 # resources exceptions
 !rsc/img/rust-spice-logo.png
