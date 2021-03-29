@@ -9,17 +9,15 @@
 #   + detection download
 #   + remove tar
 
-DIR="."
+DIR="cspice"
 TAR="cspice.tar.Z"
 URL="http://naif.jpl.nasa.gov/pub/naif/toolkit//C/PC_Linux_GCC_64bit/packages/cspice.tar.Z"
 
-if [ ! -d "$DIR" ]; then
-    mkdir $DIR
+if [ ! -d $DIR ]; then
+    wget $URL
+    tar -xf $TAR
 
-    wget $URL -P $DIR
-    tar -xf $DIR/$TAR -C $DIR
+    mv $DIR/lib/cspice.a $DIR/lib/libcspice.a
 
-    mv $DIR/cspice/lib/cspice.a $DIR/cspice/lib/libcspice.a
-
-    rm $DIR/$TAR
+    rm $TAR
 fi
