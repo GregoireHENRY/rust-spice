@@ -9,9 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 + allow users to specify already existing cspice path on their computer to
   avoid downloading it
-+ improve Rust interface
++ continuous improvement of the Rust layer
 
 ## [Unreleased]
+
+## [0.3.3] - 2021-03-29
+
++ Rust layer for the struct System
 
 ## [0.3.2] - 2021-03-29
 

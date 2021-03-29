@@ -7,7 +7,7 @@
 [![license badge]][license link]
 [![pre-commit badge]][pre-commit link]
 
-> NASA/NAIF Spice toolkit actually usable on Rust
+> WOW! The complete NASA/NAIF Spice toolkit is actually usable on Rust
 
 ---
 
@@ -50,6 +50,19 @@ Many thanks to the [author][author spice-sys] of the crate
 upload, I included your script copyrighted under your MIT license and added some
 modifications that I listed carefully.
 
+## Disclaimer
+
+This crate is a bit more than a wrapper, it provides some generic functions and
+structs to ease the life of the user.
+
+This crate was also my first exercice to write a wrapper, all kind advices are
+warmly welcome.
+
+The Rust layer is being built in real time as I face the need of it. Raise an
+issue with the need of a function/struct and we will work on it immediately.
+Any time a function is not wrapper for safe code, you can still use the unsafe
+code to call it.
+
 ## Installation
 
 Add the dependency **rust-spice** to your `Cargo.toml`:
@@ -57,7 +70,7 @@ Add the dependency **rust-spice** to your `Cargo.toml`:
 ```toml
 ...
 [dependencies]
-rust-spice = "0.3.2"
+rust-spice = "0.3.3"
 ```
 
 ## License
@@ -65,12 +78,12 @@ rust-spice = "0.3.2"
 Licensed under the [Apache License, Version 2.0][license link].
 
 [repository link]: https://github.com/GregoireHENRY/rust-spice
-[logo image]: https://github.com/GregoireHENRY/rust-spice/tree/main/rsc/img/rust-spice-logo.png
+[logo image]: https://github.com/GregoireHENRY/rust-spice/blop/main/rsc/img/rust-spice-logo.png
 [crate link]: https://crates.io/crates/rust-spice
 [crate badge]: https://meritbadge.herokuapp.com/rust-spice?style=flat-square
 [doc link]: https://docs.rs/rust-spice
 [doc badge]: https://docs.rs/rust-spice/badge.svg
-[license link]: https://github.com/GregoireHENRY/rust-spice/tree/main/LICENSE
+[license link]: https://github.com/GregoireHENRY/rust-spice/blop/main/LICENSE
 [license badge]: https://img.shields.io/badge/License-Apache%202.0-blue.svg
 [pre-commit link]: https://pre-commit.com
 [pre-commit badge]: https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white

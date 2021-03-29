@@ -1,6 +1,6 @@
 [package]
 name = "rust-spice"
-version = "0.3.2"
+version = "0.3.3"
 authors = ["Greg Henry <contact@greghenry.xyz>"]
 edition = "2018"
 description = "NASA/NAIF Spice toolkit actually usable on Rust"
@@ -27,3 +27,4 @@ log = "0.4"
 simplelog = "0.9"
 serde_json = "1.0"
 serde = "1.0.124"
+serial_test = "0.5.1"

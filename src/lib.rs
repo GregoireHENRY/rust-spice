@@ -9,7 +9,7 @@ Simply add the following to your `Cargo.toml` file:
 
 ```.ignore
 [dependencies]
-rust-spice = "0.3.2"
+rust-spice = "0.3.3"
 ```
 
 Useful functionalities of **rust-spice** are grouped in the root module `spice::`.
@@ -39,6 +39,8 @@ pub mod core;
 /// Generic functions for math, physics, matrix operations.
 #[macro_use]
 pub mod toolbox;
+pub mod spicetools;
 
 pub use crate::core::*;
+pub use crate::spicetools::*;
 pub use crate::toolbox::*;
