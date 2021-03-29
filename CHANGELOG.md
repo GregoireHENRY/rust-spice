@@ -9,6 +9,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2021-03-28
+
+### Removed
+
++ dependency spice-sys
+
+### Modified
+
++ spice-sys script to get cscpice
++ README
+
+## [0.2.1] - 2021-03-29
+
++ tried to incorporate spice-sys to use its build script to get cspice but the
+  OUT_DIR environment variable is not configurable for dependency so the cspice
+  library was hidden in target/ and it was not easy to link it automatically
++ cspice was being downloaded every time the build is launch... and multiple
+  time for the different targets, so it was annoying and had to move to v0.3.0
+
 ## [0.2.0] - 2021-03-28
 
 ### Added

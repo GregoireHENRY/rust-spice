@@ -1,9 +1,9 @@
 [package]
 name = "rust-spice"
-version = "0.2.0"
+version = "0.3.0"
 authors = ["Greg Henry <contact@greghenry.xyz>"]
 edition = "2018"
-description = "NASA/NAIF Spice toolkit usable on Rust"
+description = "NASA/NAIF Spice toolkit actually usable on Rust"
 license = "Apache-2.0"
 repository = "https://github.com/GregoireHENRY/rust-spice"
 keywords = ["space", "spice", "nasa", "trajectories", "kernels"]

@@ -1,6 +1,3 @@
 [submodule "spicetools"]
 	path = spicetools
 	url = https://github.com/GregoireHENRY/spicetools
-[submodule "cspice"]
-	path = cspice
-	url = https://github.com/GregoireHENRY/cspice

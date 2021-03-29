@@ -1,8 +1,7 @@
-extern crate bindgen;
-
 use std::collections::HashSet;
 use std::env;
 use std::path::PathBuf;
+use std::process::Command;
 
 #[derive(Debug)]
 struct IgnoreMacros(HashSet<String>);
@@ -18,7 +17,10 @@ impl bindgen::callbacks::ParseCallbacks for IgnoreMacros {
 }
 
 fn main() {
-    println!("cargo:rerun-if-changed=wrapper.h");
+    Command::new("sh")
+        .arg("scripts/getspice.sh")
+        .output()
+        .expect("Failed to get cspice");
 
     // cspice
     println!("cargo:rustc-link-search=native=cspice/lib");
@@ -27,6 +29,8 @@ fn main() {
     // spicetools
     println!("cargo:rustc-link-search=native=spicetools/lib");
     println!("cargo:rustc-link-lib=static=spicetools");
+
+    println!("cargo:rerun-if-changed=wrapper.h");
 
     let ignored_macros = IgnoreMacros(
         vec![

@@ -1,15 +1,14 @@
 # default
-TODO
 target/
 Cargo.lock
-
-# binary
-rust-spice
 
 # resources
 rsc/img/*
 rsc/data/*
 rsc/log/*
+
+# cspice library
+cspice/
 
 # resources exceptions
 !rsc/img/rust-spice-logo.png
