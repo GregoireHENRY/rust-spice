@@ -1,9 +1,11 @@
-use na::{Matrix1xX, Matrix3x1};
+use na::{Matrix1xX, Matrix3x1, Matrix3xX};
 use std::convert::TryInto;
 use std::ffi::{CStr, CString};
 use std::vec::Vec;
 
-impl crate::System {
+pub type System = crate::c::System;
+
+impl System {
     pub fn new<S: AsRef<str>>(
         kernel: S,
         frame: S,
@@ -20,7 +22,7 @@ impl crate::System {
         let start_date_ptr = CString::new(start_date.as_ref()).unwrap().into_raw();
         let abcorr_ptr = CString::new(abcorr.as_ref()).unwrap().into_raw();
         unsafe {
-            crate::system_new(
+            crate::c::system_new(
                 kernel_ptr,
                 frame_ptr,
                 observer_ptr,
@@ -62,27 +64,27 @@ impl crate::System {
 
     pub fn load(&mut self) {
         unsafe {
-            crate::system_load_kernel(self);
+            crate::c::system_load_kernel(self);
         }
     }
 
     pub fn unload(&mut self) {
         unsafe {
-            crate::system_unload_kernel(self);
+            crate::c::system_unload_kernel(self);
         }
     }
 
     pub fn time_start(&mut self) -> f64 {
-        unsafe { crate::system_get_time_start(self) }
+        unsafe { crate::c::system_get_time_start(self) }
     }
 
     pub fn time_end(&mut self) -> f64 {
-        unsafe { crate::system_get_time_end(self) }
+        unsafe { crate::c::system_get_time_end(self) }
     }
 
     pub fn position_start(&mut self) -> Matrix3x1<f64> {
         let position = unsafe {
-            let ptr = crate::system_get_position_start(self);
+            let ptr = crate::c::system_get_position_start(self);
             Vec::from_raw_parts(ptr, 3, 3)
         };
         Matrix3x1::new(position[0], position[1], position[2])
@@ -90,7 +92,7 @@ impl crate::System {
 
     pub fn position_end(&mut self) -> Matrix3x1<f64> {
         let position = unsafe {
-            let ptr = crate::system_get_position_end(self);
+            let ptr = crate::c::system_get_position_end(self);
             Vec::from_raw_parts(ptr, 3, 3)
         };
         Matrix3x1::new(position[0], position[1], position[2])
@@ -98,16 +100,25 @@ impl crate::System {
 
     pub fn number_points(&mut self, time_step: f64) -> usize {
         unsafe {
-            crate::system_get_number_points(self, time_step)
+            crate::c::system_get_number_points(self, time_step)
                 .try_into()
                 .unwrap()
         }
     }
 
+    pub fn times(&mut self, time_step: f64) -> Matrix1xX<f64> {
+        let size = self.number_points(time_step);
+        let times = unsafe {
+            let ptr = crate::c::system_get_times(self, time_step);
+            Vec::from_raw_parts(ptr, size, size)
+        };
+        Matrix1xX::from_iterator(size, times.iter().cloned())
+    }
+
     pub fn times_formatted(&mut self, time_step: f64) -> Matrix1xX<&'static str> {
         let size = self.number_points(time_step);
         unsafe {
-            let ptr = crate::system_get_times_formatted(self, time_step);
+            let ptr = crate::c::system_get_times_formatted(self, time_step);
             let times = Vec::from_raw_parts(ptr, size, size);
             Matrix1xX::from_iterator(
                 size,
@@ -117,5 +128,14 @@ impl crate::System {
                     .map(|time| CStr::from_ptr(time).to_str().unwrap()),
             )
         }
+    }
+
+    pub fn positions(&mut self, time_step: f64) -> Matrix3xX<f64> {
+        let size = self.number_points(time_step);
+        let positions = unsafe {
+            let ptr = crate::c::system_get_positions(self, time_step);
+            Vec::from_raw_parts(ptr, 3 * size, 3 * size)
+        };
+        Matrix3xX::from_iterator(size, positions.iter().cloned())
     }
 }

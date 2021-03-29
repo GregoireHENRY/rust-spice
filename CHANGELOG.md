@@ -15,7 +15,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.3.3] - 2021-03-29
 
+### Added
+
 + Rust layer for the struct System
++ documentation
++ test on 100% of C spicetools
 
 ## [0.3.2] - 2021-03-29
 

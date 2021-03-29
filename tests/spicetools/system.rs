@@ -1,7 +1,7 @@
 // TODO: redo these tests with kernels that won't change
 
 use itertools::multizip;
-use na::{Matrix1xX, Matrix3x1};
+use na::{Matrix1xX, Matrix3x1, Matrix3xX};
 
 #[test]
 #[serial]
@@ -12,7 +12,7 @@ fn create_system() {
         "HERA",                         // observer
         "DIMORPHOS",                    // target
         "2027-MAR-23 16:00:00",         // start date
-        129.0 * spice::get_DAY(),       // duration
+        129.0 * spice::DAY(),           // duration
         "NONE",                         // aberration correction
     );
     system.unload();
@@ -26,7 +26,7 @@ fn test_fields() {
     let observer = "HERA";
     let target = "DIMORPHOS";
     let start_date = "2027-MAR-23 16:00:00";
-    let duration = 129.0 * spice::get_DAY();
+    let duration = 129.0 * spice::DAY();
     let abcorr = "NONE";
     let mut system = spice::System::new(
         kernel, frame, observer, target, start_date, duration, abcorr,
@@ -52,7 +52,7 @@ fn time_start() {
         "HERA",                         // observer
         "DIMORPHOS",                    // target
         "2027-MAR-23 16:00:00",         // start date
-        129.0 * spice::get_DAY(),       // duration
+        129.0 * spice::DAY(),           // duration
         "NONE",                         // aberration correction
     );
     let expected_time = 859089667.1856234;
@@ -72,7 +72,7 @@ fn time_end() {
         "HERA",                         // observer
         "DIMORPHOS",                    // target
         "2027-MAR-23 16:00:00",         // start date
-        129.0 * spice::get_DAY(),       // duration
+        129.0 * spice::DAY(),           // duration
         "NONE",                         // aberration correction
     );
     let expected_time = 870235267.1856234;
@@ -92,7 +92,7 @@ fn position_start() {
         "HERA",                         // observer
         "DIMORPHOS",                    // target
         "2027-MAR-23 16:00:00",         // start date
-        129.0 * spice::get_DAY(),       // duration
+        129.0 * spice::DAY(),           // duration
         "NONE",                         // aberration correction
     );
     let expected_position =
@@ -121,7 +121,7 @@ fn position_end() {
         "HERA",                         // observer
         "DIMORPHOS",                    // target
         "2027-MAR-23 16:00:00",         // start date
-        129.0 * spice::get_DAY(),       // duration
+        129.0 * spice::DAY(),           // duration
         "NONE",                         // aberration correction
     );
     let expected_position =
@@ -149,15 +149,40 @@ fn number_points() {
         "HERA",                         // observer
         "DIMORPHOS",                    // target
         "2027-MAR-23 16:00:00",         // start date
-        129.0 * spice::get_DAY(),       // duration
+        129.0 * spice::DAY(),           // duration
         "NONE",                         // aberration correction
     );
-    let time_step = 1.0 * spice::get_DAY();
+    let time_step = 1.0 * spice::DAY();
     let expected_number = 129;
 
     let number = system.number_points(time_step);
 
     assert_eq!(number, expected_number);
+
+    system.unload();
+}
+
+#[test]
+#[serial]
+fn times() {
+    let mut system = spice::System::new(
+        "rsc/data/hera_PO_EMA_2024.tm", // kernel
+        "J2000",                        // frame
+        "HERA",                         // observer
+        "DIMORPHOS",                    // target
+        "2027-MAR-23 16:00:00",         // start date
+        3.0 * spice::DAY(),             // duration
+        "NONE",                         // aberration correction
+    );
+    let time_step = 1.0 * spice::DAY();
+    let expected_times =
+        Matrix1xX::from_column_slice(&[859089667.1856234, 859176067.1856234, 859262467.1856234]);
+
+    let times = system.times(time_step);
+
+    for (time, expected_time) in multizip((times.iter(), expected_times.iter())) {
+        assert_eq!(time, expected_time);
+    }
 
     system.unload();
 }
@@ -171,10 +196,10 @@ fn times_formatted() {
         "HERA",                         // observer
         "DIMORPHOS",                    // target
         "2027-MAR-23 16:00:00",         // start date
-        3.0 * spice::get_DAY(),         // duration
+        3.0 * spice::DAY(),             // duration
         "NONE",                         // aberration correction
     );
-    let time_step = 1.0 * spice::get_DAY();
+    let time_step = 1.0 * spice::DAY();
     let expected_times = Matrix1xX::from_column_slice(&[
         "2027-MAR-23 16:00:00",
         "2027-MAR-24 16:00:00",
@@ -185,6 +210,44 @@ fn times_formatted() {
 
     for (time, expected_time) in multizip((times.iter(), expected_times.iter())) {
         assert_eq!(time, expected_time);
+    }
+
+    system.unload();
+}
+
+#[test]
+#[serial]
+fn positions() {
+    let mut system = spice::System::new(
+        "rsc/data/hera_PO_EMA_2024.tm", // kernel
+        "J2000",                        // frame
+        "HERA",                         // observer
+        "DIMORPHOS",                    // target
+        "2027-MAR-23 16:00:00",         // start date
+        3.0 * spice::DAY(),             // duration
+        "NONE",                         // aberration correction
+    );
+    let time_step = 1.0 * spice::DAY();
+    let expected_positions = Matrix3xX::from_column_slice(&[
+        18.62639796759623,
+        21.05444863563425,
+        -7.136416860555217,
+        18.685576648253853,
+        17.77035176622136,
+        2.315428951220107,
+        18.63486050866997,
+        13.806780236054001,
+        11.523204797636854,
+    ]);
+
+    let positions = system.positions(time_step);
+
+    for (component, expected_component) in multizip((positions.iter(), expected_positions.iter())) {
+        assert!(relative_eq!(
+            component,
+            expected_component,
+            epsilon = f64::EPSILON
+        ));
     }
 
     system.unload();

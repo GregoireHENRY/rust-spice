@@ -1,3 +1,3 @@
-pub fn get_DAY() -> f64 {
-    unsafe { crate::DAY }
+pub fn DAY() -> f64 {
+    unsafe { crate::c::DAY }
 }

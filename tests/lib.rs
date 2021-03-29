@@ -21,7 +21,7 @@ fn it_works() {
 fn test_spice_load() {
     unsafe {
         let kernel = CString::new("rsc/data/hera_PO_EMA_2024.tm").unwrap();
-        spice::furnsh_c(kernel.as_ptr() as *mut _);
-        spice::unload_c(kernel.as_ptr() as *mut _);
+        spice::c::furnsh_c(kernel.as_ptr() as *mut _);
+        spice::c::unload_c(kernel.as_ptr() as *mut _);
     }
 }

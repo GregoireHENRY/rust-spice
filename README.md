@@ -19,29 +19,30 @@
 
 ## Rational
 
-Another crate already exist for wrapping C spice: [spice-sys][spice-sys link].
+Another crate already exists for wrapping C spice: [spice-sys][spice-sys link].
 The motivation behind the creation of [rust-spice][crate link] was 1) the need
-to access the complete spice API from Rust and 2) the need to have a Rust layer
-to feel natural to use for Rust users.
+to access the complete spice API from Rust and 2) the need to have a nice Rust
+layer to code naturally.
 
 ### Complete API
 
 [spice-sys][spice-sys link] does not use [bindgen][bindgen link] to wrap
-  which is error-prone and does not provide a complete API. The description of
-  spice-sys says:
-  > *Currently, it provides only the most common API calls as outlined
-  [here][cspice most common].*
+which is error-prone and does not provide a complete API. The description of
+spice-sys says:
 
-  This boosted me to build a complete C spice wrapper.
+> *Currently, it provides only the most common API calls as outlined
+[here][cspice most common].*
+
+This boosted me to build a complete C spice wrapper.
 
 ### Rust interface
 
 [spice-sys][spice-sys link] does not provide a Rust user-friendly interface,
-which constrains the user to use FFI/libc tools to convert strings, floats and
-array to C types and using unsafe scopes.
+which constrains the user to use unsafe and FFI types conversion which is simply
+a pain to use.
 
-I wanted to use spice from Rust without feeling it is a C wrapper, for quicker
-and simplier usage in my crates.
+I wanted to use spice from Rust without feeling it being a C wrapper, for
+quicker and simplier development and usage in my crates.
 
 ### S/O
 
@@ -52,23 +53,21 @@ modifications that I listed carefully.
 
 ## Disclaimer
 
-This crate is a bit more than a wrapper, it provides some generic functions and
-structs to ease the life of the user.
-
-This crate was also my first exercice to write a wrapper, all kind advices are
-warmly welcome.
+This crate is my first exercice to write a wrapper, all kind advices are
+warmly welcomed.
 
 The Rust layer is being built in real time as I face the need of it. Raise an
 issue with the need of a function/struct and we will work on it immediately.
 Any time a function is not wrapped inside safe code, you can still use the
 unsafe code to call it.
 
-Apparently the documentation is not building online, but in local it is working
-perfectly. The header cspice/include/SpiceUser.h is not in PATH obviously.
-Locally it works because in build.rs I use `.clang_arg()` on the the
-`bindgen:Builder` to tell Rust where to find the header. And it should work
-online also. Any help is appreciated to solve this issue!! I can send you the
-offline documentation in the meantime if you want.
+Apparently the documentation is not building online, though I spent a lot of
+time writting it. On my pc it is building just nice. By reading docs.rs output,
+the header `cspice/include/SpiceUser.h` is not in the include PATH obviously.
+Locally it works because in my `build.rs` I use `.clang_arg()` on the the
+`bindgen:Builder` to tell Rust where to find the damn header. And it should work
+online also, I guess. Any help is appreciated to solve this issue!! I can send
+you the offline documentation in the meantime if you want.
 
 ## Installation
 
