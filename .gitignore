@@ -7,9 +7,6 @@ rsc/img/
 rsc/data/
 rsc/log/
 
-# cspice library
-cspice/
-
 # resources exceptions
 !rsc/img/rust-spice-logo.png
 !rsc/data/hera_PO_EMA_2024.tm
