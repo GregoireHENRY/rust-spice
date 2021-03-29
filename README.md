@@ -12,6 +12,7 @@
 ---
 
 [Rational](#rational) |
+[Disclaimer](#disclaimer) |
 [Installation](#installation) |
 [License](#license)
 
@@ -76,7 +77,7 @@ Add the dependency **rust-spice** to your `Cargo.toml`:
 ```toml
 ...
 [dependencies]
-rust-spice = "0.3.4"
+rust-spice = "0.3.5"
 ```
 
 ## License
