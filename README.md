@@ -20,7 +20,8 @@
 
 ## Rational
 
-Another crate already exists for wrapping C spice: [spice-sys][spice-sys link].
+Other crates already exist for wrapping C spice: [spice-sys][spice-sys link]
+and [cspice-sys][cspice-sys link].
 The motivation behind the creation of [rust-spice][crate link] was 1) the need
 to access the complete spice API from Rust and 2) the need to have a nice Rust
 layer to code naturally.
@@ -36,14 +37,23 @@ spice-sys says:
 
 This boosted me to build a complete C spice wrapper.
 
+[cspice-sys][cspice-sys link] is build with bindgen but the cspice code is
+collected in a strange way, the original architecture of cspice is not
+respected, plus the repository is missing somehow. I cannot ensure the full-
+API is available with this crate.
+
 ### Rust interface
 
-[spice-sys][spice-sys link] does not provide a Rust user-friendly interface,
+These crates are bare wrapper and does not provide a Rust user-friendly interface,
 which constrains the user to use unsafe and FFI types conversion which is simply
 a pain to use.
 
 I wanted to use spice from Rust without feeling it being a C wrapper, for
 quicker and simplier development and usage in my crates.
+
+I could have started by forking one these two crate or using them in dependency,
+but both of them did not feel sane to use. I decided to also provide my own
+wrapper, which can be used during the process of the creation of the Rust layer.
 
 ### S/O
 
@@ -96,5 +106,6 @@ Licensed under the [Apache License, Version 2.0][license link].
 [pre-commit badge]: https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white
 [spice-sys link]: https://crates.io/crates/spice-sys
 [author spice-sys]: https://github.com/rjpower4
+[cspice-sys link]: https://crates.io/crates/cspice-sys
 [cspice most common]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/info/mostused.html
 [bindgen link]: https://crates.io/crates/bindgen
