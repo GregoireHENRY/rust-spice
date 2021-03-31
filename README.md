@@ -6,6 +6,8 @@
 [![doc badge]][doc link]
 [![license badge]][license link]
 [![pre-commit badge]][pre-commit link]
+[![coverage doc badge]][coverage doc link]
+[![coverage test badge]][coverage test link]
 
 > WOW! The complete NASA/NAIF Spice toolkit is actually usable on Rust
 
@@ -45,7 +47,7 @@ Add the dependency **rust-spice** to your `Cargo.toml`:
 ```toml
 ...
 [dependencies]
-rust-spice = "0.4.0"
+rust-spice = "0.4.1"
 ```
 
 ## License
@@ -62,3 +64,7 @@ Licensed under the [Apache License, Version 2.0][license link].
 [license badge]: https://img.shields.io/badge/License-Apache%202.0-blue.svg
 [pre-commit link]: https://pre-commit.com
 [pre-commit badge]: https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white
+[coverage doc badge]: https://img.shields.io/badge/Documentation-100%25-brightgreen
+[coverage doc link]: https://docs.rs/crate/rust-spice
+[coverage test badge]: https://img.shields.io/badge/Tests-90%25-green
+[coverage test link]: https://docs.rs/crate/rust-spice
