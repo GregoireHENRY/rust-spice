@@ -1,9 +1,9 @@
-/// Geometry toolbox.
+/// Collection of functions for geometry computations.
 pub mod geometry;
-/// Log toolbox.
+/// Log aliases.
 #[macro_use]
 pub mod log;
-/// Matrix toolbox.
+/// Collection of functions for matrix usage.
 pub mod matrix;
 
 pub use self::geometry::*;

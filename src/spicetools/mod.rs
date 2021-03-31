@@ -1,7 +1,7 @@
+/// Additional constants.
 mod constants;
-mod physics;
+/// Definition of System type to ease the use of Spice.
 mod system;
 
 pub use self::constants::*;
-pub use self::physics::*;
 pub use self::system::*;

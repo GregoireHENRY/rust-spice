@@ -44,14 +44,14 @@ API is available with this crate.
 
 ### Rust interface
 
-These crates are bare wrapper and does not provide a Rust user-friendly interface,
+These crates are bare wrappers and do not provide a Rust user-friendly interface,
 which constrains the user to use unsafe and FFI types conversion which is simply
 a pain to use.
 
 I wanted to use spice from Rust without feeling it being a C wrapper, for
 quicker and simplier development and usage in my crates.
 
-I could have started by forking one these two crate or using them in dependency,
+I could have started by forking one these two crates or using them in dependency,
 but both of them did not feel sane to use. I decided to also provide my own
 wrapper, which can be used during the process of the creation of the Rust layer.
 

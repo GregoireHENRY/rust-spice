@@ -2,7 +2,7 @@ use simplelog::*;
 use std::fs::File;
 
 /// Location of the log file.
-const LOG_FILE: &str = "rsc/log/kalast.log";
+const LOG_FILE: &str = "rsc/log/main.log";
 /// Default filter for the terminal logging.
 pub const DEFAULT_LEVEL_TERM: LevelFilter = LevelFilter::Warn;
 /// Default filter for the file logging.

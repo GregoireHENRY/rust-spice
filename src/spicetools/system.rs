@@ -1,141 +1,245 @@
+use itertools::multizip;
 use na::{Matrix1xX, Matrix3x1, Matrix3xX};
-use std::convert::TryInto;
-use std::ffi::{CStr, CString};
+use std::path::PathBuf;
 use std::vec::Vec;
 
-pub type System = crate::c::System;
+/// System type to quickly provide sets of basic functions.
+#[derive(Debug, Clone)]
+pub struct System {
+    /// The kernel containing the information.
+    kernel: crate::Kernel,
+    /// The reference frame.
+    frame: String,
+    /// The origin of the reference frame.
+    observer: String,
+    /// The target.
+    target: String,
+    /// The formatted start date.
+    start_date: String,
+    /// The duration of the window to compute the end date.
+    duration: f64,
+    /// The aberration correction.
+    aberration_correction: String,
+}
 
 impl System {
-    pub fn new<S: AsRef<str>>(
-        kernel: S,
-        frame: S,
-        observer: S,
-        target: S,
-        start_date: S,
-        duration: f64,
-        abcorr: S,
-    ) -> Self {
-        let kernel_ptr = CString::new(kernel.as_ref()).unwrap().into_raw();
-        let frame_ptr = CString::new(frame.as_ref()).unwrap().into_raw();
-        let observer_ptr = CString::new(observer.as_ref()).unwrap().into_raw();
-        let target_ptr = CString::new(target.as_ref()).unwrap().into_raw();
-        let start_date_ptr = CString::new(start_date.as_ref()).unwrap().into_raw();
-        let abcorr_ptr = CString::new(abcorr.as_ref()).unwrap().into_raw();
-        unsafe {
-            crate::c::system_new(
-                kernel_ptr,
-                frame_ptr,
-                observer_ptr,
-                target_ptr,
-                start_date_ptr,
-                duration,
-                abcorr_ptr,
-            )
-        }
+    /// Get a reference to the kernel.
+    pub fn kernel(&self) -> &crate::Kernel {
+        &self.kernel
     }
 
-    pub fn kernel(&mut self) -> &str {
-        unsafe { CStr::from_ptr(self.KERNEL).to_str().unwrap() }
+    /// Get the frame.
+    pub fn frame(&mut self) -> String {
+        self.frame.clone()
     }
 
-    pub fn frame(&mut self) -> &str {
-        unsafe { CStr::from_ptr(self.FRAME).to_str().unwrap() }
+    /// Get the observer.
+    pub fn observer(&mut self) -> String {
+        self.observer.clone()
     }
 
-    pub fn observer(&mut self) -> &str {
-        unsafe { CStr::from_ptr(self.OBSERVER).to_str().unwrap() }
+    /// Get the target.
+    pub fn target(&mut self) -> String {
+        self.target.clone()
     }
 
-    pub fn target(&mut self) -> &str {
-        unsafe { CStr::from_ptr(self.TARGET).to_str().unwrap() }
+    /// Get the start date.
+    pub fn start_date(&mut self) -> String {
+        self.start_date.clone()
     }
 
-    pub fn start_date(&mut self) -> &str {
-        unsafe { CStr::from_ptr(self.START_DATE).to_str().unwrap() }
-    }
-
+    /// Get the duration.
     pub fn duration(&mut self) -> f64 {
-        self.DURATION
+        self.duration
     }
 
-    pub fn abcorr(&mut self) -> &str {
-        unsafe { CStr::from_ptr(self.ABCORR).to_str().unwrap() }
+    /// Get the aberration correction.
+    pub fn aberration_correction(&mut self) -> String {
+        self.aberration_correction.clone()
     }
 
-    pub fn load(&mut self) {
-        unsafe {
-            crate::c::system_load_kernel(self);
-        }
+    /// Load the kernel of the system.
+    pub fn load(&mut self) -> Result<(), crate::KernelAlreadyLoadedError> {
+        Ok(self.kernel.load()?)
     }
 
-    pub fn unload(&mut self) {
-        unsafe {
-            crate::c::system_unload_kernel(self);
-        }
+    /// Unload the kernel of the system.
+    pub fn unload(&mut self) -> Result<(), crate::KernelNotLoadedError> {
+        Ok(self.kernel.unload()?)
     }
 
+    /// Get the time at the start.
     pub fn time_start(&mut self) -> f64 {
-        unsafe { crate::c::system_get_time_start(self) }
+        crate::ephemeris_from_date(self.start_date())
     }
 
+    /// Get the time at the end.
     pub fn time_end(&mut self) -> f64 {
-        unsafe { crate::c::system_get_time_end(self) }
+        crate::ephemeris_from_date(self.start_date()) + self.duration
     }
 
+    /// Get the position at the start.
     pub fn position_start(&mut self) -> Matrix3x1<f64> {
-        let position = unsafe {
-            let ptr = crate::c::system_get_position_start(self);
-            Vec::from_raw_parts(ptr, 3, 3)
-        };
-        Matrix3x1::new(position[0], position[1], position[2])
+        let time = self.time_start();
+        let (position, _) = crate::position(
+            self.target(),
+            time,
+            self.frame(),
+            self.aberration_correction(),
+            self.observer(),
+        );
+        position
     }
 
+    /// Get the position at the end.
     pub fn position_end(&mut self) -> Matrix3x1<f64> {
-        let position = unsafe {
-            let ptr = crate::c::system_get_position_end(self);
-            Vec::from_raw_parts(ptr, 3, 3)
-        };
-        Matrix3x1::new(position[0], position[1], position[2])
+        let time = self.time_end();
+        let (position, _) = crate::position(
+            self.target(),
+            time,
+            self.frame(),
+            self.aberration_correction(),
+            self.observer(),
+        );
+        position
     }
 
+    /// Get the number of points from start to end date with time step.
     pub fn number_points(&mut self, time_step: f64) -> usize {
-        unsafe {
-            crate::c::system_get_number_points(self, time_step)
-                .try_into()
-                .unwrap()
-        }
+        let time_start = self.time_start();
+        let time_end = self.time_end();
+        crate::size_range_with_step(time_start, time_end, time_step)
     }
 
+    /// Get the times.
     pub fn times(&mut self, time_step: f64) -> Matrix1xX<f64> {
-        let size = self.number_points(time_step);
-        let times = unsafe {
-            let ptr = crate::c::system_get_times(self, time_step);
-            Vec::from_raw_parts(ptr, size, size)
-        };
-        Matrix1xX::from_iterator(size, times.iter().cloned())
+        let time_start = self.time_start();
+        let time_end = self.time_end();
+        crate::linspace(time_start, time_end, time_step)
     }
 
-    pub fn times_formatted(&mut self, time_step: f64) -> Matrix1xX<&'static str> {
-        let size = self.number_points(time_step);
-        unsafe {
-            let ptr = crate::c::system_get_times_formatted(self, time_step);
-            let times = Vec::from_raw_parts(ptr, size, size);
-            Matrix1xX::from_iterator(
-                size,
-                times
-                    .iter()
-                    .cloned()
-                    .map(|time| CStr::from_ptr(time).to_str().unwrap()),
-            )
-        }
+    /// Get the times formatted.
+    pub fn times_formatted(&mut self, time_step: f64) -> Vec<String> {
+        // Get times as ephemerides.
+        let times = self.times(time_step);
+
+        // Convert them into formatted string.
+        times
+            .iter()
+            .map(|&time| crate::date_from_ephemeris(time))
+            .collect()
     }
 
+    /// Get the positions from start to end with time step.
     pub fn positions(&mut self, time_step: f64) -> Matrix3xX<f64> {
-        let size = self.number_points(time_step);
-        let positions = unsafe {
-            let ptr = crate::c::system_get_positions(self, time_step);
-            Vec::from_raw_parts(ptr, 3 * size, 3 * size)
-        };
-        Matrix3xX::from_iterator(size, positions.iter().cloned())
+        // Get times.
+        let times = self.times(time_step);
+
+        // Allocate positions matrix.
+        let mut positions = Matrix3xX::zeros(times.len());
+
+        // Get position at each time.
+        for (time, mut position) in multizip((times.iter(), positions.column_iter_mut())) {
+            position.copy_from(
+                &crate::position(
+                    self.target(),
+                    *time,
+                    self.frame(),
+                    self.aberration_correction(),
+                    self.observer(),
+                )
+                .0,
+            );
+        }
+
+        positions
+    }
+}
+
+/// System type builder.
+#[derive(Debug, Clone, Default)]
+pub struct SystemBuilder {
+    kernel: Option<crate::Kernel>,
+    frame: Option<String>,
+    observer: Option<String>,
+    target: Option<String>,
+    start_date: Option<String>,
+    duration: Option<f64>,
+    aberration_correction: Option<String>,
+}
+
+impl SystemBuilder {
+    /// Set kernel from its name.
+    pub fn kernel<P: Into<PathBuf>>(
+        &mut self,
+        file: P,
+    ) -> Result<&mut Self, crate::KernelAlreadyLoadedError> {
+        self.kernel = Some(crate::Kernel::new(file)?);
+        Ok(self)
+    }
+
+    /// Set reference frame.
+    pub fn frame<S: Into<String>>(&mut self, name: S) -> &mut Self {
+        self.frame = Some(name.into());
+        self
+    }
+
+    /// Set observer.
+    pub fn observer<S: Into<String>>(&mut self, name: S) -> &mut Self {
+        self.observer = Some(name.into());
+        self
+    }
+
+    /// Set target.
+    pub fn target<S: Into<String>>(&mut self, name: S) -> &mut Self {
+        self.target = Some(name.into());
+        self
+    }
+
+    /// Set start date.
+    pub fn start_date<S: Into<String>>(&mut self, date: S) -> &mut Self {
+        self.start_date = Some(date.into());
+        self
+    }
+
+    /// Set duration.
+    pub fn duration(&mut self, time: f64) -> &mut Self {
+        self.duration = Some(time);
+        self
+    }
+
+    /// Set aberration correction.
+    pub fn aberration_correction<S: Into<String>>(&mut self, name: S) -> &mut Self {
+        self.aberration_correction = Some(name.into());
+        self
+    }
+
+    /// Build to give System.
+    pub fn build(&self) -> Result<System, String> {
+        Ok(System {
+            kernel: Clone::clone(self.kernel.as_ref().ok_or("kernel must be initialized.")?),
+            frame: Clone::clone(self.frame.as_ref().ok_or("frame must be initialized.")?),
+            observer: Clone::clone(
+                self.observer
+                    .as_ref()
+                    .ok_or("observer must be initialized.")?,
+            ),
+            target: Clone::clone(self.target.as_ref().ok_or("target must be initialized.")?),
+            start_date: Clone::clone(
+                self.start_date
+                    .as_ref()
+                    .ok_or("start_date must be initialized.")?,
+            ),
+            duration: Clone::clone(
+                self.duration
+                    .as_ref()
+                    .ok_or("duration must be initialized.")?,
+            ),
+            aberration_correction: Clone::clone(
+                self.aberration_correction
+                    .as_ref()
+                    .ok_or("aberration_correction must be initialized.")?,
+            ),
+        })
     }
 }

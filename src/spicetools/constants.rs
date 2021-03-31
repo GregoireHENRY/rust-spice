@@ -1,3 +1,2 @@
-pub fn DAY() -> f64 {
-    unsafe { crate::c::DAY }
-}
+/// Duration of a day in seconds.
+pub const DAY: f64 = 86400.0;

@@ -10,8 +10,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 + allow users to specify already existing cspice path on their computer to
   avoid downloading it
 + continuous improvement of the Rust layer
++ send mail to Marc Costa about this crate
 
 ## [Unreleased]
+
+## [0.3.5] - 2021-03-31
+
+### Changed
+
++ spicetools toolbox is now 100% Rust -> safer and simplier build script
 
 ## [0.3.4] - 2021-03-29
 

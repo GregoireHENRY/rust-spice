@@ -20,8 +20,10 @@ fn it_works() {
 #[serial]
 fn test_spice_load() {
     unsafe {
-        let kernel = CString::new("rsc/data/hera_PO_EMA_2024.tm").unwrap();
-        spice::c::furnsh_c(kernel.as_ptr() as *mut _);
-        spice::c::unload_c(kernel.as_ptr() as *mut _);
+        let kernel = CString::new("rsc/data/hera_PO_EMA_2024.tm")
+            .unwrap()
+            .into_raw();
+        spice::c::furnsh_c(kernel);
+        spice::c::unload_c(kernel);
     }
 }
