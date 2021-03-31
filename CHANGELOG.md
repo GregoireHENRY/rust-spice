@@ -7,12 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## TODO
 
-+ allow users to specify already existing cspice path on their computer to
-  avoid downloading it
 + continuous improvement of the Rust layer
 + send mail to Marc Costa about this crate
 
 ## [Unreleased]
+
+## [0.4.0] - 2021-04-01
+
+### Changed
+
++ this crate is not anymore creating the binding, it uses cspice-rust, to focus
+  more on the Rust layer.
 
 ## [0.3.5] - 2021-03-31
 

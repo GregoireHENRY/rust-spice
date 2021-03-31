@@ -74,7 +74,7 @@ pub fn position<S: Into<String>>(
 }
 
 /// List of loaded kernels to avoid loading an already loaded.
-pub static mut LoadedKernels: Vec<String> = vec![];
+static mut LOADED_KERNELS: Vec<String> = vec![];
 
 /// Custom error type when trying to load an already load kernel.
 #[derive(Debug)]
@@ -115,15 +115,15 @@ impl fmt::Display for KernelNotLoadedError {
 }
 
 /// Load the kernel if it not already loaded.
-pub fn load<S: AsRef<str>>(name: S) -> Result<(), KernelAlreadyLoadedError> {
+fn load<S: AsRef<str>>(name: S) -> Result<(), KernelAlreadyLoadedError> {
     let _name = name.as_ref();
     unsafe {
         // Check if the name of the kernel is in the static list of already loaded kernels.
-        match LoadedKernels.contains(&_name.to_string()) {
+        match LOADED_KERNELS.contains(&_name.to_string()) {
             true => Err(KernelAlreadyLoadedError::new(_name.to_string())),
             false => {
                 // Add the name of the kernel to this list.
-                LoadedKernels.push(_name.to_string());
+                LOADED_KERNELS.push(_name.to_string());
 
                 // Load it.
                 let kernel = CString::new(_name).unwrap().into_raw();
@@ -136,15 +136,15 @@ pub fn load<S: AsRef<str>>(name: S) -> Result<(), KernelAlreadyLoadedError> {
 }
 
 /// Unload the kernel if loaded.
-pub fn unload<S: AsRef<str>>(name: S) -> Result<(), KernelNotLoadedError> {
+fn unload<S: AsRef<str>>(name: S) -> Result<(), KernelNotLoadedError> {
     let _name = name.as_ref();
     unsafe {
         // Check if the name of the kernel is not in the static list of already loaded kernels.
-        match !LoadedKernels.contains(&_name.to_string()) {
+        match !LOADED_KERNELS.contains(&_name.to_string()) {
             true => Err(KernelNotLoadedError::new(_name.to_string())),
             false => {
                 // Remove the name of the kernel from this list.
-                LoadedKernels.retain(|n| n != &_name.to_string());
+                LOADED_KERNELS.retain(|n| n != &_name.to_string());
 
                 // Unload it.
                 let kernel = CString::new(_name).unwrap().into_raw();

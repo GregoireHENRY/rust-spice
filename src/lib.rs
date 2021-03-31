@@ -9,29 +9,27 @@ Simply add the following to your `Cargo.toml` file:
 
 ```.ignore
 [dependencies]
-rust-spice = "0.3.5"
+rust-spice = "0.4.0"
 ```
 
-Rust layered Spice functions of **rust-spice** are grouped in the root module `spice::` and all wrapper functions in `spice::c::`.
+Rust layered Spice functions of **rust-spice** are grouped in the root module `spice::` and all
+wrapper functions in `spice::c::`.
 
 ## **rust-spice** basics
 
 ```.ignore
 use spice;
 
-// Example using binded C Spice.
+// ugly: using binded C Spice.
 unsafe {
     let kernel = CString::new("/path/to/metakernel.mk").unwrap().into_raw();
     spice::c::furnsh_c(kernel);
     spice::c::unload_c(kernel);
 }
 
-// Using the nice Rust interface.
+// pretty: using the nice Rust interface.
 let mut kernel = spice::Kernel::new("/path/to/metakernels.mk")?;
 kernel.unload()?;
-
-// If you are curious reading the sources, do not be tempted to use directly `spice::load(..)`.
-// The Kernel type adds extra error checks.
 ```
 
 ## In action
@@ -78,17 +76,6 @@ You can also read other [examples](https://github.com/GregoireHENRY/rust-spice/t
 
 ## Rust layer in development
 
-### Intro to C wrapper
-
-The complete NASA/NAIF C Spice toolkit is accessible under the module `spice::c`. It has been
-generated using [`bindgen`](https://docs.rs/bindgen/0.57.0/bindgen/).
-
-If you feel some troubles to use the C interface, you can visit the sources of [`core`]. Most
-conversions from pointers to list of doubles or chars, back and forth, are done there. A complete
-guide can be written if needed.
-
-### The damn Rust layer
-
 The Rust layer is nicer to use: no unsafe and easy types. But it takes a long time to write because it
 is not automated, I have to do it by hand. I started from my needs, basically getting positions from
 start to end date of target in referential. I will implemented a nice Rust layer more and more when
@@ -100,18 +87,15 @@ The Rust layer for the most Used C Spice API for accessing kernel data is locate
 The type [`System`] provides some tools, built on top of spice.
 */
 
-#![allow(non_upper_case_globals)]
-#![allow(non_camel_case_types)]
-#![allow(non_snake_case)]
-
+extern crate cspice_sys;
 extern crate itertools;
 extern crate log;
 extern crate nalgebra as na;
 extern crate simplelog;
 
-/// Complete NASA/NAIF C Spice binded functions, very unsafe.
+/// Complete NASA/NAIF C Spice binded functions, very unsafe, from [`cspice_sys`] wrapper.
 pub mod c {
-    include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
+    pub use cspice_sys::*;
 }
 /// The Rust layer to ease the use of the wrapper.
 pub mod core;

@@ -46,7 +46,11 @@ fn test_fields() {
     assert_eq!(system.observer(), observer);
     assert_eq!(system.target(), target);
     assert_eq!(system.start_date(), start_date);
-    assert_eq!(system.duration(), duration);
+    assert!(relative_eq!(
+        system.duration(),
+        duration,
+        epsilon = f64::EPSILON
+    ));
     assert_eq!(system.aberration_correction(), aberration_correction);
     system.unload().unwrap();
 }
@@ -69,7 +73,7 @@ fn time_start() {
 
     let time = system.time_start();
 
-    assert_eq!(time, expected_time);
+    assert!(relative_eq!(time, expected_time, epsilon = f64::EPSILON));
     system.unload().unwrap();
 }
 
@@ -91,8 +95,8 @@ fn time_end() {
 
     let time = system.time_end();
 
-    assert_eq!(time, expected_time);
-    system.unload();
+    assert!(relative_eq!(time, expected_time, epsilon = f64::EPSILON));
+    system.unload().unwrap();
 }
 
 #[test]
@@ -123,7 +127,7 @@ fn position_start() {
         ));
     }
 
-    system.unload();
+    system.unload().unwrap();
 }
 
 #[test]
@@ -153,7 +157,7 @@ fn position_end() {
         ));
     }
 
-    system.unload();
+    system.unload().unwrap();
 }
 
 #[test]
@@ -177,7 +181,7 @@ fn number_points() {
 
     assert_eq!(number, expected_number);
 
-    system.unload();
+    system.unload().unwrap();
 }
 
 #[test]
@@ -201,10 +205,10 @@ fn times() {
     let times = system.times(time_step);
 
     for (time, expected_time) in multizip((times.iter(), expected_times.iter())) {
-        assert_eq!(time, expected_time);
+        assert!(relative_eq!(time, expected_time, epsilon = f64::EPSILON));
     }
 
-    system.unload();
+    system.unload().unwrap();
 }
 
 #[test]
@@ -235,7 +239,7 @@ fn times_formatted() {
         assert_eq!(time, expected_time);
     }
 
-    system.unload();
+    system.unload().unwrap();
 }
 
 #[test]
@@ -275,5 +279,5 @@ fn positions() {
         ));
     }
 
-    system.unload();
+    system.unload().unwrap();
 }
