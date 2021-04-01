@@ -23,7 +23,7 @@
 
 Quick example showing the simplicity of using Spice in Rust.
 
-```Rust
+```rust
 use spice;
 
 // ugly and unsafe: using binded C Spice.
