@@ -7,6 +7,17 @@ use std::path::PathBuf;
 pub const TIME_FORMAT: &str = "YYYY-MON-DD HR:MN:SC ::RND";
 
 /// Convert a formatted date from string to ephemeris time.
+///
+/// # Example
+///
+/// ```
+/// let mut kernel = spice::Kernel::new("rsc/data/hera_PO_EMA_2024.tm")?;
+/// let time = spice::ephemeris_from_date("2027-MAR-23 16:00:00");
+///
+/// // time: 859089667.1856234
+///
+/// kernel.unload()?;
+/// ```
 pub fn ephemeris_from_date<S: Into<String>>(date: S) -> f64 {
     let mut ephemeris_time = 0.0;
     unsafe {
@@ -17,16 +28,27 @@ pub fn ephemeris_from_date<S: Into<String>>(date: S) -> f64 {
 }
 
 /// Convert an ephemeris time to a formatted string.
-pub fn date_from_ephemeris(time: f64) -> String {
+///
+/// # Example
+///
+/// ```
+/// let mut kernel = spice::Kernel::new("rsc/data/hera_PO_EMA_2024.tm")?;
+/// let date = spice::date_from_ephemeris(859089667.1856234, spice::TIME_FORMAT);
+///
+/// // date: "2027-MAR-23 16:00:00"
+///
+/// kernel.unload()?;
+/// ```
+pub fn date_from_ephemeris(time: f64, time_format: &str) -> String {
     // Define pointer where data will be written.
-    let size = TIME_FORMAT.len();
+    let size = time_format.len();
     let date_c = CString::new(String::with_capacity(size))
         .unwrap()
         .into_raw();
 
     unsafe {
         // Get data.
-        let time_format_c = CString::new(TIME_FORMAT.to_string()).unwrap().into_raw();
+        let time_format_c = CString::new(time_format.to_string()).unwrap().into_raw();
         crate::c::timout_c(time, time_format_c, size as i32 + 1, date_c);
 
         // Convert data to Rust type.
@@ -34,8 +56,21 @@ pub fn date_from_ephemeris(time: f64) -> String {
     }
 }
 
-/// Get position of target with respect to observer in the reference frame at time with optional
-/// aberration correction.
+/// Get the position and one way light time of target with respect to observer in the reference
+/// frame at time with optional aberration correction.
+///
+/// # Example
+///
+/// ```
+/// let mut kernel = spice::Kernel::new("rsc/data/hera_PO_EMA_2024.tm")?;
+/// let time = spice::ephemeris_from_date("2027-MAR-23 16:00:00");
+/// let (position, light_time) = spice::position("DIMORPHOS", time, "J2000", "NONE", "HERA");
+///
+/// // position: [18.62639796759623  21.05444863563425 -7.136416860555217]
+/// // light_time: 0.00009674284381011395
+///
+/// kernel.unload()?;
+/// ```
 pub fn position<S: Into<String>>(
     target: S,
     time: f64,
@@ -165,6 +200,13 @@ enum KernelStatus {
 
 /// Kernel type to automatically load the kernel on the definition and keep a record of the status
 /// of the loading.
+///
+/// # Example
+///
+/// ```
+/// let mut kernel = spice::Kernel::new("rsc/data/hera_PO_EMA_2024.tm")?;
+/// kernel.unload()?;
+/// ```
 #[derive(Debug, Clone)]
 pub struct Kernel {
     /// The file to the kernel.

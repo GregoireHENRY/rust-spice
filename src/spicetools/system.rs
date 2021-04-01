@@ -4,6 +4,26 @@ use std::path::PathBuf;
 use std::vec::Vec;
 
 /// System type to quickly provide sets of basic functions.
+///
+/// # Example
+///
+/// The type [`System`] is created from the builder [`SystemBuilder`].
+///
+/// ```.ignore
+/// use spice;
+///
+/// let mut system = spice::SystemBuilder::default()
+///     .kernel("/path/to/metakernels.mk")?
+///     .frame("J2000")
+///     .observer("HERA")
+///     .target("DIMORPHOS")
+///     .start_date("2027-MAR-23 16:00:00")
+///     .duration(129.0 * spice::DAY)
+///     .aberration_correction("NONE")
+///     .build()?;
+///
+/// system.unload()?;
+/// ```
 #[derive(Debug, Clone)]
 pub struct System {
     /// The kernel containing the information.
@@ -126,7 +146,7 @@ impl System {
         // Convert them into formatted string.
         times
             .iter()
-            .map(|&time| crate::date_from_ephemeris(time))
+            .map(|&time| crate::date_from_ephemeris(time, crate::TIME_FORMAT))
             .collect()
     }
 
@@ -156,7 +176,9 @@ impl System {
     }
 }
 
-/// System type builder.
+/// Builder of the system type.
+///
+/// You might be interested in [`System`].
 #[derive(Debug, Clone, Default)]
 pub struct SystemBuilder {
     kernel: Option<crate::Kernel>,

@@ -9,11 +9,13 @@ Simply add the following to your `Cargo.toml` file:
 
 ```.ignore
 [dependencies]
-rust-spice = "0.4.1"
+rust-spice = "0.4.2"
 ```
 
 Rust layered Spice functions of **rust-spice** are grouped in the root module `spice::` and all
 wrapper functions in `spice::c::`.
+
+You can find a guide for the Rust interface [here][crate::core].
 
 ## **rust-spice** basics
 
@@ -76,11 +78,11 @@ You can also read other [examples](https://github.com/GregoireHENRY/rust-spice/t
 
 ## Rust layer in development
 
-The Rust layer is nicer to use: no unsafe and easy types. But it takes a long time to write because it
-is not automated, I have to do it by hand. I started from my needs, basically getting positions from
-start to end date of target in referential. I will implemented a nice Rust layer more and more when
-I will be using other functions. You can submit issues if you want a layer to some functionalities,
-and we will implement it immediately.
+The Rust layer is nicer to use: no unsafe and easy types. But it takes a long time to write because
+it is not automated, I have to do it by hand. I started from my needs, basically getting positions
+from start to end date of target in referential. I will implemented a nice Rust layer more and more
+when I will need to use other functions. You can submit issues if you want a layer to some
+functionalities, and we will implement it immediately. Pull requests are also welcomed to help!
 
 The Rust layer for the most Used C Spice API for accessing kernel data is located in [`core`].
 
