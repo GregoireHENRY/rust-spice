@@ -49,32 +49,32 @@ impl System {
     }
 
     /// Get the frame.
-    pub fn frame(&mut self) -> String {
+    pub fn frame(&self) -> String {
         self.frame.clone()
     }
 
     /// Get the observer.
-    pub fn observer(&mut self) -> String {
+    pub fn observer(&self) -> String {
         self.observer.clone()
     }
 
     /// Get the target.
-    pub fn target(&mut self) -> String {
+    pub fn target(&self) -> String {
         self.target.clone()
     }
 
     /// Get the start date.
-    pub fn start_date(&mut self) -> String {
+    pub fn start_date(&self) -> String {
         self.start_date.clone()
     }
 
     /// Get the duration.
-    pub fn duration(&mut self) -> f64 {
+    pub fn duration(&self) -> f64 {
         self.duration
     }
 
     /// Get the aberration correction.
-    pub fn aberration_correction(&mut self) -> String {
+    pub fn aberration_correction(&self) -> String {
         self.aberration_correction.clone()
     }
 
@@ -89,17 +89,17 @@ impl System {
     }
 
     /// Get the time at the start.
-    pub fn time_start(&mut self) -> f64 {
+    pub fn time_start(&self) -> f64 {
         crate::ephemeris_from_date(self.start_date())
     }
 
     /// Get the time at the end.
-    pub fn time_end(&mut self) -> f64 {
+    pub fn time_end(&self) -> f64 {
         crate::ephemeris_from_date(self.start_date()) + self.duration
     }
 
     /// Get the position at the start.
-    pub fn position_start(&mut self) -> Matrix3x1<f64> {
+    pub fn position_start(&self) -> Matrix3x1<f64> {
         let time = self.time_start();
         let (position, _) = crate::position(
             self.target(),
@@ -112,7 +112,7 @@ impl System {
     }
 
     /// Get the position at the end.
-    pub fn position_end(&mut self) -> Matrix3x1<f64> {
+    pub fn position_end(&self) -> Matrix3x1<f64> {
         let time = self.time_end();
         let (position, _) = crate::position(
             self.target(),
@@ -125,21 +125,21 @@ impl System {
     }
 
     /// Get the number of points from start to end date with time step.
-    pub fn number_points(&mut self, time_step: f64) -> usize {
+    pub fn number_points(&self, time_step: f64) -> usize {
         let time_start = self.time_start();
         let time_end = self.time_end();
         crate::size_range_with_step(time_start, time_end, time_step)
     }
 
     /// Get the times.
-    pub fn times(&mut self, time_step: f64) -> Matrix1xX<f64> {
+    pub fn times(&self, time_step: f64) -> Matrix1xX<f64> {
         let time_start = self.time_start();
         let time_end = self.time_end();
         crate::linspace(time_start, time_end, time_step)
     }
 
     /// Get the times formatted.
-    pub fn times_formatted(&mut self, time_step: f64) -> Vec<String> {
+    pub fn times_formatted(&self, time_step: f64) -> Vec<String> {
         // Get times as ephemerides.
         let times = self.times(time_step);
 
@@ -151,7 +151,7 @@ impl System {
     }
 
     /// Get the positions from start to end with time step.
-    pub fn positions(&mut self, time_step: f64) -> Matrix3xX<f64> {
+    pub fn positions(&self, time_step: f64) -> Matrix3xX<f64> {
         // Get times.
         let times = self.times(time_step);
 
