@@ -92,6 +92,7 @@ The type [`System`] provides some tools, built on top of spice.
 extern crate cspice_sys;
 extern crate itertools;
 extern crate nalgebra as na;
+extern crate serial_test;
 extern crate tool;
 
 /// Complete NASA/NAIF C Spice binded functions, very unsafe, from [`cspice_sys`] wrapper.

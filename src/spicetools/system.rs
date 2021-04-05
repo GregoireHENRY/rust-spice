@@ -12,7 +12,7 @@ use std::vec::Vec;
 /// type System.
 #[derive(Clone)]
 pub struct SystemBuilderError {
-    kind: SystemBuilderErrorKind,
+    pub kind: SystemBuilderErrorKind,
 }
 
 /// Enumeration of the different kinds of errors about the build of the type System.
@@ -35,13 +35,8 @@ pub enum SystemBuilderErrorKind {
 }
 
 impl SystemBuilderError {
-    /// Outputs the detailed cause of system builder failing.
-    pub fn kind(&self) -> &SystemBuilderErrorKind {
-        &self.kind
-    }
-
     /// Error messages for system builder failing.
-    pub fn description(&self) -> &str {
+    fn description(&self) -> &str {
         match self.kind {
             SystemBuilderErrorKind::Kernel => "the kernel must be initialized",
             SystemBuilderErrorKind::Frame => "the frame must be initialized",
@@ -73,7 +68,7 @@ impl fmt::Debug for SystemBuilderError {
 /// Read [`SystemErrorKind`] for the different kinds of errors related to the type System.
 #[derive(Clone)]
 pub struct SystemError {
-    kind: SystemErrorKind,
+    pub kind: SystemErrorKind,
 }
 
 /// Enumeration of the different kinds of errors about the type System.
@@ -86,13 +81,8 @@ pub enum SystemErrorKind {
 }
 
 impl SystemError {
-    /// Outputs the detailed cause of System failing.
-    pub fn kind(&self) -> &SystemErrorKind {
-        &self.kind
-    }
-
     /// Error messages for System failing.
-    pub fn description(&self) -> String {
+    fn description(&self) -> String {
         match self.kind {
             SystemErrorKind::Kernel(ref e) => format!("error with the kernel: {}", e),
             SystemErrorKind::Build(ref e) => format!("error during the build: {}", e),

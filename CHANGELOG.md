@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 + error managment
 + examples
++ tests
 
 ### Changed
 
@@ -26,6 +27,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 + module toolbox is now external to this crate
++ static list of loaded kernels, let user deal with asynchronous problem if they
+  want to do it, this crate ensures the type Kernel loads and unloads correctly
 
 ## [0.4.2] - 2021-04-01
 

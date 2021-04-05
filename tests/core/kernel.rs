@@ -40,6 +40,42 @@ fn position() {
 #[serial]
 fn already_loaded() -> Result<(), spice::KernelError> {
     let mut kernel = spice::Kernel::new("rsc/data/hera_PO_EMA_2024.tm")?;
+
+    assert_eq!(
+        kernel.load(),
+        Err(spice::KernelError {
+            kind: spice::KernelErrorKind::AlreadyLoaded
+        })
+    );
+
+    kernel.unload()?;
+    Ok(())
+}
+
+#[test]
+#[serial]
+fn display() -> Result<(), spice::KernelError> {
+    let mut kernel = spice::Kernel::new("rsc/data/hera_PO_EMA_2024.tm")?;
+
+    match kernel.load() {
+        Ok(_) => (),
+        Err(e) => assert_eq!(e.to_string(), "the kernel is already loaded"),
+    };
+
+    kernel.unload()?;
+    Ok(())
+}
+
+#[test]
+#[serial]
+fn debug() -> Result<(), spice::KernelError> {
+    let mut kernel = spice::Kernel::new("rsc/data/hera_PO_EMA_2024.tm")?;
+
+    match kernel.load() {
+        Ok(_) => (),
+        Err(e) => assert_eq!(format!("{:?}", e), r#""the kernel is already loaded""#),
+    };
+
     kernel.unload()?;
     Ok(())
 }

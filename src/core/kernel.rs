@@ -108,21 +108,18 @@ pub fn position<S: Into<String>>(
     )
 }
 
-/// List of loaded kernels to avoid loading an already loaded.
-static mut LOADED_KERNELS: Vec<String> = vec![];
-
 /// An error which can be returned when using a kernel.
 ///
 /// This error can happen when loading/unloading a kernel.
 ///
 /// Read [`KernelErrorKind`] for the different kinds of errors related to kernels.
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub struct KernelError {
-    kind: KernelErrorKind,
+    pub kind: KernelErrorKind,
 }
 
 /// Enumeration of the different kinds of errors about kernels.
-#[derive(Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum KernelErrorKind {
     /// The kernel is already loaded and cannot be loaded twice.
     AlreadyLoaded,
@@ -131,13 +128,8 @@ pub enum KernelErrorKind {
 }
 
 impl KernelError {
-    /// Outputs the detailed cause of kernel failing.
-    pub fn kind(&self) -> &KernelErrorKind {
-        &self.kind
-    }
-
     /// Error messages for kernel failing.
-    pub fn description(&self) -> &str {
+    fn description(&self) -> &str {
         match self.kind {
             KernelErrorKind::AlreadyLoaded => "the kernel is already loaded",
             KernelErrorKind::NotLoaded => "the kernel is not loaded, it cannot be unloaded",
@@ -157,53 +149,25 @@ impl fmt::Debug for KernelError {
 }
 
 /// Load the kernel if it not already loaded.
-fn load<S: AsRef<str>>(name: S) -> Result<(), KernelError> {
+fn load<S: AsRef<str>>(name: S) {
     let _name = name.as_ref();
     unsafe {
-        // Check if the name of the kernel is in the static list of already loaded kernels.
-        match LOADED_KERNELS.contains(&_name.to_string()) {
-            true => Err(KernelError {
-                kind: KernelErrorKind::AlreadyLoaded,
-            }),
-            false => {
-                // Add the name of the kernel to this list.
-                LOADED_KERNELS.push(_name.to_string());
-
-                // Load it.
-                let kernel = CString::new(_name).unwrap().into_raw();
-                crate::c::furnsh_c(kernel);
-
-                Ok(())
-            }
-        }
+        let kernel = CString::new(_name).unwrap().into_raw();
+        crate::c::furnsh_c(kernel);
     }
 }
 
 /// Unload the kernel if loaded.
-fn unload<S: AsRef<str>>(name: S) -> Result<(), KernelError> {
+fn unload<S: AsRef<str>>(name: S) {
     let _name = name.as_ref();
     unsafe {
-        // Check if the name of the kernel is not in the static list of already loaded kernels.
-        match !LOADED_KERNELS.contains(&_name.to_string()) {
-            true => Err(KernelError {
-                kind: KernelErrorKind::NotLoaded,
-            }),
-            false => {
-                // Remove the name of the kernel from this list.
-                LOADED_KERNELS.retain(|n| n != &_name.to_string());
-
-                // Unload it.
-                let kernel = CString::new(_name).unwrap().into_raw();
-                crate::c::unload_c(kernel);
-
-                Ok(())
-            }
-        }
+        let kernel = CString::new(_name).unwrap().into_raw();
+        crate::c::unload_c(kernel);
     }
 }
 
 /// Status on the state of the loading of the kernel.
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 enum KernelStatus {
     Loaded,
     Unloaded,
@@ -250,9 +214,8 @@ impl Kernel {
             }),
 
             KernelStatus::Unloaded => {
-                // Load if not loaded by someone else.
-                load(self.name())?;
-
+                // Load the kernel.
+                load(self.name());
                 // Update status
                 self.status = KernelStatus::Loaded;
 
@@ -269,8 +232,8 @@ impl Kernel {
             }),
 
             KernelStatus::Loaded => {
-                // Unload if loaded.
-                unload(self.name())?;
+                // Unload the kernel.
+                unload(self.name());
 
                 // Update status
                 self.status = KernelStatus::Unloaded;
@@ -278,5 +241,43 @@ impl Kernel {
                 Ok(())
             }
         }
+    }
+}
+
+#[macro_use]
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serial_test::serial;
+
+    #[test]
+    #[serial]
+    fn already_loaded_description() -> Result<(), KernelError> {
+        let mut kernel = Kernel::new("rsc/data/hera_PO_EMA_2024.tm")?;
+
+        assert_eq!(
+            kernel.load().err().unwrap().description(),
+            "the kernel is already loaded"
+        );
+
+        kernel.unload()?;
+        Ok(())
+    }
+
+    #[test]
+    #[serial]
+    fn not_loaded_description() -> Result<(), KernelError> {
+        let mut kernel = Kernel::new("rsc/data/hera_PO_EMA_2024.tm")?;
+        kernel.unload()?;
+
+        match kernel.unload() {
+            Ok(_) => (),
+            Err(e) => assert_eq!(
+                e.description(),
+                "the kernel is not loaded, it cannot be unloaded"
+            ),
+        };
+
+        Ok(())
     }
 }
