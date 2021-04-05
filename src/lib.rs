@@ -9,7 +9,7 @@ Simply add the following to your `Cargo.toml` file:
 
 ```.ignore
 [dependencies]
-rust-spice = "0.4.2"
+rust-spice = "0.4.3"
 ```
 
 Rust layered Spice functions of **rust-spice** are grouped in the root module `spice::` and all
@@ -91,9 +91,8 @@ The type [`System`] provides some tools, built on top of spice.
 
 extern crate cspice_sys;
 extern crate itertools;
-extern crate log;
 extern crate nalgebra as na;
-extern crate simplelog;
+extern crate tool;
 
 /// Complete NASA/NAIF C Spice binded functions, very unsafe, from [`cspice_sys`] wrapper.
 pub mod c {
@@ -103,10 +102,6 @@ pub mod c {
 pub mod core;
 /// Tools developped on top of Spice for even easier usage of the library.
 pub mod spicetools;
-/// Generic functions for geometry and matrix operations.
-#[macro_use]
-pub mod toolbox;
 
 pub use crate::core::*;
 pub use crate::spicetools::*;
-pub use crate::toolbox::*;

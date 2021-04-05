@@ -1,5 +1,6 @@
 use itertools::multizip;
 use spice;
+use tool;
 
 fn main() {
     let mut system = spice::SystemBuilder::default()
@@ -18,7 +19,7 @@ fn main() {
 
     let times = system.times_formatted(time_step);
     let positions = system.positions(time_step);
-    let distances = spice::distances(positions);
+    let distances = tool::distances(positions);
 
     for (time, distance) in multizip((times.iter(), distances.iter())) {
         println!("{} -> {:.2} km", time, distance);

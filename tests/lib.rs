@@ -7,7 +7,6 @@ extern crate serial_test;
 
 mod core;
 mod spicetools;
-mod toolbox;
 
 use std::ffi::CString;
 

@@ -128,14 +128,14 @@ impl System {
     pub fn number_points(&self, time_step: f64) -> usize {
         let time_start = self.time_start();
         let time_end = self.time_end();
-        crate::size_range_with_step(time_start, time_end, time_step)
+        tool::size_range_with_step(time_start, time_end, time_step)
     }
 
     /// Get the times.
     pub fn times(&self, time_step: f64) -> Matrix1xX<f64> {
         let time_start = self.time_start();
         let time_end = self.time_end();
-        crate::linspace(time_start, time_end, time_step)
+        tool::linspace(time_start, time_end, time_step)
     }
 
     /// Get the times formatted.
