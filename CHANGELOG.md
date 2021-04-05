@@ -12,6 +12,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.3] - 2021-04-05
+
+### Added
+
++ error managment
++ examples
+
+### Changed
+
++ System getters not mutable
+
+### Removed
+
++ module toolbox is now external to this crate
+
 ## [0.4.2] - 2021-04-01
 
 ### Added
