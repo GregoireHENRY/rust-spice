@@ -111,51 +111,60 @@ pub fn position<S: Into<String>>(
 /// List of loaded kernels to avoid loading an already loaded.
 static mut LOADED_KERNELS: Vec<String> = vec![];
 
-/// Custom error type when trying to load an already load kernel.
-#[derive(Debug)]
-pub struct KernelAlreadyLoadedError {
-    name: String,
+/// An error which can be returned when using a kernel.
+///
+/// This error can happen when loading/unloading a kernel.
+///
+/// Read [`KernelErrorKind`] for the different kinds of errors related to kernels.
+#[derive(Clone)]
+pub struct KernelError {
+    kind: KernelErrorKind,
 }
 
-impl KernelAlreadyLoadedError {
-    /// Build KernelAlreadyLoadedError with the name of the kernel.
-    pub fn new(name: String) -> Self {
-        Self { name }
+/// Enumeration of the different kinds of errors about kernels.
+#[derive(Clone)]
+pub enum KernelErrorKind {
+    /// The kernel is already loaded and cannot be loaded twice.
+    AlreadyLoaded,
+    /// The kernel is not loaded or has been unloaded already.
+    NotLoaded,
+}
+
+impl KernelError {
+    /// Outputs the detailed cause of kernel failing.
+    pub fn kind(&self) -> &KernelErrorKind {
+        &self.kind
+    }
+
+    /// Error messages for kernel failing.
+    pub fn description(&self) -> &str {
+        match self.kind {
+            KernelErrorKind::AlreadyLoaded => "the kernel is already loaded",
+            KernelErrorKind::NotLoaded => "the kernel is not loaded, it cannot be unloaded",
+        }
     }
 }
 
-impl fmt::Display for KernelAlreadyLoadedError {
+impl fmt::Display for KernelError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "The kernel {} is already loaded.", self.name)
+        self.description().fmt(f)
     }
 }
-
-/// Custom error type when trying to unload an kernel that was not loaded.
-#[derive(Debug)]
-pub struct KernelNotLoadedError {
-    name: String,
-}
-
-impl KernelNotLoadedError {
-    /// Build KernelNotLoadedError with the name of the kernel.
-    pub fn new(name: String) -> Self {
-        Self { name }
-    }
-}
-
-impl fmt::Display for KernelNotLoadedError {
+impl fmt::Debug for KernelError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "The kernel {} was not loaded.", self.name)
+        self.description().fmt(f)
     }
 }
 
 /// Load the kernel if it not already loaded.
-fn load<S: AsRef<str>>(name: S) -> Result<(), KernelAlreadyLoadedError> {
+fn load<S: AsRef<str>>(name: S) -> Result<(), KernelError> {
     let _name = name.as_ref();
     unsafe {
         // Check if the name of the kernel is in the static list of already loaded kernels.
         match LOADED_KERNELS.contains(&_name.to_string()) {
-            true => Err(KernelAlreadyLoadedError::new(_name.to_string())),
+            true => Err(KernelError {
+                kind: KernelErrorKind::AlreadyLoaded,
+            }),
             false => {
                 // Add the name of the kernel to this list.
                 LOADED_KERNELS.push(_name.to_string());
@@ -171,12 +180,14 @@ fn load<S: AsRef<str>>(name: S) -> Result<(), KernelAlreadyLoadedError> {
 }
 
 /// Unload the kernel if loaded.
-fn unload<S: AsRef<str>>(name: S) -> Result<(), KernelNotLoadedError> {
+fn unload<S: AsRef<str>>(name: S) -> Result<(), KernelError> {
     let _name = name.as_ref();
     unsafe {
         // Check if the name of the kernel is not in the static list of already loaded kernels.
         match !LOADED_KERNELS.contains(&_name.to_string()) {
-            true => Err(KernelNotLoadedError::new(_name.to_string())),
+            true => Err(KernelError {
+                kind: KernelErrorKind::NotLoaded,
+            }),
             false => {
                 // Remove the name of the kernel from this list.
                 LOADED_KERNELS.retain(|n| n != &_name.to_string());
@@ -217,7 +228,7 @@ pub struct Kernel {
 
 impl Kernel {
     /// Constructor from the path of the file. Automatically load the kernel.
-    pub fn new<P: Into<PathBuf>>(file: P) -> Result<Self, KernelAlreadyLoadedError> {
+    pub fn new<P: Into<PathBuf>>(file: P) -> Result<Self, KernelError> {
         let mut kernel = Self {
             file: file.into(),
             status: KernelStatus::Unloaded,
@@ -232,9 +243,12 @@ impl Kernel {
     }
 
     /// Load the kernel if not loaded already.
-    pub fn load(&mut self) -> Result<(), KernelAlreadyLoadedError> {
+    pub fn load(&mut self) -> Result<(), KernelError> {
         match self.status {
-            KernelStatus::Loaded => Err(KernelAlreadyLoadedError::new(self.name())),
+            KernelStatus::Loaded => Err(KernelError {
+                kind: KernelErrorKind::AlreadyLoaded,
+            }),
+
             KernelStatus::Unloaded => {
                 // Load if not loaded by someone else.
                 load(self.name())?;
@@ -248,9 +262,12 @@ impl Kernel {
     }
 
     /// Unload the kernel if loaded.
-    pub fn unload(&mut self) -> Result<(), KernelNotLoadedError> {
+    pub fn unload(&mut self) -> Result<(), KernelError> {
         match self.status {
-            KernelStatus::Unloaded => Err(KernelNotLoadedError::new(self.name())),
+            KernelStatus::Unloaded => Err(KernelError {
+                kind: KernelErrorKind::NotLoaded,
+            }),
+
             KernelStatus::Loaded => {
                 // Unload if loaded.
                 unload(self.name())?;

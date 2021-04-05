@@ -35,3 +35,11 @@ fn position() {
 
     kernel.unload().unwrap();
 }
+
+#[test]
+#[serial]
+fn already_loaded() -> Result<(), spice::KernelError> {
+    let mut kernel = spice::Kernel::new("rsc/data/hera_PO_EMA_2024.tm")?;
+    kernel.unload()?;
+    Ok(())
+}

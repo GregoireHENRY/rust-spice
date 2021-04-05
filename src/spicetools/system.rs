@@ -1,7 +1,136 @@
 use itertools::multizip;
 use na::{Matrix1xX, Matrix3x1, Matrix3xX};
+use std::fmt;
 use std::path::PathBuf;
 use std::vec::Vec;
+
+/// An error which can be returned during the build of the type System.
+///
+/// This error happens if any of the fields of the type System is missing when building.
+///
+/// Read [`SystemBuilderErrorKind`] for the different kinds of errors related to the build of the
+/// type System.
+#[derive(Clone)]
+pub struct SystemBuilderError {
+    kind: SystemBuilderErrorKind,
+}
+
+/// Enumeration of the different kinds of errors about the build of the type System.
+#[derive(Clone)]
+pub enum SystemBuilderErrorKind {
+    /// Kernel is missing.
+    Kernel,
+    /// Frame is missing.
+    Frame,
+    /// Observer is missing.
+    Observer,
+    /// Target is missing.
+    Target,
+    /// Start date is missing.
+    StartDate,
+    /// Duration is missing.
+    Duration,
+    /// Aberration correction is missing.
+    AberrationCorrection,
+}
+
+impl SystemBuilderError {
+    /// Outputs the detailed cause of system builder failing.
+    pub fn kind(&self) -> &SystemBuilderErrorKind {
+        &self.kind
+    }
+
+    /// Error messages for system builder failing.
+    pub fn description(&self) -> &str {
+        match self.kind {
+            SystemBuilderErrorKind::Kernel => "the kernel must be initialized",
+            SystemBuilderErrorKind::Frame => "the frame must be initialized",
+            SystemBuilderErrorKind::Observer => "the observer must be initialized",
+            SystemBuilderErrorKind::Target => "the target must be initialized",
+            SystemBuilderErrorKind::StartDate => "the start date must be initialized",
+            SystemBuilderErrorKind::Duration => "the duration must be initialized",
+            SystemBuilderErrorKind::AberrationCorrection => "the aberration must be initialized",
+        }
+    }
+}
+
+impl fmt::Display for SystemBuilderError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        self.description().fmt(f)
+    }
+}
+
+impl fmt::Debug for SystemBuilderError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        self.description().fmt(f)
+    }
+}
+
+/// An error which can be returned when using the type System.
+///
+/// This error can happen when loading/unload a kernel or building the system.
+///
+/// Read [`SystemErrorKind`] for the different kinds of errors related to the type System.
+#[derive(Clone)]
+pub struct SystemError {
+    kind: SystemErrorKind,
+}
+
+/// Enumeration of the different kinds of errors about the type System.
+#[derive(Clone)]
+pub enum SystemErrorKind {
+    /// Errors in loading/unloading a kernel, see [`KernelError`].
+    Kernel(crate::KernelError),
+    /// Error during the build of the type System, see [`SystemBuilderError`].
+    Build(SystemBuilderError),
+}
+
+impl SystemError {
+    /// Outputs the detailed cause of System failing.
+    pub fn kind(&self) -> &SystemErrorKind {
+        &self.kind
+    }
+
+    /// Error messages for System failing.
+    pub fn description(&self) -> String {
+        match self.kind {
+            SystemErrorKind::Kernel(ref e) => format!("error with the kernel: {}", e),
+            SystemErrorKind::Build(ref e) => format!("error during the build: {}", e),
+        }
+    }
+}
+
+impl fmt::Display for SystemError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        self.description().fmt(f)
+    }
+}
+
+impl fmt::Debug for SystemError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        self.description().fmt(f)
+    }
+}
+
+/// Implement the conversion from `KernelError` to `SystemError`. This will be automatically called
+/// by `?` if a `KernelError` needs to be converted into a `SystemError`.
+impl From<crate::KernelError> for SystemError {
+    fn from(err: crate::KernelError) -> SystemError {
+        SystemError {
+            kind: SystemErrorKind::Kernel(err),
+        }
+    }
+}
+
+/// Implement the conversion from `SystemBuilderError` to `SystemError`. This will be automatically called
+/// by `?` if a `SystemBuilderError` needs to be converted into a `SystemError`.
+impl From<SystemBuilderError> for SystemError {
+    fn from(err: SystemBuilderError) -> SystemError {
+        SystemError {
+            kind: SystemErrorKind::Build(err),
+        }
+    }
+}
 
 /// System type to quickly provide sets of basic functions.
 ///
@@ -79,12 +208,12 @@ impl System {
     }
 
     /// Load the kernel of the system.
-    pub fn load(&mut self) -> Result<(), crate::KernelAlreadyLoadedError> {
+    pub fn load(&mut self) -> Result<(), crate::KernelError> {
         Ok(self.kernel.load()?)
     }
 
     /// Unload the kernel of the system.
-    pub fn unload(&mut self) -> Result<(), crate::KernelNotLoadedError> {
+    pub fn unload(&mut self) -> Result<(), crate::KernelError> {
         Ok(self.kernel.unload()?)
     }
 
@@ -192,10 +321,7 @@ pub struct SystemBuilder {
 
 impl SystemBuilder {
     /// Set kernel from its name.
-    pub fn kernel<P: Into<PathBuf>>(
-        &mut self,
-        file: P,
-    ) -> Result<&mut Self, crate::KernelAlreadyLoadedError> {
+    pub fn kernel<P: Into<PathBuf>>(&mut self, file: P) -> Result<&mut Self, crate::KernelError> {
         self.kernel = Some(crate::Kernel::new(file)?);
         Ok(self)
     }
@@ -237,31 +363,54 @@ impl SystemBuilder {
     }
 
     /// Build to give System.
-    pub fn build(&self) -> Result<System, String> {
-        Ok(System {
-            kernel: Clone::clone(self.kernel.as_ref().ok_or("kernel must be initialized.")?),
-            frame: Clone::clone(self.frame.as_ref().ok_or("frame must be initialized.")?),
-            observer: Clone::clone(
-                self.observer
-                    .as_ref()
-                    .ok_or("observer must be initialized.")?,
-            ),
-            target: Clone::clone(self.target.as_ref().ok_or("target must be initialized.")?),
-            start_date: Clone::clone(
-                self.start_date
-                    .as_ref()
-                    .ok_or("start_date must be initialized.")?,
-            ),
-            duration: Clone::clone(
-                self.duration
-                    .as_ref()
-                    .ok_or("duration must be initialized.")?,
-            ),
-            aberration_correction: Clone::clone(
-                self.aberration_correction
-                    .as_ref()
-                    .ok_or("aberration_correction must be initialized.")?,
-            ),
-        })
+    pub fn build(&self) -> Result<System, SystemBuilderError> {
+        match (
+            self.kernel.as_ref(),
+            self.frame.as_ref(),
+            self.observer.as_ref(),
+            self.target.as_ref(),
+            self.start_date.as_ref(),
+            self.duration,
+            self.aberration_correction.as_ref(),
+        ) {
+            (
+                Some(kernel),
+                Some(frame),
+                Some(observer),
+                Some(target),
+                Some(start),
+                Some(duration),
+                Some(aberration),
+            ) => Ok(System {
+                kernel: kernel.clone(),
+                frame: frame.clone(),
+                observer: observer.clone(),
+                target: target.clone(),
+                start_date: start.clone(),
+                duration,
+                aberration_correction: aberration.clone(),
+            }),
+            (None, _, _, _, _, _, _) => Err(SystemBuilderError {
+                kind: SystemBuilderErrorKind::Kernel,
+            }),
+            (_, None, _, _, _, _, _) => Err(SystemBuilderError {
+                kind: SystemBuilderErrorKind::Frame,
+            }),
+            (_, _, None, _, _, _, _) => Err(SystemBuilderError {
+                kind: SystemBuilderErrorKind::Observer,
+            }),
+            (_, _, _, None, _, _, _) => Err(SystemBuilderError {
+                kind: SystemBuilderErrorKind::Target,
+            }),
+            (_, _, _, _, None, _, _) => Err(SystemBuilderError {
+                kind: SystemBuilderErrorKind::StartDate,
+            }),
+            (_, _, _, _, _, None, _) => Err(SystemBuilderError {
+                kind: SystemBuilderErrorKind::Duration,
+            }),
+            (_, _, _, _, _, _, None) => Err(SystemBuilderError {
+                kind: SystemBuilderErrorKind::AberrationCorrection,
+            }),
+        }
     }
 }

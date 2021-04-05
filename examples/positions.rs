@@ -2,18 +2,16 @@ use itertools::multizip;
 use spice;
 use tool;
 
-fn main() {
+fn main() -> Result<(), spice::SystemError> {
     let mut system = spice::SystemBuilder::default()
-        .kernel("rsc/data/hera_PO_EMA_2024.tm")
-        .unwrap()
+        .kernel("rsc/data/hera_PO_EMA_2024.tm")?
         .frame("J2000")
         .observer("HERA")
         .target("DIMORPHOS")
         .start_date("2027-MAR-23 16:00:00")
         .duration(129.0 * spice::DAY)
         .aberration_correction("NONE")
-        .build()
-        .unwrap();
+        .build()?;
 
     let time_step = 1.0 * spice::DAY;
 
@@ -25,5 +23,6 @@ fn main() {
         println!("{} -> {:.2} km", time, distance);
     }
 
-    system.unload().unwrap();
+    system.unload()?;
+    Ok(())
 }
