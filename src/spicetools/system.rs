@@ -44,7 +44,9 @@ impl SystemBuilderError {
             SystemBuilderErrorKind::Target => "the target must be initialized",
             SystemBuilderErrorKind::StartDate => "the start date must be initialized",
             SystemBuilderErrorKind::Duration => "the duration must be initialized",
-            SystemBuilderErrorKind::AberrationCorrection => "the aberration must be initialized",
+            SystemBuilderErrorKind::AberrationCorrection => {
+                "the aberration correction must be initialized"
+            }
         }
     }
 }
@@ -402,5 +404,152 @@ impl SystemBuilder {
                 kind: SystemBuilderErrorKind::AberrationCorrection,
             }),
         }
+    }
+}
+
+#[macro_use]
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serial_test::serial;
+
+    #[test]
+    #[serial]
+    fn builder_description_kernel() -> Result<(), SystemError> {
+        let system_res = SystemBuilder::default()
+            .frame("J2000")
+            .observer("HERA")
+            .target("DIMORPHOS")
+            .start_date("2027-MAR-23 16:00:00")
+            .duration(129.0 * crate::DAY)
+            .aberration_correction("NONE")
+            .build();
+
+        // Not need direct assert as the message might change in the future.
+        assert_eq!(
+            system_res.err().unwrap().description(),
+            "the kernel must be initialized"
+        );
+        Ok(())
+    }
+
+    #[test]
+    #[serial]
+    fn builder_description_frame() -> Result<(), SystemError> {
+        let system_res = SystemBuilder::default()
+            .kernel("rsc/data/hera_PO_EMA_2024.tm")?
+            .observer("HERA")
+            .target("DIMORPHOS")
+            .start_date("2027-MAR-23 16:00:00")
+            .duration(129.0 * crate::DAY)
+            .aberration_correction("NONE")
+            .build();
+
+        // Not need direct assert as the message might change in the future.
+        assert_eq!(
+            system_res.err().unwrap().description(),
+            "the frame must be initialized"
+        );
+        Ok(())
+    }
+
+    #[test]
+    #[serial]
+    fn builder_description_observer() -> Result<(), SystemError> {
+        let system_res = SystemBuilder::default()
+            .kernel("rsc/data/hera_PO_EMA_2024.tm")?
+            .frame("J2000")
+            .target("DIMORPHOS")
+            .start_date("2027-MAR-23 16:00:00")
+            .duration(129.0 * crate::DAY)
+            .aberration_correction("NONE")
+            .build();
+
+        // Not need direct assert as the message might change in the future.
+        assert_eq!(
+            system_res.err().unwrap().description(),
+            "the observer must be initialized"
+        );
+        Ok(())
+    }
+
+    #[test]
+    #[serial]
+    fn builder_description_target() -> Result<(), SystemError> {
+        let system_res = SystemBuilder::default()
+            .kernel("rsc/data/hera_PO_EMA_2024.tm")?
+            .frame("J2000")
+            .observer("HERA")
+            .start_date("2027-MAR-23 16:00:00")
+            .duration(129.0 * crate::DAY)
+            .aberration_correction("NONE")
+            .build();
+
+        // Not need direct assert as the message might change in the future.
+        assert_eq!(
+            system_res.err().unwrap().description(),
+            "the target must be initialized"
+        );
+        Ok(())
+    }
+
+    #[test]
+    #[serial]
+    fn builder_description_start() -> Result<(), SystemError> {
+        let system_res = SystemBuilder::default()
+            .kernel("rsc/data/hera_PO_EMA_2024.tm")?
+            .frame("J2000")
+            .observer("HERA")
+            .target("DIMORPHOS")
+            .duration(129.0 * crate::DAY)
+            .aberration_correction("NONE")
+            .build();
+
+        // Not need direct assert as the message might change in the future.
+        assert_eq!(
+            system_res.err().unwrap().description(),
+            "the start date must be initialized"
+        );
+        Ok(())
+    }
+
+    #[test]
+    #[serial]
+    fn builder_description_duration() -> Result<(), SystemError> {
+        let system_res = SystemBuilder::default()
+            .kernel("rsc/data/hera_PO_EMA_2024.tm")?
+            .frame("J2000")
+            .observer("HERA")
+            .target("DIMORPHOS")
+            .start_date("2027-MAR-23 16:00:00")
+            .aberration_correction("NONE")
+            .build();
+
+        // Not need direct assert as the message might change in the future.
+        assert_eq!(
+            system_res.err().unwrap().description(),
+            "the duration must be initialized"
+        );
+        Ok(())
+    }
+
+    #[test]
+    #[serial]
+    fn builder_description_aberration() -> Result<(), SystemError> {
+        let system_res = SystemBuilder::default()
+            .kernel("rsc/data/hera_PO_EMA_2024.tm")?
+            .frame("J2000")
+            .observer("HERA")
+            .target("DIMORPHOS")
+            .start_date("2027-MAR-23 16:00:00")
+            .duration(129.0 * crate::DAY)
+            .build();
+
+        // Not need direct assert as the message might change in the future.
+        assert_eq!(
+            system_res.err().unwrap().description(),
+            "the aberration correction must be initialized"
+        );
+        Ok(())
     }
 }

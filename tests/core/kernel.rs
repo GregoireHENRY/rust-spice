@@ -79,3 +79,13 @@ fn debug() -> Result<(), spice::KernelError> {
     kernel.unload()?;
     Ok(())
 }
+
+#[test]
+#[serial]
+fn unload_and_load() -> Result<(), spice::KernelError> {
+    let mut kernel = spice::Kernel::new("rsc/data/hera_PO_EMA_2024.tm")?;
+    kernel.unload()?;
+    kernel.load()?;
+    kernel.unload()?;
+    Ok(())
+}
