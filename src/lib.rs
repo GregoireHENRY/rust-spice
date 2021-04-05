@@ -9,7 +9,7 @@ Simply add the following to your `Cargo.toml` file:
 
 ```.ignore
 [dependencies]
-rust-spice = "0.4.3"
+rust-spice = "0.4.4"
 ```
 
 Rust layered Spice functions of **rust-spice** are grouped in the root module `spice::` and all
