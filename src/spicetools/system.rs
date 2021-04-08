@@ -1,8 +1,8 @@
 use itertools::multizip;
-use na::{Matrix1xX, Matrix3x1, Matrix3xX};
 use std::fmt;
 use std::path::PathBuf;
 use std::vec::Vec;
+use tool::{List, Vector, Vectors};
 
 /// An error which can be returned during the build of the type System.
 ///
@@ -220,7 +220,7 @@ impl System {
     }
 
     /// Get the position at the start.
-    pub fn position_start(&self) -> Matrix3x1<f64> {
+    pub fn position_start(&self) -> Vector<f64> {
         let time = self.time_start();
         let (position, _) = crate::position(
             self.target(),
@@ -233,7 +233,7 @@ impl System {
     }
 
     /// Get the position at the end.
-    pub fn position_end(&self) -> Matrix3x1<f64> {
+    pub fn position_end(&self) -> Vector<f64> {
         let time = self.time_end();
         let (position, _) = crate::position(
             self.target(),
@@ -253,7 +253,7 @@ impl System {
     }
 
     /// Get the times.
-    pub fn times(&self, time_step: f64) -> Matrix1xX<f64> {
+    pub fn times(&self, time_step: f64) -> List<f64> {
         let time_start = self.time_start();
         let time_end = self.time_end();
         tool::linspace(time_start, time_end, time_step)
@@ -272,12 +272,12 @@ impl System {
     }
 
     /// Get the positions from start to end with time step.
-    pub fn positions(&self, time_step: f64) -> Matrix3xX<f64> {
+    pub fn positions(&self, time_step: f64) -> Vectors<f64> {
         // Get times.
         let times = self.times(time_step);
 
         // Allocate positions matrix.
-        let mut positions = Matrix3xX::zeros(times.len());
+        let mut positions = Vectors::zeros(times.len());
 
         // Get position at each time.
         for (time, mut position) in multizip((times.iter(), positions.column_iter_mut())) {

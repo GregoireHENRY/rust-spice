@@ -18,10 +18,10 @@ lto = true
 
 [dependencies]
 itertools = "0.10.0"
-nalgebra = {version = "0.25.0", features = ["serde-serialize"]}
+nalgebra = {version = "0.25.4", features = ["serde-serialize"]}
 approx = "0.4.0"
 serde_json = "1.0"
 serde = "1.0.124"
 serial_test = "0.5.1"
-rustool = "0.1"
 cspice-sys = "0.0.1"
+rustool = "0.3.2"

@@ -1,7 +1,7 @@
-use na::Matrix3x1;
 use std::ffi::{CStr, CString};
 use std::fmt;
 use std::path::PathBuf;
+use tool::Vector;
 
 /// Instructions to format an ephemeris time to a string.
 pub const TIME_FORMAT: &str = "YYYY-MON-DD HR:MN:SC ::RND";
@@ -77,7 +77,7 @@ pub fn position<S: Into<String>>(
     frame: S,
     aberration_correction: S,
     observer: S,
-) -> (Matrix3x1<f64>, f64) {
+) -> (Vector<f64>, f64) {
     // Define pointers where data will be written.
     let mut light_time = 0.0;
     let mut position = [0.0, 0.0, 0.0];
@@ -103,7 +103,7 @@ pub fn position<S: Into<String>>(
 
     // Convert data to Rust type.
     (
-        Matrix3x1::new(position[0], position[1], position[2]),
+        Vector::new(position[0], position[1], position[2]),
         light_time,
     )
 }

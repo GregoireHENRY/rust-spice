@@ -17,7 +17,7 @@ fn main() -> Result<(), spice::SystemError> {
 
     let times = system.times_formatted(time_step);
     let positions = system.positions(time_step);
-    let distances = tool::distances(positions);
+    let distances = tool::magnitudes(&positions);
 
     for (time, distance) in multizip((times.iter(), distances.iter())) {
         println!("{} -> {:.2} km", time, distance);
