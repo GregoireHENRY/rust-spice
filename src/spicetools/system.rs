@@ -211,18 +211,18 @@ impl System {
 
     /// Get the time at the start.
     pub fn time_start(&self) -> f64 {
-        crate::ephemeris_from_date(self.start_date())
+        crate::str2et(self.start_date())
     }
 
     /// Get the time at the end.
     pub fn time_end(&self) -> f64 {
-        crate::ephemeris_from_date(self.start_date()) + self.duration
+        crate::str2et(self.start_date()) + self.duration
     }
 
     /// Get the position at the start.
     pub fn position_start(&self) -> Vector<f64> {
         let time = self.time_start();
-        let (position, _) = crate::position(
+        let (position, _) = crate::spkpos(
             self.target(),
             time,
             self.frame(),
@@ -235,7 +235,7 @@ impl System {
     /// Get the position at the end.
     pub fn position_end(&self) -> Vector<f64> {
         let time = self.time_end();
-        let (position, _) = crate::position(
+        let (position, _) = crate::spkpos(
             self.target(),
             time,
             self.frame(),
@@ -267,7 +267,7 @@ impl System {
         // Convert them into formatted string.
         times
             .iter()
-            .map(|&time| crate::date_from_ephemeris(time, crate::TIME_FORMAT))
+            .map(|&time| crate::timout(time, crate::TIME_FORMAT))
             .collect()
     }
 
@@ -282,7 +282,7 @@ impl System {
         // Get position at each time.
         for (time, mut position) in multizip((times.iter(), positions.column_iter_mut())) {
             position.copy_from(
-                &crate::position(
+                &crate::spkpos(
                     self.target(),
                     *time,
                     self.frame(),
@@ -421,7 +421,7 @@ mod tests {
             .observer("HERA")
             .target("DIMORPHOS")
             .start_date("2027-MAR-23 16:00:00")
-            .duration(129.0 * crate::DAY)
+            .duration(129.0 * tool::DAY)
             .aberration_correction("NONE")
             .build();
 
@@ -441,7 +441,7 @@ mod tests {
             .observer("HERA")
             .target("DIMORPHOS")
             .start_date("2027-MAR-23 16:00:00")
-            .duration(129.0 * crate::DAY)
+            .duration(129.0 * tool::DAY)
             .aberration_correction("NONE")
             .build();
 
@@ -461,7 +461,7 @@ mod tests {
             .frame("J2000")
             .target("DIMORPHOS")
             .start_date("2027-MAR-23 16:00:00")
-            .duration(129.0 * crate::DAY)
+            .duration(129.0 * tool::DAY)
             .aberration_correction("NONE")
             .build();
 
@@ -481,7 +481,7 @@ mod tests {
             .frame("J2000")
             .observer("HERA")
             .start_date("2027-MAR-23 16:00:00")
-            .duration(129.0 * crate::DAY)
+            .duration(129.0 * tool::DAY)
             .aberration_correction("NONE")
             .build();
 
@@ -501,7 +501,7 @@ mod tests {
             .frame("J2000")
             .observer("HERA")
             .target("DIMORPHOS")
-            .duration(129.0 * crate::DAY)
+            .duration(129.0 * tool::DAY)
             .aberration_correction("NONE")
             .build();
 
@@ -542,7 +542,7 @@ mod tests {
             .observer("HERA")
             .target("DIMORPHOS")
             .start_date("2027-MAR-23 16:00:00")
-            .duration(129.0 * crate::DAY)
+            .duration(129.0 * tool::DAY)
             .build();
 
         // Not need direct assert as the message might change in the future.

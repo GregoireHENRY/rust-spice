@@ -13,7 +13,7 @@ fn system() {
         .observer("HERA")
         .target("DIMORPHOS")
         .start_date("2027-MAR-23 16:00:00")
-        .duration(129.0 * spice::DAY)
+        .duration(129.0 * tool::DAY)
         .aberration_correction("NONE")
         .build()
         .unwrap();
@@ -28,7 +28,7 @@ fn test_fields() {
     let observer = "HERA";
     let target = "DIMORPHOS";
     let start_date = "2027-MAR-23 16:00:00";
-    let duration = 129.0 * spice::DAY;
+    let duration = 129.0 * tool::DAY;
     let aberration_correction = "NONE";
     let mut system = spice::SystemBuilder::default()
         .kernel(kernel)
@@ -65,7 +65,7 @@ fn time_start() {
         .observer("HERA")
         .target("DIMORPHOS")
         .start_date("2027-MAR-23 16:00:00")
-        .duration(129.0 * spice::DAY)
+        .duration(129.0 * tool::DAY)
         .aberration_correction("NONE")
         .build()
         .unwrap();
@@ -87,7 +87,7 @@ fn time_end() {
         .observer("HERA")
         .target("DIMORPHOS")
         .start_date("2027-MAR-23 16:00:00")
-        .duration(129.0 * spice::DAY)
+        .duration(129.0 * tool::DAY)
         .aberration_correction("NONE")
         .build()
         .unwrap();
@@ -109,7 +109,7 @@ fn position_start() {
         .observer("HERA")
         .target("DIMORPHOS")
         .start_date("2027-MAR-23 16:00:00")
-        .duration(129.0 * spice::DAY)
+        .duration(129.0 * tool::DAY)
         .aberration_correction("NONE")
         .build()
         .unwrap();
@@ -140,7 +140,7 @@ fn position_end() {
         .observer("HERA")
         .target("DIMORPHOS")
         .start_date("2027-MAR-23 16:00:00")
-        .duration(129.0 * spice::DAY)
+        .duration(129.0 * tool::DAY)
         .aberration_correction("NONE")
         .build()
         .unwrap();
@@ -170,11 +170,11 @@ fn number_points() {
         .observer("HERA")
         .target("DIMORPHOS")
         .start_date("2027-MAR-23 16:00:00")
-        .duration(129.0 * spice::DAY)
+        .duration(129.0 * tool::DAY)
         .aberration_correction("NONE")
         .build()
         .unwrap();
-    let time_step = 1.0 * spice::DAY;
+    let time_step = 1.0 * tool::DAY;
     let expected_number = 130;
 
     let number = system.number_points(time_step);
@@ -194,11 +194,11 @@ fn times() {
         .observer("HERA")
         .target("DIMORPHOS")
         .start_date("2027-MAR-23 16:00:00")
-        .duration(3.0 * spice::DAY)
+        .duration(3.0 * tool::DAY)
         .aberration_correction("NONE")
         .build()
         .unwrap();
-    let time_step = 1.0 * spice::DAY;
+    let time_step = 1.0 * tool::DAY;
     let expected_times =
         Matrix1xX::from_column_slice(&[859089667.1856234, 859176067.1856234, 859262467.1856234]);
 
@@ -221,11 +221,11 @@ fn times_formatted() {
         .observer("HERA")
         .target("DIMORPHOS")
         .start_date("2027-MAR-23 16:00:00")
-        .duration(3.0 * spice::DAY)
+        .duration(3.0 * tool::DAY)
         .aberration_correction("NONE")
         .build()
         .unwrap();
-    let time_step = 1.0 * spice::DAY;
+    let time_step = 1.0 * tool::DAY;
     let expected_times = Matrix1xX::from_column_slice(&[
         "2027-MAR-23 16:00:00",
         "2027-MAR-24 16:00:00",
@@ -252,11 +252,11 @@ fn positions() {
         .observer("HERA")
         .target("DIMORPHOS")
         .start_date("2027-MAR-23 16:00:00")
-        .duration(3.0 * spice::DAY)
+        .duration(3.0 * tool::DAY)
         .aberration_correction("NONE")
         .build()
         .unwrap();
-    let time_step = 1.0 * spice::DAY;
+    let time_step = 1.0 * tool::DAY;
     let expected_positions = Matrix3xX::from_column_slice(&[
         18.62639796759623,
         21.05444863563425,

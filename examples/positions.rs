@@ -9,11 +9,11 @@ fn main() -> Result<(), spice::SystemError> {
         .observer("HERA")
         .target("DIMORPHOS")
         .start_date("2027-MAR-23 16:00:00")
-        .duration(129.0 * spice::DAY)
+        .duration(129.0 * tool::DAY)
         .aberration_correction("NONE")
         .build()?;
 
-    let time_step = 1.0 * spice::DAY;
+    let time_step = 1.0 * tool::DAY;
 
     let times = system.times_formatted(time_step);
     let positions = system.positions(time_step);

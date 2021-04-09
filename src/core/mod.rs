@@ -24,8 +24,8 @@ CSpice | `rust-spice`
 
 CSpice | `rust-spice`
 -------|-------------
-[str2et_c][str2et_c link] | [`ephemeris_from_date`]
-[timout_c][timout_c link] | [`date_from_ephemeris`]
+[str2et_c][str2et_c link] | [`str2et`]
+[timout_c][timout_c link] | [`timout`]
 
 ### Converting between Ephemeris Time and Spacecraft Clock (SCLK)
 
@@ -44,7 +44,7 @@ CSpice | `rust-spice`
 -------|-------------
 [bodfnd_c][bodfnd_c link] | *TODO*
 [bodvrd_c][bodvrd_c link] | *TODO*
-[pxform_c][pxform_c link] | *TODO*
+[pxform_c][pxform_c link] | [`pxform`]
 [sxform_c][sxform_c link] | *TODO*
 [pckfrm_c][pckfrm_c link] | *TODO*
 [pckcov_c][pckcov_c link] | *TODO*
@@ -53,14 +53,14 @@ CSpice | `rust-spice`
 
 CSpice | `rust-spice`
 -------|-------------
-[pxfrm2_c][pxfrm2_c link] | *TODO*
+[pxfrm2_c][pxfrm2_c link] | [`pxfrm2`]
 
 ### Computing Positions of Spacecraft and Natural Bodies (SPK)
 
 CSpice | `rust-spice`
 -------|-------------
 [spkezr_c][spkezr_c link] | *TODO*
-[spkpos_c][spkpos_c link] | [`position`]
+[spkpos_c][spkpos_c link] | [`spkpos`]
 [spkcpo_c][spkcpo_c link] | *TODO*
 [spkcpt_c][spkcpt_c link] | *TODO*
 [spkcvo_c][spkcvo_c link] | *TODO*

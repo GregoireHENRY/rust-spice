@@ -12,11 +12,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.4.4] - 2021-04-05
+## [0.4.4] - 2021-04-09
 
 ### Added
 
-+ tests
++ tests kernel
++ frames functions
++ example frames
 
 ## [0.4.3] - 2021-04-05
 
