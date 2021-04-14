@@ -47,7 +47,7 @@ Add the dependency **rust-spice** to your `Cargo.toml`:
 ```toml
 ...
 [dependencies]
-rust-spice = "0.4.5"
+rust-spice = "*" # replace * by the latest version of the crate
 ```
 
 ## License

@@ -7,10 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## TODO
 
-+ continuous improvement of the Rust layer
-+ send mail to Marc Costa about this crate
++ write idiomatic Rust wrapper for every "most common" spice functions
++ write idiomatic Rust wrapper for every spice functions
 
 ## [Unreleased]
+
+## [0.4.5] - 2021-04-09
+
++ improved example
 
 ## [0.4.4] - 2021-04-09
 
