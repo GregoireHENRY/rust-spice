@@ -1,6 +1,6 @@
 KPL/MK
 
-Meta-kernel for HERA Dataset v100 -- Studies 20210226_001
+Meta-kernel for HERA Dataset v101 -- Studies 20210415_001
 ==========================================================================
 
    This meta-kernel lists the hera Studies SPICE kernels
@@ -38,7 +38,7 @@ Implementation Notes
 
 -------------------
 
-   This file was created on February 26, 2021 by Alfredo Escalante ESAC/ESA.
+   This file was created on April 15, 2021 by Alfredo Escalante ESAC/ESA.
 
 
    \begindata
@@ -70,9 +70,9 @@ Implementation Notes
                            '$KERNELS/spk/didymos_gmv_270101_330623_v02.bsp'
                            '$KERNELS/spk/hera_dart_impact_site_v01.bsp'
 
-                           '$KERNELS/spk/HERA_sc_PO_LPO_EMA_2024_v02.bsp'
+                           '$KERNELS/spk/HERA_sc_PO_LPO_EMA_2024_v03.bsp'
 
-                           '$KERNELS/ck/hera_sc_PO_EMA_20270209_20270807_f20181203_v02.bc'
+                           '$KERNELS/ck/hera_sc_PO_EMA_20270209_20270727_f20181203_v03.bc'
 
                            '$KERNELS/dsk/g_50677mm_rad_obj_dida_0000n00000_v001.bds'
                            '$KERNELS/dsk/g_08438mm_lgt_obj_didb_0000n00000_v002.bds'
@@ -90,7 +90,7 @@ SPICE Kernel Dataset Version
 
    \begindata
 
-      SKD_VERSION = 'v100_20210226_001'
+      SKD_VERSION = 'v101_20210415_001'
 
    \begintext
 

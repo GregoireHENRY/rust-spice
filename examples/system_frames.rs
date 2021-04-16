@@ -1,7 +1,7 @@
 use spice;
 
 fn main() -> Result<(), spice::KernelError> {
-    let mut kernel = spice::Kernel::new("rsc/data/hera_PO_EMA_2024.tm")?;
+    let mut kernel = spice::Kernel::new("rsc/krn/hera_study_PO_EMA_2024.tm")?;
     let inertial_frame = "J2000";
     let system_frame = "DIDYMOS_FIXED";
     let body_frame = "DIMORPHOS_FIXED";
@@ -18,6 +18,7 @@ fn main() -> Result<(), spice::KernelError> {
     let system_rotate = spice::pxform(inertial_frame, system_frame, et);
     let body_rotate = spice::pxform(inertial_frame, body_frame, et);
     let rotate_step = spice::pxfrm2(body_frame, body_frame, et, et + time_step);
+    let rotate_step_1 = spice::pxfrm2(system_frame, system_frame, et, et + time_step);
 
     println!(
         "{} position in {} wrt {} (km): {:.2}",
@@ -40,6 +41,12 @@ fn main() -> Result<(), spice::KernelError> {
         body_frame,
         time_step,
         rotate_step.matrix()
+    );
+    println!(
+        "rotation of {} itself after {:0} seconds: {:.2}",
+        system_frame,
+        time_step,
+        rotate_step_1.matrix()
     );
 
     kernel.unload()?;

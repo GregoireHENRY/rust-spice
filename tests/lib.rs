@@ -19,7 +19,7 @@ fn it_works() {
 #[serial]
 fn test_spice_load() {
     unsafe {
-        let kernel = CString::new("rsc/data/hera_PO_EMA_2024.tm")
+        let kernel = CString::new("rsc/krn/hera_study_PO_EMA_2024.tm")
             .unwrap()
             .into_raw();
         spice::c::furnsh_c(kernel);

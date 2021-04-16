@@ -1,26 +1,10 @@
 use itertools::multizip;
-use serde::{Deserialize, Serialize};
-use serde_json::{json, Value};
+use serde_json::json;
 use spice;
-use std::collections::BTreeMap;
 use tool::Vectors;
 
-/// Struct to be converted into JSON.
-#[derive(Serialize, Deserialize)]
-pub struct JsonStruct {
-    /// Some context.
-    context: BTreeMap<String, Value>,
-    /// Positions on the orbit.
-    positions: Vectors<f64>,
-}
-
-/// Write JSON string to file.
-pub fn write_str<S: AsRef<str>>(path: S, string: String) {
-    std::fs::write(path.as_ref(), string).unwrap();
-}
-
 fn main() -> Result<(), spice::KernelError> {
-    let mut kernel = spice::Kernel::new("rsc/data/hera_PO_EMA_2024.tm")?;
+    let mut kernel = spice::Kernel::new("rsc/krn/hera_study_PO_EMA_2024.tm")?;
     let frame = "J2000";
     let target = "DIDYMOS_BARYCENTER";
     let observer = "SUN";
@@ -45,18 +29,19 @@ fn main() -> Result<(), spice::KernelError> {
     }
 
     // Export
-    let path = "rsc/data/tmp.json";
-    let mut context = BTreeMap::new();
-    context.insert("frame".to_string(), json!(frame));
-    context.insert("observer".to_string(), json!(observer));
-    context.insert("target".to_string(), json!(target));
-    context.insert("abcorr".to_string(), json!(abcorr));
-    context.insert("date".to_string(), json!(date));
-    context.insert("duration".to_string(), json!(duration));
-    context.insert("time_step".to_string(), json!(time_step));
-    let json_struct = JsonStruct { context, positions };
-    let json_string = serde_json::to_string_pretty(&json_struct).unwrap();
-    write_str(path, json_string);
+    let json = json!({
+        "context": {
+            "frame": frame,
+            "observer": observer,
+            "target": target,
+            "abcorr": abcorr,
+            "date": date,
+            "duration": duration,
+            "time_step": time_step,
+        },
+        "positions": positions,
+    });
+    tool::writejs!("rsc/data/tmp/position.json", json);
 
     kernel.unload()?;
     Ok(())

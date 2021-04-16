@@ -4,7 +4,7 @@ use tool;
 
 fn main() -> Result<(), spice::SystemError> {
     let mut system = spice::SystemBuilder::default()
-        .kernel("rsc/data/hera_PO_EMA_2024.tm")?
+        .kernel("rsc/krn/hera_study_PO_EMA_2024.tm")?
         .frame("J2000")
         .observer("HERA")
         .target("DIMORPHOS")

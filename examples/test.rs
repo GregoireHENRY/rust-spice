@@ -1,7 +1,7 @@
 use spice;
 
 fn main() -> Result<(), spice::KernelError> {
-    let mut kernel = spice::Kernel::new("rsc/data/hera_PO_EMA_2024.tm")?;
+    let mut kernel = spice::Kernel::new("rsc/krn/hera_study_PO_EMA_2024.tm")?;
     let frame = "J2000";
     let origin = "SUN";
     let secondary_frame = "DIMORPHOS_FIXED";

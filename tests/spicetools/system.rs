@@ -7,13 +7,13 @@ use na::{Matrix1xX, Matrix3x1, Matrix3xX};
 #[serial]
 fn system() {
     let mut system = spice::SystemBuilder::default()
-        .kernel("rsc/data/hera_PO_EMA_2024.tm")
+        .kernel("rsc/krn/hera_study_PO_EMA_2024.tm")
         .unwrap()
         .frame("J2000")
         .observer("HERA")
         .target("DIMORPHOS")
         .start_date("2027-MAR-23 16:00:00")
-        .duration(129.0 * tool::DAY)
+        .duration(100.0 * tool::DAY)
         .aberration_correction("NONE")
         .build()
         .unwrap();
@@ -23,12 +23,12 @@ fn system() {
 #[test]
 #[serial]
 fn test_fields() {
-    let kernel = "rsc/data/hera_PO_EMA_2024.tm";
+    let kernel = "rsc/krn/hera_study_PO_EMA_2024.tm";
     let frame = "J2000";
     let observer = "HERA";
     let target = "DIMORPHOS";
     let start_date = "2027-MAR-23 16:00:00";
-    let duration = 129.0 * tool::DAY;
+    let duration = 100.0 * tool::DAY;
     let aberration_correction = "NONE";
     let mut system = spice::SystemBuilder::default()
         .kernel(kernel)
@@ -59,13 +59,13 @@ fn test_fields() {
 #[serial]
 fn time_start() {
     let mut system = spice::SystemBuilder::default()
-        .kernel("rsc/data/hera_PO_EMA_2024.tm")
+        .kernel("rsc/krn/hera_study_PO_EMA_2024.tm")
         .unwrap()
         .frame("J2000")
         .observer("HERA")
         .target("DIMORPHOS")
         .start_date("2027-MAR-23 16:00:00")
-        .duration(129.0 * tool::DAY)
+        .duration(100.0 * tool::DAY)
         .aberration_correction("NONE")
         .build()
         .unwrap();
@@ -81,17 +81,17 @@ fn time_start() {
 #[serial]
 fn time_end() {
     let mut system = spice::SystemBuilder::default()
-        .kernel("rsc/data/hera_PO_EMA_2024.tm")
+        .kernel("rsc/krn/hera_study_PO_EMA_2024.tm")
         .unwrap()
         .frame("J2000")
         .observer("HERA")
         .target("DIMORPHOS")
         .start_date("2027-MAR-23 16:00:00")
-        .duration(129.0 * tool::DAY)
+        .duration(100.0 * tool::DAY)
         .aberration_correction("NONE")
         .build()
         .unwrap();
-    let expected_time = 870235267.1856234;
+    let expected_time = 867729667.1856234;
 
     let time = system.time_end();
 
@@ -103,18 +103,18 @@ fn time_end() {
 #[serial]
 fn position_start() {
     let mut system = spice::SystemBuilder::default()
-        .kernel("rsc/data/hera_PO_EMA_2024.tm")
+        .kernel("rsc/krn/hera_study_PO_EMA_2024.tm")
         .unwrap()
         .frame("J2000")
         .observer("HERA")
         .target("DIMORPHOS")
         .start_date("2027-MAR-23 16:00:00")
-        .duration(129.0 * tool::DAY)
+        .duration(100.0 * tool::DAY)
         .aberration_correction("NONE")
         .build()
         .unwrap();
     let expected_position =
-        Matrix3x1::new(18.62639796759623, 21.05444863563425, -7.136416860555217);
+        Matrix3x1::new(18.62640405424448, 21.054373008357004, -7.136291402940499);
 
     let position = system.position_start();
 
@@ -134,18 +134,18 @@ fn position_start() {
 #[serial]
 fn position_end() {
     let mut system = spice::SystemBuilder::default()
-        .kernel("rsc/data/hera_PO_EMA_2024.tm")
+        .kernel("rsc/krn/hera_study_PO_EMA_2024.tm")
         .unwrap()
         .frame("J2000")
         .observer("HERA")
         .target("DIMORPHOS")
         .start_date("2027-MAR-23 16:00:00")
-        .duration(129.0 * tool::DAY)
+        .duration(100.0 * tool::DAY)
         .aberration_correction("NONE")
         .build()
         .unwrap();
     let expected_position =
-        Matrix3x1::new(-6.978302254901042, -13.20486626395836, -3.9423172996249947);
+        Matrix3x1::new(-15.755418936009995, -6.983783596736234, -0.9102520894410653);
 
     let position = system.position_end();
 
@@ -164,18 +164,18 @@ fn position_end() {
 #[serial]
 fn number_points() {
     let mut system = spice::SystemBuilder::default()
-        .kernel("rsc/data/hera_PO_EMA_2024.tm")
+        .kernel("rsc/krn/hera_study_PO_EMA_2024.tm")
         .unwrap()
         .frame("J2000")
         .observer("HERA")
         .target("DIMORPHOS")
         .start_date("2027-MAR-23 16:00:00")
-        .duration(129.0 * tool::DAY)
+        .duration(100.0 * tool::DAY)
         .aberration_correction("NONE")
         .build()
         .unwrap();
     let time_step = 1.0 * tool::DAY;
-    let expected_number = 130;
+    let expected_number = 101;
 
     let number = system.number_points(time_step);
 
@@ -188,7 +188,7 @@ fn number_points() {
 #[serial]
 fn times() {
     let mut system = spice::SystemBuilder::default()
-        .kernel("rsc/data/hera_PO_EMA_2024.tm")
+        .kernel("rsc/krn/hera_study_PO_EMA_2024.tm")
         .unwrap()
         .frame("J2000")
         .observer("HERA")
@@ -215,7 +215,7 @@ fn times() {
 #[serial]
 fn times_formatted() {
     let mut system = spice::SystemBuilder::default()
-        .kernel("rsc/data/hera_PO_EMA_2024.tm")
+        .kernel("rsc/krn/hera_study_PO_EMA_2024.tm")
         .unwrap()
         .frame("J2000")
         .observer("HERA")
@@ -244,9 +244,9 @@ fn times_formatted() {
 
 #[test]
 #[serial]
-fn positions() {
+fn test_positions() {
     let mut system = spice::SystemBuilder::default()
-        .kernel("rsc/data/hera_PO_EMA_2024.tm")
+        .kernel("rsc/krn/hera_study_PO_EMA_2024.tm")
         .unwrap()
         .frame("J2000")
         .observer("HERA")
@@ -258,15 +258,18 @@ fn positions() {
         .unwrap();
     let time_step = 1.0 * tool::DAY;
     let expected_positions = Matrix3xX::from_column_slice(&[
-        18.62639796759623,
-        21.05444863563425,
-        -7.136416860555217,
-        18.685576648253853,
-        17.77035176622136,
-        2.315428951220107,
-        18.63486050866997,
-        13.806780236054001,
-        11.523204797636854,
+        18.62640405424448,
+        21.054373008357004,
+        -7.136291402940499,
+        18.686088286014225,
+        17.770768246121182,
+        2.3155663881208772,
+        18.63536857304623,
+        13.807160769358065,
+        11.523427696615501,
+        18.47919249140907,
+        9.220087797695399,
+        20.37198559472944,
     ]);
 
     let positions = system.positions(time_step);

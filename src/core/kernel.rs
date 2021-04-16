@@ -251,7 +251,7 @@ pub fn spkpos<S: Into<String>>(
 /// # Example
 ///
 /// ```
-/// let mut kernel = spice::Kernel::new("rsc/data/hera_PO_EMA_2024.tm")?;
+/// let mut kernel = spice::Kernel::new("rsc/krn/hera_study_PO_EMA_2024.tm")?;
 /// let et = spice::ephemeris_from_date("2027-MAR-23 16:00:00");
 ///
 /// let matrix = spice::pxform("J2000", "DIMORPHOS", time);
@@ -283,7 +283,7 @@ pub fn pxform<S: Into<String>>(from: S, to: S, time: f64) -> Rotation3<f64> {
 /// # Example
 ///
 /// ```
-/// let mut kernel = spice::Kernel::new("rsc/data/hera_PO_EMA_2024.tm")?;
+/// let mut kernel = spice::Kernel::new("rsc/krn/hera_study_PO_EMA_2024.tm")?;
 /// let et_from = spice::ephemeris_from_date("2027-MAR-23 16:00:00");
 /// let et_to = spice::ephemeris_from_date("2027-MAR-24 16:00:00");
 ///
@@ -319,7 +319,7 @@ mod tests {
     #[test]
     #[serial]
     fn already_loaded_description() -> Result<(), KernelError> {
-        let mut kernel = Kernel::new("rsc/data/hera_PO_EMA_2024.tm")?;
+        let mut kernel = Kernel::new("rsc/krn/hera_study_PO_EMA_2024.tm")?;
 
         assert_eq!(
             kernel.load().err().unwrap().description(),
@@ -333,7 +333,7 @@ mod tests {
     #[test]
     #[serial]
     fn not_loaded_description() -> Result<(), KernelError> {
-        let mut kernel = Kernel::new("rsc/data/hera_PO_EMA_2024.tm")?;
+        let mut kernel = Kernel::new("rsc/krn/hera_study_PO_EMA_2024.tm")?;
         kernel.unload()?;
 
         match kernel.unload() {

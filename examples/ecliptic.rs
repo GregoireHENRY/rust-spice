@@ -2,7 +2,7 @@ use nalgebra;
 use spice;
 
 fn main() -> Result<(), spice::KernelError> {
-    let mut kernel = spice::Kernel::new("rsc/data/hera_PO_EMA_2024.tm")?;
+    let mut kernel = spice::Kernel::new("rsc/krn/hera_study_PO_EMA_2024.tm")?;
     let date = "2027-MAR-23 16:00:00";
     let from = "J2000";
     let to = "ECLIPJ2000";

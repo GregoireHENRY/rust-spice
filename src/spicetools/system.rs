@@ -437,7 +437,7 @@ mod tests {
     #[serial]
     fn builder_description_frame() -> Result<(), SystemError> {
         let system_res = SystemBuilder::default()
-            .kernel("rsc/data/hera_PO_EMA_2024.tm")?
+            .kernel("rsc/krn/hera_study_PO_EMA_2024.tm")?
             .observer("HERA")
             .target("DIMORPHOS")
             .start_date("2027-MAR-23 16:00:00")
@@ -457,7 +457,7 @@ mod tests {
     #[serial]
     fn builder_description_observer() -> Result<(), SystemError> {
         let system_res = SystemBuilder::default()
-            .kernel("rsc/data/hera_PO_EMA_2024.tm")?
+            .kernel("rsc/krn/hera_study_PO_EMA_2024.tm")?
             .frame("J2000")
             .target("DIMORPHOS")
             .start_date("2027-MAR-23 16:00:00")
@@ -477,7 +477,7 @@ mod tests {
     #[serial]
     fn builder_description_target() -> Result<(), SystemError> {
         let system_res = SystemBuilder::default()
-            .kernel("rsc/data/hera_PO_EMA_2024.tm")?
+            .kernel("rsc/krn/hera_study_PO_EMA_2024.tm")?
             .frame("J2000")
             .observer("HERA")
             .start_date("2027-MAR-23 16:00:00")
@@ -497,7 +497,7 @@ mod tests {
     #[serial]
     fn builder_description_start() -> Result<(), SystemError> {
         let system_res = SystemBuilder::default()
-            .kernel("rsc/data/hera_PO_EMA_2024.tm")?
+            .kernel("rsc/krn/hera_study_PO_EMA_2024.tm")?
             .frame("J2000")
             .observer("HERA")
             .target("DIMORPHOS")
@@ -517,7 +517,7 @@ mod tests {
     #[serial]
     fn builder_description_duration() -> Result<(), SystemError> {
         let system_res = SystemBuilder::default()
-            .kernel("rsc/data/hera_PO_EMA_2024.tm")?
+            .kernel("rsc/krn/hera_study_PO_EMA_2024.tm")?
             .frame("J2000")
             .observer("HERA")
             .target("DIMORPHOS")
@@ -537,7 +537,7 @@ mod tests {
     #[serial]
     fn builder_description_aberration() -> Result<(), SystemError> {
         let system_res = SystemBuilder::default()
-            .kernel("rsc/data/hera_PO_EMA_2024.tm")?
+            .kernel("rsc/krn/hera_study_PO_EMA_2024.tm")?
             .frame("J2000")
             .observer("HERA")
             .target("DIMORPHOS")
