@@ -12,6 +12,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.6] - 2021-04-16
+
++ more examples
++ use rustool 0.3.12
+
 ## [0.4.5] - 2021-04-09
 
 + improved example
