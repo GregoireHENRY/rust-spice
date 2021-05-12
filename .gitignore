@@ -3,10 +3,11 @@ target/
 Cargo.lock
 
 # resources
-rsc/img/
-rsc/data/
-rsc/log/
+rsc/img/*
+rsc/data/*
+rsc/log/*
 
 # resources exceptions
-!rsc/img/rust-spice-logo.png
+!rsc/img/logo_bg.png
+!rsc/img/logo.png
 !rsc/data/hera_PO_EMA_2024.tm
