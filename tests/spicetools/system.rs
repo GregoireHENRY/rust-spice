@@ -2,11 +2,12 @@
 
 use itertools::multizip;
 use na::{Matrix1xX, Matrix3x1, Matrix3xX};
+use spice::{SystemBuilder, SystemError};
 
 #[test]
 #[serial]
 fn system() {
-    let mut system = spice::SystemBuilder::default()
+    let mut system = SystemBuilder::default()
         .kernel("rsc/krn/hera_study_PO_EMA_2024.tm")
         .unwrap()
         .frame("J2000")
@@ -30,7 +31,7 @@ fn test_fields() {
     let start_date = "2027-MAR-23 16:00:00";
     let duration = 100.0 * tool::DAY;
     let aberration_correction = "NONE";
-    let mut system = spice::SystemBuilder::default()
+    let mut system = SystemBuilder::default()
         .kernel(kernel)
         .unwrap()
         .frame(frame)
@@ -58,7 +59,7 @@ fn test_fields() {
 #[test]
 #[serial]
 fn time_start() {
-    let mut system = spice::SystemBuilder::default()
+    let mut system = SystemBuilder::default()
         .kernel("rsc/krn/hera_study_PO_EMA_2024.tm")
         .unwrap()
         .frame("J2000")
@@ -80,7 +81,7 @@ fn time_start() {
 #[test]
 #[serial]
 fn time_end() {
-    let mut system = spice::SystemBuilder::default()
+    let mut system = SystemBuilder::default()
         .kernel("rsc/krn/hera_study_PO_EMA_2024.tm")
         .unwrap()
         .frame("J2000")
@@ -102,7 +103,7 @@ fn time_end() {
 #[test]
 #[serial]
 fn position_start() {
-    let mut system = spice::SystemBuilder::default()
+    let mut system = SystemBuilder::default()
         .kernel("rsc/krn/hera_study_PO_EMA_2024.tm")
         .unwrap()
         .frame("J2000")
@@ -133,7 +134,7 @@ fn position_start() {
 #[test]
 #[serial]
 fn position_end() {
-    let mut system = spice::SystemBuilder::default()
+    let mut system = SystemBuilder::default()
         .kernel("rsc/krn/hera_study_PO_EMA_2024.tm")
         .unwrap()
         .frame("J2000")
@@ -163,7 +164,7 @@ fn position_end() {
 #[test]
 #[serial]
 fn number_points() {
-    let mut system = spice::SystemBuilder::default()
+    let mut system = SystemBuilder::default()
         .kernel("rsc/krn/hera_study_PO_EMA_2024.tm")
         .unwrap()
         .frame("J2000")
@@ -187,7 +188,7 @@ fn number_points() {
 #[test]
 #[serial]
 fn times() {
-    let mut system = spice::SystemBuilder::default()
+    let mut system = SystemBuilder::default()
         .kernel("rsc/krn/hera_study_PO_EMA_2024.tm")
         .unwrap()
         .frame("J2000")
@@ -214,7 +215,7 @@ fn times() {
 #[test]
 #[serial]
 fn times_formatted() {
-    let mut system = spice::SystemBuilder::default()
+    let mut system = SystemBuilder::default()
         .kernel("rsc/krn/hera_study_PO_EMA_2024.tm")
         .unwrap()
         .frame("J2000")
@@ -245,7 +246,7 @@ fn times_formatted() {
 #[test]
 #[serial]
 fn test_positions() {
-    let mut system = spice::SystemBuilder::default()
+    let mut system = SystemBuilder::default()
         .kernel("rsc/krn/hera_study_PO_EMA_2024.tm")
         .unwrap()
         .frame("J2000")
@@ -283,4 +284,116 @@ fn test_positions() {
     }
 
     system.unload().unwrap();
+}
+
+#[test]
+#[serial]
+fn builder_needs_kernel() -> Result<(), SystemError> {
+    let e = SystemBuilder::default()
+        .frame("J2000")
+        .observer("HERA")
+        .target("DIMORPHOS")
+        .start_date("2027-MAR-23 16:00:00")
+        .duration(129.0 * tool::DAY)
+        .aberration_correction("NONE")
+        .build();
+
+    assert!(e.is_err());
+    Ok(())
+}
+
+#[test]
+#[serial]
+fn builder_needs_frame() -> Result<(), SystemError> {
+    let e = SystemBuilder::default()
+        .kernel("rsc/krn/hera_study_PO_EMA_2024.tm")?
+        .observer("HERA")
+        .target("DIMORPHOS")
+        .start_date("2027-MAR-23 16:00:00")
+        .duration(129.0 * tool::DAY)
+        .aberration_correction("NONE")
+        .build();
+
+    assert!(e.is_err());
+    Ok(())
+}
+
+#[test]
+#[serial]
+fn builder_needs_observer() -> Result<(), SystemError> {
+    let e = SystemBuilder::default()
+        .kernel("rsc/krn/hera_study_PO_EMA_2024.tm")?
+        .frame("J2000")
+        .target("DIMORPHOS")
+        .start_date("2027-MAR-23 16:00:00")
+        .duration(129.0 * tool::DAY)
+        .aberration_correction("NONE")
+        .build();
+
+    assert!(e.is_err());
+    Ok(())
+}
+
+#[test]
+#[serial]
+fn builder_needs_target() -> Result<(), SystemError> {
+    let e = SystemBuilder::default()
+        .kernel("rsc/krn/hera_study_PO_EMA_2024.tm")?
+        .frame("J2000")
+        .observer("HERA")
+        .start_date("2027-MAR-23 16:00:00")
+        .duration(129.0 * tool::DAY)
+        .aberration_correction("NONE")
+        .build();
+
+    assert!(e.is_err());
+    Ok(())
+}
+
+#[test]
+#[serial]
+fn builder_needs_start_date() -> Result<(), SystemError> {
+    let e = SystemBuilder::default()
+        .kernel("rsc/krn/hera_study_PO_EMA_2024.tm")?
+        .frame("J2000")
+        .observer("HERA")
+        .target("DIMORPHOS")
+        .duration(129.0 * tool::DAY)
+        .aberration_correction("NONE")
+        .build();
+
+    assert!(e.is_err());
+    Ok(())
+}
+
+#[test]
+#[serial]
+fn builder_needs_duration() -> Result<(), SystemError> {
+    let e = SystemBuilder::default()
+        .kernel("rsc/krn/hera_study_PO_EMA_2024.tm")?
+        .frame("J2000")
+        .observer("HERA")
+        .target("DIMORPHOS")
+        .start_date("2027-MAR-23 16:00:00")
+        .aberration_correction("NONE")
+        .build();
+
+    assert!(e.is_err());
+    Ok(())
+}
+
+#[test]
+#[serial]
+fn builder_needs_aberration() -> Result<(), SystemError> {
+    let e = SystemBuilder::default()
+        .kernel("rsc/krn/hera_study_PO_EMA_2024.tm")?
+        .frame("J2000")
+        .observer("HERA")
+        .target("DIMORPHOS")
+        .start_date("2027-MAR-23 16:00:00")
+        .duration(129.0 * tool::DAY)
+        .build();
+
+    assert!(e.is_err());
+    Ok(())
 }
