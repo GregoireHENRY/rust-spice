@@ -13,80 +13,67 @@ rust-spice = "*" // replace * by the latest version of the crate
 ```
 
 Rust layered Spice functions of **rust-spice** are grouped in the root module `spice::` and all
-wrapper functions in `spice::c::`.
+functions from the FFI are grouped in `spice::c::`.
 
 You can find a guide for the Rust interface [here][crate::core].
 
-## **rust-spice** basics
+## **rust-spice** in action
+
+A nice and idiomatic interface to Spice,
 
 ```.ignore
 use spice;
 
-// ugly: using binded C Spice.
-unsafe {
-    let kernel = CString::new("/path/to/metakernel.mk").unwrap().into_raw();
-    spice::c::furnsh_c(kernel);
-    spice::c::unload_c(kernel);
-}
-
-// pretty: using the nice Rust interface.
 let mut kernel = spice::Kernel::new("/path/to/metakernels.mk")?;
+
+let et = spice::str2et("2027-MAR-23 16:00:00");
+let (position, light_time) = spice::spkpos("TARGET_NAME", et, "FRAME_NAME", "NONE", "SUN");
+
 kernel.unload()?;
-```
-
-## In action
-
-With this code, you can get the evolution of the distance in the system.
-
-```.ignore
-use itertools::multizip;
-use spice;
-
-// Define the system.
-let mut system = spice::SystemBuilder::default()
-    .kernel("/path/to/metakernels.mk")?
-    .frame("J2000")
-    .observer("HERA")
-    .target("DIMORPHOS")
-    .start_date("2027-MAR-23 16:00:00")
-    .duration(129.0 * spice::DAY)
-    .aberration_correction("NONE")
-    .build()?;
-
-// Define the time step.
-let time_step = 1.0 * spice::DAY;
-
-// Get all the times string-formatted.
-let times = system.times_formatted(time_step);
-
-// Get all the positions at the times.
-let positions = system.positions(time_step);
-
-// Get the distances from the positions.
-let distances = spice::distance(positions);
-
-// Display
-for (time, distance) in multizip((times.iter(), distances.iter())) {
-    println!("{} -> {:.2} km", time, distance);
-}
-
-// Always unload the kernels.
-system.unload()?;
 ```
 
 You can also read other [examples](https://github.com/GregoireHENRY/rust-spice/tree/main/examples).
 
-## Rust layer in development
+## In development
 
-The Rust layer is nicer to use: no unsafe and easy types. But it takes a long time to write because
-it is not automated, I have to do it by hand. I started from my needs, basically getting positions
-from start to end date of target in referential. I will implemented a nice Rust layer more and more
-when I will need to use other functions. You can submit issues if you want a layer to some
-functionalities, and we will implement it immediately. Pull requests are also welcomed to help!
+Developing an idiomatic interface for Spice in Rust takes time, and not all
+functions are implemented yet. In the [module `**core**`][core], you will find
+a guide detailing which functions are available. If yours is not, you can
+always use the [unsafe API][c] which contains all [cspice functions](https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/index.html).
 
-The Rust layer for the most Used C Spice API for accessing kernel data is located in [`core`].
+For instance, with the unsafe API, the example above would be,
 
-The type [`System`] provides some tools, built on top of spice.
+```.ignore
+use spice;
+use std::ffi::CString;
+
+unsafe {
+    let kernel = CString::new("/path/to/metakernel.mk").unwrap().into_raw();
+    spice::c::furnsh_c(kernel);
+
+    let mut ephemeris_time = 0.0;
+    let date = CString::new("2027-MAR-23 16:00:00").unwrap().into_raw();
+    spice::c::str2et_c(date, &mut ephemeris_time);
+
+    let target_c = CString::new("TARGET_NAME").unwrap().into_raw();
+    let frame_c = CString::new("FRAME_NAME").unwrap().into_raw();
+    let abcorr_c = CString::new("NONE").unwrap().into_raw();
+    let observer_c = CString::new("SUN").unwrap().into_raw();
+    let mut light_time = 0.0;
+    let mut position = [0.0, 0.0, 0.0];
+    spice::c::spkpos_c(
+        target_c,
+        ephemeris_time,
+        frame_c,
+        abcorr_c,
+        observer_c,
+        &mut position[0],
+        &mut light_time,
+    );
+
+    spice::c::unload_c(kernel);
+}
+```
 */
 
 extern crate cspice_sys;
@@ -106,3 +93,11 @@ pub mod spicetools;
 
 pub use crate::core::*;
 pub use crate::spicetools::*;
+
+/// Convert String to *mut i8
+#[macro_export]
+macro_rules! cstr {
+    ($s:expr) => {{
+        std::ffi::CString::new($s).unwrap().into_raw()
+    }};
+}

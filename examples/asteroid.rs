@@ -4,12 +4,10 @@ use serde_json::json;
 use tool::{List, Vector, Vectors};
 
 fn main() -> Result<(), spice::KernelError> {
-    tool::log_init!();
-
     let mut kernel = spice::Kernel::new("rsc/krn/hera_study_PO_EA_2026.tm")?;
-    let inertial_frame_name = "J2000";
-    let origin = "SUN";
-    let body = "DIMORPHOS";
+    let reference_frame_name = "ECLIPJ2000";
+    let origin_name = "SUN";
+    let body_name = "DIMORPHOS";
     let body_frame_name = "DIMORPHOS_FIXED";
     let date = "2027-MAR-23 16:00:00";
     let abcorr = "NONE";
@@ -19,8 +17,8 @@ fn main() -> Result<(), spice::KernelError> {
     let et_start = spice::str2et(date);
     let ephemeris_times = tool::linspace(et_start, et_start + duration, time_step);
     let size = ephemeris_times.len();
-    let _inertial_frame = nalgebra::Rotation3::<f64>::identity();
     let inertial_upward = Vector::new(0.0, 0.0, 1.0);
+    // let reference_frame = nalgebra::Rotation3::<f64>::identity();
 
     let mut body_positions = Vectors::<f64>::zeros(size);
     let mut body_frames = vec![Rotation3::new(Vector::zeros()); size];
@@ -32,8 +30,8 @@ fn main() -> Result<(), spice::KernelError> {
         body_frames.iter_mut(),
         obliquities.iter_mut(),
     )) {
-        pos.copy_from(&spice::spkpos(body, et, inertial_frame_name, abcorr, origin).0);
-        *frm = spice::pxform(inertial_frame_name, body_frame_name, et);
+        pos.copy_from(&spice::spkpos(body_name, et, reference_frame_name, abcorr, origin_name).0);
+        *frm = spice::pxform(reference_frame_name, body_frame_name, et);
         let local_upward = *frm * inertial_upward;
         *tilt = local_upward.angle(&inertial_upward) * tool::RAD2DEG;
     }
@@ -41,9 +39,9 @@ fn main() -> Result<(), spice::KernelError> {
     // Export.
     let json = json!({
         "context": {
-            "inertial_frame_name": inertial_frame_name,
-            "origin": origin,
-            "body": body,
+            "reference_frame_name": reference_frame_name,
+            "origin_name": origin_name,
+            "body_name": body_name,
             "body_frame_name": body_frame_name,
             "abcorr": abcorr,
             "date": date,
