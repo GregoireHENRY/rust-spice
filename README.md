@@ -30,7 +30,10 @@ their [website][naif link].
 ## Requirements
 
 1) Install [CSPICE library][cspice install link] for your platform.
-2) Tell Cargo where to look for the CSPICE library. This is done by adding some
+2) In your folder `/path/to/cspice/lib`, rename the static libraries to match standards:
+    1) `cspice.a` -> `libcspice.a`
+    2) `csupport.a` -> `libcsupport.a`
+3) Tell Cargo where to look for the CSPICE library. This is done by adding some
 lines to `$HOME/.cargo/config.toml`. If the file doesn't exist, create it (read
 [Configuration doc][config doc]). You need to write:
 

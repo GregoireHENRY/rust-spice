@@ -6,11 +6,14 @@ WOW! The complete NASA/NAIF Spice toolkit is actually usable on Rust.
 ## Requirements
 
 1) Install [CSPICE library][cspice install link] for your platform.
-2) Tell Cargo where to look for the CSPICE library. This is done by adding some
+2) In your folder `/path/to/cspice/lib`, rename the static libraries to match standards:
+    1) `cspice.a` -> `libcspice.a`
+    2) `csupport.a` -> `libcsupport.a`
+3) Tell Cargo where to look for the CSPICE library. This is done by adding some
 lines to `$HOME/.cargo/config.toml`. If the file doesn't exist, create it (read
 [Configuration doc][config doc]). You need to write:
 
-```
+```toml
 [target.YOUR_PLATFORM.cspice]
 rustc-link-lib = ["cspice"]
 rustc-link-search = ["/path/to/cspice/lib"]
@@ -18,6 +21,7 @@ rustc-cdylib-link-arg = ["-I/path/to/cspice/include"]
 ```
 
 replace `YOUR_PLATFORM` by either:
+
 + for linux: `x86_64-unknown-linux-gnu`
 + for mac: `x86_64-apple-darwin`
 + for windows: `x86_64-pc-windows-msvc`

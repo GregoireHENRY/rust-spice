@@ -1,6 +1,6 @@
 [package]
 name = "rust-spice"
-version = "0.5.3"
+version = "0.5.4"
 authors = ["Greg Henry <contact@greghenry.xyz>"]
 edition = "2018"
 description = "WOW! The complete NASA/NAIF Spice toolkit is actually usable on Rust."
@@ -26,6 +26,6 @@ serde_repr = "0.1"
 serial_test = "0.5.1"
 log = "0.4"
 thiserror = "1.0"
-rustool = "0.3.20"
 cspice-sys = "0.0.1"
+rustool = "0.3.20"
 # rustool = {git = "https://github.com/GregoireHENRY/rustool", branch = "dev"}
