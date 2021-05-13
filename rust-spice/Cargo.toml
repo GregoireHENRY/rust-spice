@@ -11,10 +11,6 @@ categories = ["algorithms", "api-bindings", "science"]
 
 [lib]
 name = "spice"
-path = "src/lib.rs"
-
-[profile.release]
-lto = true
 
 [dependencies]
 itertools = "0.10.0"
@@ -27,6 +23,6 @@ serial_test = "0.5.1"
 log = "0.4"
 thiserror = "1.0"
 cspice-sys = "0.0.1"
-rust-spice-derive = { version = "0.5.4", path = "../rust-spice-derive" }
+rust-spice-derive = { version = "0.6.0", path = "../rust-spice-derive" }
 rustool = "0.3.20"
 # rustool = {git = "https://github.com/GregoireHENRY/rustool", branch = "dev"}

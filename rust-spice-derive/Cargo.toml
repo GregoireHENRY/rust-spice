@@ -13,9 +13,6 @@ categories = ["algorithms", "api-bindings", "science"]
 name = "spice_derive"
 proc-macro = true
 
-[profile.release]
-lto = true
-
 [dependencies]
 itertools = "0.10.0"
 # rustool = {git = "https://github.com/GregoireHENRY/rustool", branch = "dev"}

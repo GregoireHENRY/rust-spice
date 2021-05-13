@@ -196,8 +196,10 @@ enum KernelStatus {
 /// # Example
 ///
 /// ```
-/// let mut kernel = spice::Kernel::new("rsc/data/hera_PO_EMA_2024.tm")?;
+/// let mut kernel = spice::Kernel::new("rsc/krn/hera_study_PO_EMA_2024.tm")?;
+///
 /// kernel.unload()?;
+/// # Ok::<(), spice::KernelError>(())
 /// ```
 #[derive(Debug, Clone)]
 pub struct Kernel {
@@ -262,12 +264,14 @@ impl Kernel {
 /// # Example
 ///
 /// ```
-/// let mut kernel = spice::Kernel::new("rsc/data/hera_PO_EMA_2024.tm")?;
-/// let time = spice::ephemeris_from_date("2027-MAR-23 16:00:00");
+/// # use approx::assert_relative_eq;
+/// let mut kernel = spice::Kernel::new("rsc/krn/hera_study_PO_EMA_2024.tm")?;
 ///
-/// // time: 859089667.1856234
+/// let time = spice::str2et("2027-MAR-23 16:00:00");
+/// assert_relative_eq!(time, 859089667.1856234, epsilon = f64::EPSILON);
 ///
 /// kernel.unload()?;
+/// # Ok::<(), spice::KernelError>(())
 /// ```
 pub fn str2et<S: Into<String>>(date: S) -> f64 {
     let mut ephemeris_time = 0.0;
@@ -282,12 +286,13 @@ pub fn str2et<S: Into<String>>(date: S) -> f64 {
 /// # Example
 ///
 /// ```
-/// let mut kernel = spice::Kernel::new("rsc/data/hera_PO_EMA_2024.tm")?;
-/// let date = spice::date_from_ephemeris(859089667.1856234, spice::TIME_FORMAT);
+/// let mut kernel = spice::Kernel::new("rsc/krn/hera_study_PO_EMA_2024.tm")?;
 ///
-/// // date: "2027-MAR-23 16:00:00"
+/// let date = spice::timout(859089667.1856234, spice::TIME_FORMAT);
+/// assert_eq!(date, "2027-MAR-23 16:00:00");
 ///
 /// kernel.unload()?;
+/// # Ok::<(), spice::KernelError>(())
 /// ```
 pub fn timout(time: f64, time_format: &str) -> String {
     // Define pointer where data will be written.
@@ -312,14 +317,33 @@ pub fn timout(time: f64, time_format: &str) -> String {
 /// # Example
 ///
 /// ```
-/// let mut kernel = spice::Kernel::new("rsc/data/hera_PO_EMA_2024.tm")?;
-/// let time = spice::ephemeris_from_date("2027-MAR-23 16:00:00");
-/// let (position, light_time) = spice::position("DIMORPHOS", time, "J2000", "NONE", "HERA");
+/// # use approx::assert_relative_eq;
+/// # use itertools::multizip;
 ///
-/// // position: [18.62639796759623  21.05444863563425 -7.136416860555217]
-/// // light_time: 0.00009674284381011395
+/// let mut kernel = spice::Kernel::new("rsc/krn/hera_study_PO_EMA_2024.tm")?;
+/// let time = spice::str2et("2027-MAR-23 16:00:00");
+///
+/// let (position, light_time) = spice::spkpos("DIMORPHOS", time, "J2000", "NONE", "HERA");
+///
+/// let expected_position = tool::Vector::new(18.62640405424448, 21.054373008357004, -7.136291402940499);
+/// let expected_light_time = 0.00009674257074746383;
+///
+/// for (component, expected_component) in multizip((position.iter(), expected_position.iter())) {
+///     assert_relative_eq!(
+///         component,
+///         expected_component,
+///         epsilon = f64::EPSILON
+///     );
+/// }
+///
+/// assert_relative_eq!(
+///     light_time,
+///     expected_light_time,
+///     epsilon = f64::EPSILON
+/// );
 ///
 /// kernel.unload()?;
+/// # Ok::<(), spice::KernelError>(())
 /// ```
 pub fn spkpos<S: Into<String>>(
     target: S,
@@ -365,11 +389,12 @@ pub fn spkpos<S: Into<String>>(
 ///
 /// ```
 /// let mut kernel = spice::Kernel::new("rsc/krn/hera_study_PO_EMA_2024.tm")?;
-/// let et = spice::ephemeris_from_date("2027-MAR-23 16:00:00");
+/// let et = spice::str2et("2027-MAR-23 16:00:00");
 ///
-/// let matrix = spice::pxform("J2000", "DIMORPHOS", time);
+/// let matrix = spice::pxform("J2000", "DIMORPHOS_FIXED", et);
 ///
 /// kernel.unload()?;
+/// # Ok::<(), spice::KernelError>(())
 /// ```
 pub fn pxform<S: Into<String>>(from: S, to: S, time: f64) -> Rotation3<f64> {
     // Define pointers where data will be written.
@@ -397,12 +422,13 @@ pub fn pxform<S: Into<String>>(from: S, to: S, time: f64) -> Rotation3<f64> {
 ///
 /// ```
 /// let mut kernel = spice::Kernel::new("rsc/krn/hera_study_PO_EMA_2024.tm")?;
-/// let et_from = spice::ephemeris_from_date("2027-MAR-23 16:00:00");
-/// let et_to = spice::ephemeris_from_date("2027-MAR-24 16:00:00");
+/// let et_from = spice::str2et("2027-MAR-23 16:00:00");
+/// let et_to = spice::str2et("2027-MAR-24 16:00:00");
 ///
-/// let matrix = spice::pxfrm2("J2000", "DIMORPHOS", et_from, et_to);
+/// let matrix = spice::pxfrm2("J2000", "DIMORPHOS_FIXED", et_from, et_to);
 ///
 /// kernel.unload()?;
+/// # Ok::<(), spice::KernelError>(())
 /// ```
 pub fn pxfrm2<S: Into<String>>(from: S, to: S, et_from: f64, et_to: f64) -> Rotation3<f64> {
     // Define pointers where data will be written.

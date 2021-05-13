@@ -46,15 +46,19 @@ You can find a guide for the Rust interface [here][crate::core].
 
 A nice and idiomatic interface to Spice,
 
-```.ignore
+```
 use spice;
 
-let mut kernel = spice::Kernel::new("/path/to/metakernels.mk")?;
+let mut kernel = spice::Kernel::new("rsc/krn/hera_study_PO_EMA_2024.tm")?;
 
 let et = spice::str2et("2027-MAR-23 16:00:00");
-let (position, light_time) = spice::spkpos("TARGET_NAME", et, "FRAME_NAME", "NONE", "SUN");
+let (position, light_time) = spice::spkpos("DIMORPHOS", et, "J2000", "NONE", "SUN");
+
+// position -> 18.62640405424448, 21.054373008357004, -7.136291402940499
+// light time -> 0.00009674257074746383
 
 kernel.unload()?;
+# Ok::<(), spice::KernelError>(())
 ```
 
 You can also read other [examples](https://github.com/GregoireHENRY/rust-spice/tree/main/examples).
@@ -69,20 +73,20 @@ always use the [unsafe API][c] which contains all
 
 For instance, with the unsafe API, the example above would be,
 
-```.ignore
+```
 use spice;
 use std::ffi::CString;
 
 unsafe {
-    let kernel = CString::new("/path/to/metakernel.mk").unwrap().into_raw();
+    let kernel = CString::new("rsc/krn/hera_study_PO_EMA_2024.tm").unwrap().into_raw();
     spice::c::furnsh_c(kernel);
 
     let mut ephemeris_time = 0.0;
     let date = CString::new("2027-MAR-23 16:00:00").unwrap().into_raw();
     spice::c::str2et_c(date, &mut ephemeris_time);
 
-    let target_c = CString::new("TARGET_NAME").unwrap().into_raw();
-    let frame_c = CString::new("FRAME_NAME").unwrap().into_raw();
+    let target_c = CString::new("DIMORPHOS").unwrap().into_raw();
+    let frame_c = CString::new("J2000").unwrap().into_raw();
     let abcorr_c = CString::new("NONE").unwrap().into_raw();
     let observer_c = CString::new("SUN").unwrap().into_raw();
     let mut light_time = 0.0;
@@ -101,10 +105,16 @@ unsafe {
 }
 ```
 */
+
+#![doc(
+    html_logo_url = "https://raw.githubusercontent.com/GregoireHENRY/rust-spice/main/rsc/img/logo_bg.png"
+)]
+
 extern crate cspice_sys;
 extern crate itertools;
 extern crate nalgebra as na;
 extern crate serial_test;
+extern crate spice_derive;
 extern crate tool;
 
 /// Complete NASA/NAIF C SPICE binded functions, very unsafe.
@@ -114,11 +124,12 @@ pub mod c {
 
 /// An idiomatic Rust layer on top of the C wrapper.
 pub mod core;
-/// Extra tools developped on top of Spice for even easier usage of the library.
-pub mod spicetools;
 
 pub use crate::core::*;
-pub use crate::spicetools::*;
+
+/// Extra tools developped on top of Spice for even easier usage of the library.
+// pub mod spicetools;
+// pub use crate::spicetools::*;
 
 /// Convert String to *mut i8.
 #[macro_export]

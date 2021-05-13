@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.6.0] - 2021-05-13
 
 + prepare procedural macros
++ fixed docstring tests
++ commented `spicetools` temporary
 
 ## [0.5.4] - 2021-05-13
 

@@ -1,5 +1,5 @@
 use itertools::multizip;
-use na::Matrix3x1;
+use tool::Vector;
 
 #[test]
 #[serial]
@@ -12,8 +12,7 @@ fn load() {
 #[serial]
 fn position() {
     let mut kernel = spice::Kernel::new("rsc/krn/hera_study_PO_EMA_2024.tm").unwrap();
-    let expected_position =
-        Matrix3x1::new(18.62640405424448, 21.054373008357004, -7.136291402940499);
+    let expected_position = Vector::new(18.62640405424448, 21.054373008357004, -7.136291402940499);
     let expected_light_time = 0.00009674257074746383;
 
     let time = spice::str2et("2027-MAR-23 16:00:00");
