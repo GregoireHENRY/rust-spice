@@ -75,17 +75,23 @@ unsafe {
 }
 ```
 */
+/// Complete NASA/NAIF C Spice binded functions, very unsafe, from [`cspice_sys`] wrapper.
 
-extern crate cspice_sys;
+// extern crate cspice_sys;
+pub mod c {
+    //pub use cspice_sys::*;
+    #![allow(non_upper_case_globals)]
+    #![allow(non_camel_case_types)]
+    #![allow(non_snake_case)]
+
+    include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
+}
+
 extern crate itertools;
 extern crate nalgebra as na;
 extern crate serial_test;
 extern crate tool;
 
-/// Complete NASA/NAIF C Spice binded functions, very unsafe, from [`cspice_sys`] wrapper.
-pub mod c {
-    pub use cspice_sys::*;
-}
 /// The Rust layer to ease the use of the wrapper.
 pub mod core;
 /// Tools developped on top of Spice for even easier usage of the library.

@@ -14,7 +14,7 @@
 ---
 
 [Intro](#intro) |
-[Temporary brief notice](#temporary-brief-notice) |
+[Requirements](#requirements) |
 [In action](#in-action) |
 [In development](#in-development) |
 [Installation](#installation) |
@@ -27,13 +27,12 @@
 **SPICE** is *An Observation Geometry System for Space Science Missions*. Visit
 their [website][naif link].
 
-## Temporary brief notice
+## Requirements
 
-Apparently the crate is only available for Linux systems. It is due to the fact
-that the crate is built on top of the wrapper [cspice-sys][cspice-sys link].
-This problem will be solved in short delays as I plan to remove this dependency
-and write a build script that uses the cspice library installed on the user's
-pc.
+1) Install [CSPICE library][cspice install link] for your platform.
+2) Add to your environment variable `$PATH` the path to the CSPICE folder. For
+  instance: `/home/username/softwares/cspice`. The folder must be named
+  **cspice**.
 
 ## In action
 
@@ -131,4 +130,4 @@ Licensed under the [Apache License, Version 2.0][license link].
 [examples link]: https://github.com/GregoireHENRY/rust-spice/tree/main/examples
 [naif link]: https://naif.jpl.nasa.gov/naif
 [cspice api]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/index.html
-[cspice-sys link]: https://crates.io/crates/cspice-sys/0.0.1
+[cspice install link]: https://naif.jpl.nasa.gov/naif/toolkit_C.html
