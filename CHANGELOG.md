@@ -12,21 +12,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.5.1] - 2021-05-13
+## [0.5.1 - 0.5.3] - 2021-05-13
 
-### Added
-
-+ documentation
-
-## [0.5.0] - 2021-05-13
-
-### Added
-
-+ own wrapper of `cspice` -> look for library installed on users' pc
-
-### Removed
-
-+ `cspice-sys` dependency
+Many trials to make CSPICE wrapper working on Mac and Windows also.
+Ended up proposing to overwrite the build of `cspice-sys` inside
+`$HOME/.cargo/config.toml`, thanks to the `links` attributes.
 
 ## [0.4.8] - 2021-05-12
 

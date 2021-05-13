@@ -3,16 +3,28 @@
 
 WOW! The complete NASA/NAIF Spice toolkit is actually usable on Rust.
 
-## Using **rust-spice**
-
-### Requirements
+## Requirements
 
 1) Install [CSPICE library][cspice install link] for your platform.
-2) Add to your environment variable `$PATH` the path to the CSPICE folder. For
-  instance: `/home/username/softwares/cspice`. The folder must be named
-  **cspice**.
+2) Tell Cargo where to look for the CSPICE library. This is done by adding some
+lines to `$HOME/.cargo/config.toml`. If the file doesn't exist, create it (read
+[Configuration doc][config doc]). You need to write:
 
-### Installation
+```
+[target.YOUR_PLATFORM.cspice]
+rustc-link-lib = ["cspice"]
+rustc-link-search = ["/path/to/cspice/lib"]
+rustc-cdylib-link-arg = ["-I/path/to/cspice/include"]
+```
+
+replace `YOUR_PLATFORM` by either:
++ for linux: `x86_64-unknown-linux-gnu`
++ for mac: `x86_64-apple-darwin`
++ for windows: `x86_64-pc-windows-msvc`
+
+and replace `/path/to/cspice` with the absolute path to your CSPICE installation.
+
+## Usage
 
 Simply add the following to your `Cargo.toml` file:
 
@@ -85,6 +97,7 @@ unsafe {
 }
 ```
 */
+extern crate cspice_sys;
 extern crate itertools;
 extern crate nalgebra as na;
 extern crate serial_test;
@@ -92,11 +105,7 @@ extern crate tool;
 
 /// Complete NASA/NAIF C SPICE binded functions, very unsafe.
 pub mod c {
-    #![allow(non_upper_case_globals)]
-    #![allow(non_camel_case_types)]
-    #![allow(non_snake_case)]
-
-    include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
+    pub use cspice_sys::*;
 }
 
 /// An idiomatic Rust layer on top of the C wrapper.

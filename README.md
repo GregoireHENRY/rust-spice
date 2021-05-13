@@ -17,7 +17,7 @@
 [Requirements](#requirements) |
 [In action](#in-action) |
 [In development](#in-development) |
-[Installation](#installation) |
+[Usage](#usage) |
 [License](#license)
 
 ---
@@ -30,11 +30,26 @@ their [website][naif link].
 ## Requirements
 
 1) Install [CSPICE library][cspice install link] for your platform.
-2) Add to your environment variable `$PATH` the path to the CSPICE folder. For
-  instance: `/home/username/softwares/cspice`. The folder must be named
-  **cspice**.
+2) Tell Cargo where to look for the CSPICE library. This is done by adding some
+lines to `$HOME/.cargo/config.toml`. If the file doesn't exist, create it (read
+[Configuration doc][config doc]). You need to write:
 
-## Installation
+```toml
+[target.YOUR_PLATFORM.cspice]
+rustc-link-lib = ["cspice"]
+rustc-link-search = ["/path/to/cspice/lib"]
+rustc-cdylib-link-arg = ["-I/path/to/cspice/include"]
+```
+
+replace `YOUR_PLATFORM` by either:
+
++ for linux: `x86_64-unknown-linux-gnu`
++ for mac: `x86_64-apple-darwin`
++ for windows: `x86_64-pc-windows-msvc`
+
+and replace `/path/to/cspice` with the absolute path to your CSPICE installation.
+
+## Usage
 
 Add the dependency **rust-spice** to your `Cargo.toml`:
 
@@ -131,3 +146,5 @@ Licensed under the [Apache License, Version 2.0][license link].
 [naif link]: https://naif.jpl.nasa.gov/naif
 [cspice api]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/index.html
 [cspice install link]: https://naif.jpl.nasa.gov/naif/toolkit_C.html
+[cspice-sys link]: https://crates.io/crates/cspice-sys/0.0.1
+[config doc]: https://doc.rust-lang.org/cargo/reference/config.html

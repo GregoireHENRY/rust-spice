@@ -8,7 +8,6 @@ license = "Apache-2.0"
 repository = "https://github.com/GregoireHENRY/rust-spice"
 keywords = ["space", "spice", "nasa", "naif", "kernels"]
 categories = ["algorithms", "api-bindings", "science"]
-links = "cspice"
 
 [lib]
 name = "spice"
@@ -16,9 +15,6 @@ path = "src/lib.rs"
 
 [profile.release]
 lto = true
-
-[build-dependencies]
-bindgen = "0.53.1"
 
 [dependencies]
 itertools = "0.10.0"
@@ -31,4 +27,5 @@ serial_test = "0.5.1"
 log = "0.4"
 thiserror = "1.0"
 rustool = "0.3.20"
+cspice-sys = "0.0.1"
 # rustool = {git = "https://github.com/GregoireHENRY/rustool", branch = "dev"}
