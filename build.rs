@@ -19,14 +19,12 @@ fn get_spice_path() -> String {
         .collect::<Vec<_>>();
 
     // Return the first path that contains "cspice".
-    spice_path
-        .first()
-        .expect(
-            "No path to your installation of CSPICE has been found in the PATH. Please install
-             CSPICE (here: https://naif.jpl.nasa.gov/naif/toolkit_C.html) and add its path to the
-             environment variable `$PATH`",
-        )
-        .to_string()
+    if let Some(path) = spice_path.first() {
+        path.to_string()
+    } else {
+        println!("No path to your installation of CSPICE has been found in the PATH. Please install CSPICE (here: https://naif.jpl.nasa.gov/naif/toolkit_C.html) and add its path to the environment variable `$PATH`. By default it tries to use the library for Linux64 to build the documentation.");
+        "cspice".to_string()
+    }
 }
 
 fn main() {
