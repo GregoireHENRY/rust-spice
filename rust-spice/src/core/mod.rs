@@ -1,5 +1,5 @@
 /*!
-# The Rust layer to ease the use of the wrapper.
+# An idiomatic Rust layer on top of the C wrapper.
 
 Below you will find the index of the C spice functions that are wrapped with a nice Rust interface.
 
@@ -11,7 +11,7 @@ In the meantime, if you are in a rush and need quickly to use a function not imp
 Rust interface, use the unsafe C functions [here][c#functions]. You can find some inspiration in
 the source of this lib to deal with the FFI types and unsafe code.
 
-## [Most common API][crate::core]
+## Most common API
 
 Chapters  | Modules
 ----------|--------
@@ -19,10 +19,13 @@ Spice APIs for accessing SPICE kernel data | [kernel]
 Spice APIs for checking geometric conditions | [check_geometric_conditions]
 */
 
-/// Spice APIs for checking geometric conditions
+/// SPICE functions for checking geometric conditions.
 pub mod check_geometric_conditions;
-/// Spice API for accessing kernel data.
+/// SPICE functions for the DAS subsystem.
+pub mod das;
+/// SPICE functons for accessing kernel data.
 pub mod kernel;
 
 pub use self::check_geometric_conditions::*;
+pub use self::das::*;
 pub use self::kernel::*;

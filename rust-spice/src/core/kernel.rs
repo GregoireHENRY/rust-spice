@@ -1,5 +1,5 @@
 /*!
-# [Spice APIs for accessing SPICE kernel data][kernel]
+# SPICE functions for accessing SPICE kernel data
 
 ## Loading and Unloading SPICE Kernels
 

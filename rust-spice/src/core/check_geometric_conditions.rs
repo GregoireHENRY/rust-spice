@@ -1,5 +1,5 @@
 /*!
-# [Spice APIs for accessing SPICE kernel data][kernel]
+# SPICE functions for checking geometric conditions
 
 ## Checking for in Field-Of-View (FOV) conditions
 

@@ -20,7 +20,7 @@ repos:
           - id: forbid-binary
             exclude: |
                 (?x)^(
-                    rsc/.*\.(png|gif)
+                    .*/rsc/.*\.(png|gif)
                 )$
           - id: markdownlint
     - repo: https://github.com/jumanjihouse/pre-commit-hook-yamlfmt
