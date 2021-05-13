@@ -115,8 +115,7 @@ rust-spice = "*" # replace * by the latest version of the crate
 Licensed under the [Apache License, Version 2.0][license link].
 
 [repository link]: https://github.com/GregoireHENRY/rust-spice
-[old logo image]: https://raw.githubusercontent.com/GregoireHENRY/rust-spice/main/rsc/img/rust-spice-logo.png
-[logo image]: rsc/img/logo_bg.png
+[logo image]: https://raw.githubusercontent.com/GregoireHENRY/rust-spice/main/rsc/img/logo_bg.png
 [crate link]: https://crates.io/crates/rust-spice
 [crate badge]: https://meritbadge.herokuapp.com/rust-spice?style=flat-square
 [doc link]: https://docs.rs/rust-spice
