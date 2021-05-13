@@ -5,6 +5,15 @@ WOW! The complete NASA/NAIF Spice toolkit is actually usable on Rust.
 
 ## Using **rust-spice**
 
+### Requirements
+
+1) Install [CSPICE library][cspice install link] for your platform.
+2) Add to your environment variable `$PATH` the path to the CSPICE folder. For
+  instance: `/home/username/softwares/cspice`. The folder must be named
+  **cspice**.
+
+### Installation
+
 Simply add the following to your `Cargo.toml` file:
 
 ```.ignore
@@ -39,7 +48,8 @@ You can also read other [examples](https://github.com/GregoireHENRY/rust-spice/t
 Developing an idiomatic interface for Spice in Rust takes time, and not all
 functions are implemented yet. In the [module `**core**`][core], you will find
 a guide detailing which functions are available. If yours is not, you can
-always use the [unsafe API][c] which contains all [cspice functions](https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/index.html).
+always use the [unsafe API][c] which contains all
+[cspice functions](https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/index.html).
 
 For instance, with the unsafe API, the example above would be,
 
@@ -75,11 +85,13 @@ unsafe {
 }
 ```
 */
-/// Complete NASA/NAIF C Spice binded functions, very unsafe, from [`cspice_sys`] wrapper.
+extern crate itertools;
+extern crate nalgebra as na;
+extern crate serial_test;
+extern crate tool;
 
-// extern crate cspice_sys;
+/// Complete NASA/NAIF C SPICE binded functions, very unsafe.
 pub mod c {
-    //pub use cspice_sys::*;
     #![allow(non_upper_case_globals)]
     #![allow(non_camel_case_types)]
     #![allow(non_snake_case)]
@@ -87,20 +99,15 @@ pub mod c {
     include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
 }
 
-extern crate itertools;
-extern crate nalgebra as na;
-extern crate serial_test;
-extern crate tool;
-
-/// The Rust layer to ease the use of the wrapper.
+/// An idiomatic Rust layer on top of the C wrapper.
 pub mod core;
-/// Tools developped on top of Spice for even easier usage of the library.
+/// Extra tools developped on top of Spice for even easier usage of the library.
 pub mod spicetools;
 
 pub use crate::core::*;
 pub use crate::spicetools::*;
 
-/// Convert String to *mut i8
+/// Convert String to *mut i8.
 #[macro_export]
 macro_rules! cstr {
     ($s:expr) => {{

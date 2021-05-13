@@ -34,6 +34,16 @@ their [website][naif link].
   instance: `/home/username/softwares/cspice`. The folder must be named
   **cspice**.
 
+## Installation
+
+Add the dependency **rust-spice** to your `Cargo.toml`:
+
+```toml
+...
+[dependencies]
+rust-spice = "*" # replace * by the latest version of the crate
+```
+
 ## In action
 
 A nice and idiomatic interface to Spice,
@@ -98,16 +108,6 @@ unsafe {
 Much less friendly, but it's available. I would love some help in order to
 complete the idiomatic development. You can raise an issue or propose a pull
 request for the implementation of a specific function.
-
-## Installation
-
-Add the dependency **rust-spice** to your `Cargo.toml`:
-
-```toml
-...
-[dependencies]
-rust-spice = "*" # replace * by the latest version of the crate
-```
 
 ## License
 
