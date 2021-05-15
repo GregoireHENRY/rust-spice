@@ -14,5 +14,7 @@ name = "spice_derive"
 proc-macro = true
 
 [dependencies]
-itertools = "0.10.0"
+proc-macro2 = "1.0.26"
+syn = {version = "1.0.72", features = ["full"]}
+quote = "1.0.9"
 # rustool = {git = "https://github.com/GregoireHENRY/rustool", branch = "dev"}
