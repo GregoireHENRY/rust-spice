@@ -12,11 +12,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.6.0] - 2021-05-13
+## [0.6.0] - 2021-05-17
 
-+ prepare procedural macros
-+ fixed docstring tests
-+ commented `spicetools` temporary
+### Added
+
++ crate `rust-spice-derive`
+
+### Changed
+
++ implement Rust idiomatic interface to CSPICE with procedural macros
++ moved `rust-spice` crate to subforlder of `rust-spice` root repo, to contain
+  the main crate and the derive
+
+### Removed
+
++ mods `spicetools`, `kernel`, `check_geometric_conditions`
++ examples, for now if you want example -> go check tests
 
 ## [0.5.4] - 2021-05-13
 

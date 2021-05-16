@@ -225,6 +225,15 @@ pub fn cspice_proc(input: TokenStream) -> TokenStream {
                         cspice_inputs.push(pat_ident(format!("&mut {}", ident.clone())));
                         vars_out.push(pat_ident(ident.clone()));
                     }
+                    "i32" => {
+                        let ident = format!("varout_{}", vars_out_decl.len());
+                        vars_out_decl.push(declare(
+                            format!("mut {}", ident.clone()),
+                            Some("0i32".to_string()),
+                        ));
+                        cspice_inputs.push(pat_ident(format!("&mut {}", ident.clone())));
+                        vars_out.push(pat_ident(ident.clone()));
+                    }
                     "String" => {
                         let ident = format!("varout_{}", vars_out_decl.len());
                         vars_out_decl.push(declare(
