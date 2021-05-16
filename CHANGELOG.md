@@ -12,6 +12,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0] - 2021-05-17
+
+### Added
+
++ crate `rust-spice-derive`
+
+### Changed
+
++ implement Rust idiomatic interface to CSPICE with procedural macros
++ moved `rust-spice` crate to subforlder of `rust-spice` root repo, to contain
+  the main crate and the derive
+
+### Removed
+
++ mods `spicetools`, `kernel`, `check_geometric_conditions`
++ examples, for now if you want example -> go check tests
+
+## [0.5.4] - 2021-05-13
+
+### Added
+
++ documentation
+
+## [0.5.1 - 0.5.3] - 2021-05-13
+
+Many trials to make CSPICE wrapper working on Mac and Windows also.
+Ended up proposing to overwrite the build of `cspice-sys` inside
+`$HOME/.cargo/config.toml`, thanks to the `links` attributes.
+
 ## [0.4.8] - 2021-05-12
 
 ### Added

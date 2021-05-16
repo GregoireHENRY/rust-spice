@@ -14,10 +14,10 @@
 ---
 
 [Intro](#intro) |
-[Temporary brief notice](#temporary-brief-notice) |
+[Requirements](#requirements) |
 [In action](#in-action) |
 [In development](#in-development) |
-[Installation](#installation) |
+[Usage](#usage) |
 [License](#license)
 
 ---
@@ -27,13 +27,40 @@
 **SPICE** is *An Observation Geometry System for Space Science Missions*. Visit
 their [website][naif link].
 
-## Temporary brief notice
+## Requirements
 
-Apparently the crate is only available for Linux systems. It is due to the fact
-that the crate is built on top of the wrapper [cspice-sys][cspice-sys link].
-This problem will be solved in short delays as I plan to remove this dependency
-and write a build script that uses the cspice library installed on the user's
-pc.
+1) Install [CSPICE library][cspice install link] for your platform.
+2) In your folder `/path/to/cspice/lib`, rename the static libraries to match standards:
+    1) `cspice.a` -> `libcspice.a`
+    2) `csupport.a` -> `libcsupport.a`
+3) Tell Cargo where to look for the CSPICE library. This is done by adding some
+lines to `$HOME/.cargo/config.toml`. If the file doesn't exist, create it (read
+[Configuration doc][config doc]). You need to write:
+
+```toml
+[target.YOUR_PLATFORM.cspice]
+rustc-link-lib = ["cspice"]
+rustc-link-search = ["/path/to/cspice/lib"]
+rustc-cdylib-link-arg = ["-I/path/to/cspice/include"]
+```
+
+replace `YOUR_PLATFORM` by either:
+
++ for linux: `x86_64-unknown-linux-gnu`
++ for mac: `x86_64-apple-darwin`
++ for windows: `x86_64-pc-windows-msvc`
+
+and replace `/path/to/cspice` with the absolute path to your CSPICE installation.
+
+## Usage
+
+Add the dependency **rust-spice** to your `Cargo.toml`:
+
+```toml
+...
+[dependencies]
+rust-spice = "*" # replace * by the latest version of the crate
+```
 
 ## In action
 
@@ -42,18 +69,19 @@ A nice and idiomatic interface to Spice,
 ```rust
 use spice;
 
-let mut kernel = spice::Kernel::new("/path/to/metakernels.mk")?;
+let mut kernel = spice::furnsh("rsc/krn/hera_study_PO_EMA_2024.tm");
 
 let et = spice::str2et("2027-MAR-23 16:00:00");
-let (position, light_time) = spice::spkpos(
-    "TARGET_NAME", et, "FRAME_NAME", "NONE", "SUN"
-);
+let (position, light_time) = spice::spkpos("DIMORPHOS", et, "J2000", "NONE", "SUN");
 
-kernel.unload()?;
+// position -> 18.62640405424448, 21.054373008357004, -7.136291402940499
+// light time -> 0.00009674257074746383
+
+spice::unload("rsc/krn/hera_study_PO_EMA_2024.tm");
 ```
 
-Read more in the [documentation online][doc link] and see
-[examples][examples link].
+You can look for some inspirations in the
+[tests](https://github.com/GregoireHENRY/rust-spice/tree/main/tests/core/raw.rs).
 
 ## In development
 
@@ -96,27 +124,16 @@ unsafe {
 }
 ```
 
-Much less friendly, but it's available. I would love some help in order to
+Much less friendly.. yet it is available. I would love some help in order to
 complete the idiomatic development. You can raise an issue or propose a pull
 request for the implementation of a specific function.
-
-## Installation
-
-Add the dependency **rust-spice** to your `Cargo.toml`:
-
-```toml
-...
-[dependencies]
-rust-spice = "*" # replace * by the latest version of the crate
-```
 
 ## License
 
 Licensed under the [Apache License, Version 2.0][license link].
 
 [repository link]: https://github.com/GregoireHENRY/rust-spice
-[old logo image]: https://raw.githubusercontent.com/GregoireHENRY/rust-spice/main/rsc/img/rust-spice-logo.png
-[logo image]: rsc/img/logo_bg.png
+[logo image]: https://raw.githubusercontent.com/GregoireHENRY/rust-spice/main/rsc/img/logo_bg.png
 [crate link]: https://crates.io/crates/rust-spice
 [crate badge]: https://meritbadge.herokuapp.com/rust-spice?style=flat-square
 [doc link]: https://docs.rs/rust-spice
@@ -132,4 +149,6 @@ Licensed under the [Apache License, Version 2.0][license link].
 [examples link]: https://github.com/GregoireHENRY/rust-spice/tree/main/examples
 [naif link]: https://naif.jpl.nasa.gov/naif
 [cspice api]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/index.html
+[cspice install link]: https://naif.jpl.nasa.gov/naif/toolkit_C.html
 [cspice-sys link]: https://crates.io/crates/cspice-sys/0.0.1
+[config doc]: https://doc.rust-lang.org/cargo/reference/config.html
