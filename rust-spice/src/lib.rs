@@ -114,7 +114,7 @@ request for the implementation of a specific function.
 */
 
 #![doc(
-    html_logo_url = "https://raw.githubusercontent.com/GregoireHENRY/rust-spice/main/rsc/img/logo_bg.png"
+    html_logo_url = "https://raw.githubusercontent.com/GregoireHENRY/rust-spice/main/rust-spice/rsc/img/logo_bg.png"
 )]
 
 extern crate cspice_sys;

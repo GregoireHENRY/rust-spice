@@ -36,29 +36,22 @@ repos:
     - repo: local
       hooks:
           - id: execute-tests
-            name: Compile and execute unit and integration tests
-            stages: [commit]
-            language: system
-            entry: ./compile.py tests
-            types: [rust]
-            pass_filenames: false
-          - id: execute-tests-all-targets
             name: Compile and execute unit and integration tests for all targets
             stages: [commit]
             language: system
-            entry: ./compile.py tests -a
+            entry: cargo test
             types: [rust]
             pass_filenames: false
           - id: build-documentation
             name: Build documentation
             stages: [commit]
             language: system
-            entry: ./compile.py doc
+            entry: cargo doc
             types: [rust]
             pass_filenames: false
           - id: publish
             name: Prepare publishing to crates.io
             stages: [push]
             language: system
-            entry: ./compile.py publish -c
+            entry: cargo publish -c
             pass_filenames: false

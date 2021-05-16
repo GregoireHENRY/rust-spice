@@ -80,8 +80,7 @@ let (position, light_time) = spice::spkpos("DIMORPHOS", et, "J2000", "NONE", "SU
 spice::unload("rsc/krn/hera_study_PO_EMA_2024.tm");
 ```
 
-You can look for some inspirations in the
-[tests](https://github.com/GregoireHENRY/rust-spice/tree/main/tests/core/raw.rs).
+You can look for some inspirations in the [tests](tests link).
 
 ## In development
 
@@ -133,7 +132,7 @@ request for the implementation of a specific function.
 Licensed under the [Apache License, Version 2.0][license link].
 
 [repository link]: https://github.com/GregoireHENRY/rust-spice
-[logo image]: https://raw.githubusercontent.com/GregoireHENRY/rust-spice/main/rsc/img/logo_bg.png
+[logo image]: https://raw.githubusercontent.com/GregoireHENRY/rust-spice/main/rust-spice/rsc/img/logo_bg.png
 [crate link]: https://crates.io/crates/rust-spice
 [crate badge]: https://meritbadge.herokuapp.com/rust-spice?style=flat-square
 [doc link]: https://docs.rs/rust-spice
@@ -146,7 +145,7 @@ Licensed under the [Apache License, Version 2.0][license link].
 [coverage doc link]: https://docs.rs/crate/rust-spice
 [coverage test badge]: https://img.shields.io/badge/Tests-90%25-green
 [coverage test link]: https://docs.rs/crate/rust-spice
-[examples link]: https://github.com/GregoireHENRY/rust-spice/tree/main/examples
+[tests link]: https://github.com/GregoireHENRY/rust-spice/tree/main/rust-spice/tests
 [naif link]: https://naif.jpl.nasa.gov/naif
 [cspice api]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/index.html
 [cspice install link]: https://naif.jpl.nasa.gov/naif/toolkit_C.html
