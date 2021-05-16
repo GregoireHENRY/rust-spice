@@ -80,7 +80,7 @@ let (position, light_time) = spice::spkpos("DIMORPHOS", et, "J2000", "NONE", "SU
 spice::unload("rsc/krn/hera_study_PO_EMA_2024.tm");
 ```
 
-You can look for some inspirations in the [tests](tests link).
+You can look for some inspirations in the [tests][tests link].
 
 ## In development
 

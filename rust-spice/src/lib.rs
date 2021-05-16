@@ -60,8 +60,7 @@ let (position, light_time) = spice::spkpos("DIMORPHOS", et, "J2000", "NONE", "SU
 spice::unload("rsc/krn/hera_study_PO_EMA_2024.tm");
 ```
 
-You can look for some inspirations in the
-[tests](https://github.com/GregoireHENRY/rust-spice/tree/main/tests/core/raw.rs).
+You can look for some inspirations in the [tests][tests link].
 
 ## In development
 
@@ -69,7 +68,7 @@ Developing an idiomatic interface for Spice in Rust takes time, and not all
 functions are implemented yet. In the [module `**core**`][core], you will find
 a guide with the list of available functions. If yours is not, you can always
 use the [unsafe API][c] which contains all
-[cspice functions](https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/index.html).
+[cspice functions][cspice toolkit link].
 
 For instance, with the unsafe API, the short example above would be,
 
@@ -109,8 +108,10 @@ Much less friendly.. yet it is available. I would love some help in order to
 complete the idiomatic development. You can raise an issue or propose a pull
 request for the implementation of a specific function.
 
-[cspice install link]: https://naif.jpl.nasa.gov/naif/toolkit_C.html
+[tests link]: https://github.com/GregoireHENRY/rust-spice/tree/main/rust-spice/tests
 [config doc]: https://doc.rust-lang.org/cargo/reference/config.html
+[cspice install link]: https://naif.jpl.nasa.gov/naif/toolkit_C.html
+[cspice toolkit link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/index.html
 */
 
 #![doc(
