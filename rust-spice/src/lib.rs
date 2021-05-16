@@ -49,7 +49,7 @@ A nice and idiomatic interface to Spice,
 ```
 use spice;
 
-let mut kernel = spice::Kernel::new("rsc/krn/hera_study_PO_EMA_2024.tm")?;
+let mut kernel = spice::furnsh("rsc/krn/hera_study_PO_EMA_2024.tm");
 
 let et = spice::str2et("2027-MAR-23 16:00:00");
 let (position, light_time) = spice::spkpos("DIMORPHOS", et, "J2000", "NONE", "SUN");
@@ -57,21 +57,21 @@ let (position, light_time) = spice::spkpos("DIMORPHOS", et, "J2000", "NONE", "SU
 // position -> 18.62640405424448, 21.054373008357004, -7.136291402940499
 // light time -> 0.00009674257074746383
 
-kernel.unload()?;
-# Ok::<(), spice::KernelError>(())
+spice::unload("rsc/krn/hera_study_PO_EMA_2024.tm");
 ```
 
-You can also read other [examples](https://github.com/GregoireHENRY/rust-spice/tree/main/examples).
+You can look for some inspirations in the
+[tests](https://github.com/GregoireHENRY/rust-spice/tree/main/tests/core/raw.rs).
 
 ## In development
 
 Developing an idiomatic interface for Spice in Rust takes time, and not all
 functions are implemented yet. In the [module `**core**`][core], you will find
-a guide detailing which functions are available. If yours is not, you can
-always use the [unsafe API][c] which contains all
+a guide with the list of available functions. If yours is not, you can always
+use the [unsafe API][c] which contains all
 [cspice functions](https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/index.html).
 
-For instance, with the unsafe API, the example above would be,
+For instance, with the unsafe API, the short example above would be,
 
 ```
 use spice;
@@ -104,6 +104,13 @@ unsafe {
     spice::c::unload_c(kernel);
 }
 ```
+
+Much less friendly.. yet it is available. I would love some help in order to
+complete the idiomatic development. You can raise an issue or propose a pull
+request for the implementation of a specific function.
+
+[cspice install link]: https://naif.jpl.nasa.gov/naif/toolkit_C.html
+[config doc]: https://doc.rust-lang.org/cargo/reference/config.html
 */
 
 #![doc(
@@ -117,24 +124,16 @@ extern crate serial_test;
 extern crate spice_derive;
 extern crate tool;
 
-/// Complete NASA/NAIF C SPICE binded functions, very unsafe.
+/**
+Complete NASA/NAIF C SPICE binded functions, very unsafe.
+*/
 pub mod c {
     pub use cspice_sys::*;
 }
 
-/// An idiomatic Rust layer on top of the C wrapper.
+/**
+An idiomatic Rust layer on top of the C wrapper.
+*/
 pub mod core;
 
 pub use crate::core::*;
-
-/// Extra tools developped on top of Spice for even easier usage of the library.
-// pub mod spicetools;
-// pub use crate::spicetools::*;
-
-/// Convert String to *mut i8.
-#[macro_export]
-macro_rules! cstr {
-    ($s:expr) => {{
-        std::ffi::CString::new($s).unwrap().into_raw()
-    }};
-}

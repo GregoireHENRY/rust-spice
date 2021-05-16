@@ -69,18 +69,19 @@ A nice and idiomatic interface to Spice,
 ```rust
 use spice;
 
-let mut kernel = spice::Kernel::new("/path/to/metakernels.mk")?;
+let mut kernel = spice::furnsh("rsc/krn/hera_study_PO_EMA_2024.tm");
 
 let et = spice::str2et("2027-MAR-23 16:00:00");
-let (position, light_time) = spice::spkpos(
-    "TARGET_NAME", et, "FRAME_NAME", "NONE", "SUN"
-);
+let (position, light_time) = spice::spkpos("DIMORPHOS", et, "J2000", "NONE", "SUN");
 
-kernel.unload()?;
+// position -> 18.62640405424448, 21.054373008357004, -7.136291402940499
+// light time -> 0.00009674257074746383
+
+spice::unload("rsc/krn/hera_study_PO_EMA_2024.tm");
 ```
 
-Read more in the [documentation online][doc link] and see
-[examples][examples link].
+You can look for some inspirations in the
+[tests](https://github.com/GregoireHENRY/rust-spice/tree/main/tests/core/raw.rs).
 
 ## In development
 
@@ -123,7 +124,7 @@ unsafe {
 }
 ```
 
-Much less friendly, but it's available. I would love some help in order to
+Much less friendly.. yet it is available. I would love some help in order to
 complete the idiomatic development. You can raise an issue or propose a pull
 request for the implementation of a specific function.
 

@@ -7,18 +7,11 @@ extern crate serial_test;
 
 mod core;
 
-// mod spicetools;
-
 use std::ffi::CString;
 
 #[test]
-fn it_works() {
-    assert_eq!(2 + 2, 4);
-}
-
-#[test]
 #[serial]
-fn test_spice_load() {
+fn test_c() {
     unsafe {
         let kernel = CString::new("rsc/krn/hera_study_PO_EMA_2024.tm")
             .unwrap()
