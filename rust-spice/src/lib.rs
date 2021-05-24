@@ -1,6 +1,4 @@
 /*!
-# **rust-spice**
-
 WOW! The complete NASA/NAIF Spice toolkit is actually usable on Rust.
 
 ## Requirements
@@ -125,16 +123,12 @@ extern crate serial_test;
 extern crate spice_derive;
 extern crate tool;
 
-/**
-Complete NASA/NAIF C SPICE binded functions, very unsafe.
-*/
 pub mod c {
+    /*!
+    Complete NASA/NAIF C SPICE binded functions, very unsafe.
+    */
     pub use cspice_sys::*;
 }
-
-/**
-An idiomatic Rust layer on top of the C wrapper.
-*/
 pub mod core;
 
 pub use crate::core::*;

@@ -1,5 +1,7 @@
 /*!
-# A Rust idiomatic interface to CSPICE.
+An idiomatic interface in Rust to CSPICE.
+
+## Description
 
 Below you will find the index of the CSPICE functions that are wrapped with an idiomatic Rust interface.
 
@@ -8,8 +10,10 @@ function to be implemented and we will do it immediately. Pull requests are warm
 speed up this process (do not forget to include a proper documentation and a test).
 
 In the meantime, if you are in a rush and need quickly to use a function not implemented with the
-Rust interface, use the unsafe C functions [here][c#functions]. You can find some inspiration in
+Rust interface, use the unsafe C functions [here][crate::c#functions]. You can find some inspiration in
 the source of this lib to deal with the FFI types and unsafe code.
+
+## Bindings
 
 CSPICE | **rust-spice** | Description
 -------|--------------|------------
@@ -21,21 +25,28 @@ CSPICE | **rust-spice** | Description
 [ckgp_c][ckgp_c link] | *TODO*
 [ckgpav_c][ckgpav_c link] | *TODO*
 [ckobj_c][ckobj_c link] | *TODO*
+[dascls_c][dascls_c link] | [`raw::dascls`] | DAS, close file
+[dasopr_c][dasopr_c link] | [`raw::dasopr`] | DAS, open for read
+[dlabfs_c][dlabfs_c link] | [`raw::dlabfs`] | DLA, begin forward search
+[dskgd_c][dskgd_c link] | [`raw::dskgd`] | DSK, return DSK segment descriptor
+[dskn02_c][dskn02_c link] | [`raw::dskn02`] | DSK, type 2, compute normal vector for plate
 [dskobj_c][dskobj_c link] | *TODO*
 [dskp02_c][dskp02_c link] | *TODO*
 [dsksrf_c][dsksrf_c link] | *TODO*
 [dskv02_c][dskv02_c link] | *TODO*
+[dskx02_c][dskx02_c link] | [`raw::dskx02`] | DSK, ray-surface intercept, type 2
 [dskz02_c][dskz02_c link] | *TODO*
-[furnsh_c][furnsh_c link] | [`raw::furnsh`] | loads an individual kernel or a collection of kernels
+[furnsh_c][furnsh_c link] | [`raw::furnsh`] | Furnish a program with SPICE kernels
 [gcpool_c][gcpool_c link] | *TODO*
 [gdpool_c][gdpool_c link] | *TODO*
 [getfov_c][getfov_c link] | *TODO*
 [gipool_c][gipool_c link] | *TODO*
+[latrec_c][latrec_c link] | [`raw::latrec`] | Latitudinal to rectangular coordinates
 [latsrf_c][latsrf_c link] | *TODO*
-[occult_c][occult_c link] | [`raw::occult`] | find occultation type at time
+[occult_c][occult_c link] | [`raw::occult`] | Find occultation type at time
 [pckcov_c][pckcov_c link] | *TODO*
-[pxform_c][pxform_c link] | [`raw::pxform`] | returns the 3x3 matrix rotating a position vector one frame to another
-[pxfrm2_c][pxfrm2_c link] | [`raw::pxfrm2`] | returns the 3x3 matrix rotating a position vector from one frame at a specified epoch to another frame at a different epoch
+[pxform_c][pxform_c link] | [`raw::pxform`] | Position Transformation Matrix
+[pxfrm2_c][pxfrm2_c link] | [`raw::pxfrm2`] | Position Transform Matrix, Different Epochs
 [sce2c_c][sce2c_c link] | *TODO*
 [sce2s_c][sce2s_c link] | *TODO*
 [scencd_c][scencd_c link] | *TODO*
@@ -49,16 +60,18 @@ CSPICE | **rust-spice** | Description
 [spkcvt_c][spkcvt_c link] | *TODO*
 [spkezr_c][spkezr_c link] | *TODO*
 [spkobj_c][spkobj_c link] | *TODO*
-[spkpos_c][spkpos_c link] | [`raw::spkpos`] | returns the position of a target body relative to an observing body
+[spkpos_c][spkpos_c link] | [`raw::spkpos`] | S/P Kernel, position
 [srfc2s_c][srfc2s_c link] | *TODO*
 [srfcss_c][srfcss_c link] | *TODO*
 [srfnrm_c][srfnrm_c link] | *TODO*
 [srfs2c_c][srfs2c_c link] | *TODO*
 [srfscc_c][srfscc_c link] | *TODO*
-[str2et_c][str2et_c link] | [`raw::str2et`] | converts a time string to ET seconds past J2000
+[str2et_c][str2et_c link] | [`raw::str2et`] | String to ET
 [sxform_c][sxform_c link] | *TODO*
-[timout_c][timout_c link] | [`neat::timout`] | converts ET seconds past J2000 to a time string
-[unload_c][unload_c link] | [`raw::unload`] | unloads an individual kernel or a collection of kernels
+[recrad_c][recrad_c link] | [`raw::recrad`] | Rectangular coordinates to RA and DEC
+[timout_c][timout_c link] | [`neat::timout`] | Time Output
+[unload_c][unload_c link] | [`raw::unload`] | Unload a kernel
+[vsep_c][vsep_c link] | [`raw::vsep`] | Angular separation of vectors, 3 dimensions
 
 [bodc2n_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/bodc2n_c.html
 [bodfnd_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/bodfnd_c.html
@@ -68,16 +81,23 @@ CSPICE | **rust-spice** | Description
 [ckgp_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/ckgp_c.html
 [ckgpav_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/ckgpav_c.html
 [ckobj_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/ckobj_c.html
+[dascls_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/dascls_c.html
+[dasopr_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/dasopr_c.html
+[dlabfs_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/dasopr_c.html
+[dskgd_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/dskgd_c.html
+[dskn02_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/dskn02_c.html
 [dskobj_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/dskobj_c.html
 [dskp02_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/dskp02_c.html
 [dsksrf_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/dsksrf_c.html
 [dskv02_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/dskv02_c.html
+[dskx02_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/dskx02_c.html
 [dskz02_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/dskz02_c.html
 [furnsh_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/furnsh_c.html
 [gcpool_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/gcpool_c.html
 [gdpool_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/gdpool_c.html
 [getfov_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/getfov_c.html
 [gipool_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/gipool_c.html
+[latrec_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/latrec_c.html
 [latsrf_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/latsrf_c.html
 [occult_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/occult_c.html
 [pxform_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/pxform_c.html
@@ -105,22 +125,20 @@ CSPICE | **rust-spice** | Description
 [srfscc_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/srfscc_c.html
 [str2et_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/str2et_c.html
 [sxform_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/sxform_c.html
+[recrad_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/recrad_c.html
 [timout_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/timout_c.html
 [unload_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/unload_c.html
+[vsep_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/vsep_c.html
 */
 
-/**
-A Rust idiomatic CSPICE wrapper built with procedural macros.
-*/
+pub mod neat;
 pub mod raw;
 
-/**
-Improvement on the procedurally generated functions.
-*/
-pub mod neat;
-
 pub use self::neat::timout;
-pub use self::raw::{furnsh, pxform, pxfrm2, spkpos, str2et, unload};
+pub use self::raw::{
+    dascls, dasopr, dlabfs, dskgd, dskn02, dskx02, furnsh, latrec, pxform, pxfrm2, recrad, spkpos,
+    str2et, unload, vsep,
+};
 
 /**
 Default date format.
