@@ -409,7 +409,7 @@ pub fn cspice_proc(input: TokenStream) -> TokenStream {
             }
         }
     };
-    if fname != "greg" {
+    if fname == "greg" {
         println!("{}", tokens);
     }
     tokens.into()
