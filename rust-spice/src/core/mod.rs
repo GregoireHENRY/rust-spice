@@ -137,7 +137,7 @@ pub mod raw;
 pub use self::neat::timout;
 pub use self::raw::{
     dascls, dasopr, dlabfs, dskgd, dskn02, dskx02, furnsh, latrec, pxform, pxfrm2, recrad, spkpos,
-    str2et, unload, vsep,
+    str2et, unload, vsep, DLADSC, DSKDSC,
 };
 
 /**
