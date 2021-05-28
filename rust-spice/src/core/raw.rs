@@ -5,6 +5,9 @@ A Rust idiomatic CSPICE wrapper built with [procedural macros][`spice_derive`].
 use crate::c;
 use spice_derive::{cspice_proc, return_output};
 
+pub type DLADSC = c::SpiceDLADescr;
+pub type DSKDSC = c::SpiceDSKDescr;
+
 cspice_proc!(
     /**
     Close a DAS file.
@@ -23,21 +26,21 @@ cspice_proc!(
     /**
     Begin a forward segment search in a DLA file.
     */
-    pub fn dlabfs(handle: i32) -> (c::SpiceDLADescr, bool) {}
+    pub fn dlabfs(handle: i32) -> (DLADSC, bool) {}
 );
 
 cspice_proc!(
     /**
     Return the DSK descriptor from a DSK segment identified  by a DAS handle and DLA descriptor.
     */
-    pub fn dskgd(handle: i32, dladsc: c::SpiceDLADescr) -> c::SpiceDSKDescr {}
+    pub fn dskgd(handle: i32, dladsc: DLADSC) -> DSKDSC {}
 );
 
 cspice_proc!(
     /**
     Compute the unit normal vector for a specified plate from a type 2 DSK segment.
     */
-    pub fn dskn02(handle: i32, dladsc: c::SpiceDLADescr, plid: i32) -> [f64; 3] {}
+    pub fn dskn02(handle: i32, dladsc: DLADSC, plid: i32) -> [f64; 3] {}
 );
 
 cspice_proc!(
@@ -47,7 +50,7 @@ cspice_proc!(
     */
     pub fn dskx02(
         handle: i32,
-        dladsc: c::SpiceDLADescr,
+        dladsc: DLADSC,
         vertex: [f64; 3],
         raydir: [f64; 3],
     ) -> (i32, [f64; 3], bool) {

@@ -52,7 +52,7 @@ let mut kernel = spice::furnsh("rsc/krn/hera_study_PO_EMA_2024.tm");
 let et = spice::str2et("2027-MAR-23 16:00:00");
 let (position, light_time) = spice::spkpos("DIMORPHOS", et, "J2000", "NONE", "SUN");
 
-// position -> 18.62640405424448, 21.054373008357004, -7.136291402940499
+// position -> 18.62640405424448, 21.54373008357003, -7.136291402940499
 // light time -> 0.00009674257074746383
 
 spice::unload("rsc/krn/hera_study_PO_EMA_2024.tm");
@@ -63,7 +63,7 @@ You can look for some inspirations in the [tests][tests link].
 ## In development
 
 Developing an idiomatic interface for Spice in Rust takes time, and not all
-functions are implemented yet. In the [module `**core**`][core], you will find
+functions are implemented yet. In the [module **`core`**][core], you will find
 a guide with the list of available functions. If yours is not, you can always
 use the [unsafe API][c] which contains all
 [cspice functions][cspice toolkit link].

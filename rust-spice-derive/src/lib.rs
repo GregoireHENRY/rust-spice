@@ -201,7 +201,7 @@ pub fn cspice_proc(input: TokenStream) -> TokenStream {
 
                     match ty.clone() {
                         Type::Path(tp) => match path_get_last_s_ident(&tp).as_str() {
-                            "SpiceDLADescr" => new_pat_type(format!("mut {}", tts!(pat)), tts!(ty)),
+                            "DLADSC" => new_pat_type(format!("mut {}", tts!(pat)), tts!(ty)),
                             _ => pt.clone(),
                         },
                         Type::Array(_) => new_pat_type(format!("mut {}", tts!(pat)), tts!(ty)),
@@ -230,7 +230,7 @@ pub fn cspice_proc(input: TokenStream) -> TokenStream {
                         "String" => pat_macro("crate::cstr", &format!("{}", ident)),
                         "f64" | "i32" => new_pat(ident),
                         "usize" => new_pat(format!("{} as i32", ident)),
-                        "SpiceDLADescr" => new_pat(format!("&mut {}", ident)),
+                        "DLADSC" => new_pat(format!("&mut {}", ident)),
                         _ => panic!("->1"),
                     },
                     Type::Reference(tr) => match *tr.elem {
@@ -286,7 +286,7 @@ pub fn cspice_proc(input: TokenStream) -> TokenStream {
                                 cspice_inputs.push(pat_ident(format!("&mut {}", ident.clone())));
                                 vars_out.push(new_pat(format!("{} != 0", ident.clone())));
                             }
-                            "SpiceDLADescr" => {
+                            "DLADSC" => {
                                 let ident = format!("varout_{}", vars_out_decl.len());
                                 vars_out_decl.push(declare(
                                     format!("mut {}", ident.clone()),
@@ -338,7 +338,7 @@ pub fn cspice_proc(input: TokenStream) -> TokenStream {
                             cspice_inputs.push(pat_ident(ident.clone()));
                             vars_out.push(new_pat(format!("crate::fcstr!({})", ident.clone())));
                         }
-                        "SpiceDSKDescr" => {
+                        "DSKDSC" => {
                             let ident = format!("varout_{}", vars_out_decl.len());
                             vars_out_decl.push(declare(
                                 format!("mut {}", ident.clone()),
