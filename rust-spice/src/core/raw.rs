@@ -5,7 +5,9 @@ A Rust idiomatic CSPICE wrapper built with [procedural macros][`spice_derive`].
 use crate::c;
 use spice_derive::{cspice_proc, return_output};
 
+#[allow(clippy::upper_case_acronyms)]
 pub type DLADSC = c::SpiceDLADescr;
+#[allow(clippy::upper_case_acronyms)]
 pub type DSKDSC = c::SpiceDSKDescr;
 
 cspice_proc!(
@@ -66,6 +68,14 @@ cspice_proc!(
 
 cspice_proc!(
     /**
+    Clear the KEEPER subsystem: unload all kernels, clear the kernel pool, and re-initialize the
+    subsystem. Existing watches on kernel variables are retained.
+    */
+    pub fn kclear() {}
+);
+
+cspice_proc!(
+    /**
     Convert from latitudinal coordinates to rectangular coordinates.
     */
     pub fn latrec(radius: f64, longitude: f64, latitude: f64) -> [f64; 3] {}
@@ -77,6 +87,7 @@ cspice_proc!(
     another target as seen by an observer at a given time, with targets modeled as points,
     ellipsoids, or digital shapes (DSK)
     */
+    #[allow(clippy::too_many_arguments)]
     pub fn occult<S: Into<String>>(
         targ1: S,
         shape1: S,

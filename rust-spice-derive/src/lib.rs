@@ -128,7 +128,7 @@ where
         attrs: vec![],
         let_token: Let::default(),
         pat: new_pat(ident),
-        init: init.map_or(None, |i| Some((Eq::default(), Box::new(new_expr(i))))),
+        init: init.map(|i| (Eq::default(), Box::new(new_expr(i)))),
         semi_token: Semi::default(),
     }
 }
@@ -179,11 +179,7 @@ pub fn cspice_proc(input: TokenStream) -> TokenStream {
     let fname = sig.ident.clone();
     let generics = sig.generics;
 
-    let return_output = attrs
-        .iter()
-        .filter(|attr| tts!(attr.path) == "return_output")
-        .next()
-        .is_some();
+    let return_output = attrs.iter().any(|attr| tts!(attr.path) == "return_output");
 
     let semi_call = semi(!return_output);
 
@@ -227,7 +223,7 @@ pub fn cspice_proc(input: TokenStream) -> TokenStream {
                 match ty {
                     Type::Path(tp) => match path_get_last_s_ident(&tp).as_str() {
                         "S" => pat_macro("crate::cstr", &format!("{}.into()", ident)),
-                        "String" => pat_macro("crate::cstr", &format!("{}", ident)),
+                        "String" => pat_macro("crate::cstr", &ident),
                         "f64" | "i32" => new_pat(ident),
                         "usize" => new_pat(format!("{} as i32", ident)),
                         "DLADSC" => new_pat(format!("&mut {}", ident)),
@@ -262,39 +258,38 @@ pub fn cspice_proc(input: TokenStream) -> TokenStream {
                             "f64" => {
                                 let ident = format!("varout_{}", vars_out_decl.len());
                                 vars_out_decl.push(declare(
-                                    format!("mut {}", ident.clone()),
+                                    format!("mut {}", ident),
                                     Some("0.0f64".to_string()),
                                 ));
-                                cspice_inputs.push(pat_ident(format!("&mut {}", ident.clone())));
-                                vars_out.push(pat_ident(ident.clone()));
+                                cspice_inputs.push(pat_ident(format!("&mut {}", ident)));
+                                vars_out.push(pat_ident(ident));
                             }
                             "i32" => {
                                 let ident = format!("varout_{}", vars_out_decl.len());
                                 vars_out_decl.push(declare(
-                                    format!("mut {}", ident.clone()),
+                                    format!("mut {}", ident),
                                     Some("0i32".to_string()),
                                 ));
-                                cspice_inputs.push(pat_ident(format!("&mut {}", ident.clone())));
-                                vars_out.push(pat_ident(ident.clone()));
+                                cspice_inputs.push(pat_ident(format!("&mut {}", ident)));
+                                vars_out.push(pat_ident(ident));
                             }
                             "bool" => {
                                 let ident = format!("varout_{}", vars_out_decl.len());
                                 vars_out_decl.push(declare(
-                                    format!("mut {}", ident.clone()),
+                                    format!("mut {}", ident),
                                     Some("0i32".to_string()),
                                 ));
-                                cspice_inputs.push(pat_ident(format!("&mut {}", ident.clone())));
-                                vars_out.push(new_pat(format!("{} != 0", ident.clone())));
+                                cspice_inputs.push(pat_ident(format!("&mut {}", ident)));
+                                vars_out.push(new_pat(format!("{} != 0", ident)));
                             }
                             "DLADSC" => {
                                 let ident = format!("varout_{}", vars_out_decl.len());
                                 vars_out_decl.push(declare(
-                                    format!("mut {}", ident.clone()),
+                                    format!("mut {}", ident),
                                     Some("std::mem::MaybeUninit::uninit()".to_string()),
                                 ));
-                                cspice_inputs
-                                    .push(new_pat(format!("{}.as_mut_ptr()", ident.clone())));
-                                vars_out.push(new_pat(format!("{}.assume_init()", ident.clone())));
+                                cspice_inputs.push(new_pat(format!("{}.as_mut_ptr()", ident)));
+                                vars_out.push(new_pat(format!("{}.assume_init()", ident)));
                             }
                             _ => panic!("->6"),
                         },
@@ -303,10 +298,9 @@ pub fn cspice_proc(input: TokenStream) -> TokenStream {
                             let pat_ident_fc = new_pat(format!("{}.as_mut_ptr()", ident));
                             let size = array_get_size(&ta);
                             let init = format!("{:?}", vec![0.0f64; size]);
-                            vars_out_decl
-                                .push(declare(format!("mut {}", ident.clone()), Some(init)));
+                            vars_out_decl.push(declare(format!("mut {}", ident), Some(init)));
                             cspice_inputs.push(pat_ident_fc);
-                            vars_out.push(pat_ident(ident.clone()));
+                            vars_out.push(pat_ident(ident));
                         }
                         _ => panic!("->7"),
                     }),
@@ -314,38 +308,34 @@ pub fn cspice_proc(input: TokenStream) -> TokenStream {
                         "f64" => {
                             let ident = format!("varout_{}", vars_out_decl.len());
                             vars_out_decl.push(declare(
-                                format!("mut {}", ident.clone()),
+                                format!("mut {}", ident),
                                 Some("0.0f64".to_string()),
                             ));
-                            cspice_inputs.push(pat_ident(format!("&mut {}", ident.clone())));
-                            vars_out.push(pat_ident(ident.clone()));
+                            cspice_inputs.push(pat_ident(format!("&mut {}", ident)));
+                            vars_out.push(pat_ident(ident));
                         }
                         "i32" => {
                             let ident = format!("varout_{}", vars_out_decl.len());
-                            vars_out_decl.push(declare(
-                                format!("mut {}", ident.clone()),
-                                Some("0i32".to_string()),
-                            ));
-                            cspice_inputs.push(pat_ident(format!("&mut {}", ident.clone())));
-                            vars_out.push(pat_ident(ident.clone()));
+                            vars_out_decl
+                                .push(declare(format!("mut {}", ident), Some("0i32".to_string())));
+                            cspice_inputs.push(pat_ident(format!("&mut {}", ident)));
+                            vars_out.push(pat_ident(ident));
                         }
                         "String" => {
                             let ident = format!("varout_{}", vars_out_decl.len());
-                            vars_out_decl.push(declare(
-                                format!("{}", ident.clone()),
-                                Some("crate::cstr!()".to_string()),
-                            ));
+                            vars_out_decl
+                                .push(declare(&ident, Some(&"crate::cstr!()".to_string())));
                             cspice_inputs.push(pat_ident(ident.clone()));
-                            vars_out.push(new_pat(format!("crate::fcstr!({})", ident.clone())));
+                            vars_out.push(new_pat(format!("crate::fcstr!({})", ident)));
                         }
                         "DSKDSC" => {
                             let ident = format!("varout_{}", vars_out_decl.len());
                             vars_out_decl.push(declare(
-                                format!("mut {}", ident.clone()),
+                                format!("mut {}", ident),
                                 Some("std::mem::MaybeUninit::uninit()".to_string()),
                             ));
-                            cspice_inputs.push(new_pat(format!("{}.as_mut_ptr()", ident.clone())));
-                            vars_out.push(new_pat(format!("{}.assume_init()", ident.clone())));
+                            cspice_inputs.push(new_pat(format!("{}.as_mut_ptr()", ident)));
+                            vars_out.push(new_pat(format!("{}.assume_init()", ident)));
                         }
                         _ => panic!("->8"),
                     },
@@ -356,10 +346,9 @@ pub fn cspice_proc(input: TokenStream) -> TokenStream {
                                 let pat_ident_fc = new_pat(format!("{}.as_mut_ptr()", ident));
                                 let size = array_get_size(&ta);
                                 let init = format!("{:?}", vec![0.0f64; size]);
-                                vars_out_decl
-                                    .push(declare(format!("mut {}", ident.clone()), Some(init)));
+                                vars_out_decl.push(declare(format!("mut {}", ident), Some(init)));
                                 cspice_inputs.push(pat_ident_fc);
-                                vars_out.push(pat_ident(ident.clone()));
+                                vars_out.push(pat_ident(ident));
                             }
                             _ => panic!("->12"),
                         },
@@ -371,12 +360,10 @@ pub fn cspice_proc(input: TokenStream) -> TokenStream {
                                     let size = array_get_size(&ta);
                                     let size_2 = array_get_size(&ta_2);
                                     let init = format!("{:?}", vec![vec![0.0f64; size_2]; size]);
-                                    vars_out_decl.push(declare(
-                                        format!("mut {}", ident.clone()),
-                                        Some(init),
-                                    ));
+                                    vars_out_decl
+                                        .push(declare(format!("mut {}", ident), Some(init)));
                                     cspice_inputs.push(pat_ident_fc);
-                                    vars_out.push(pat_ident(ident.clone()));
+                                    vars_out.push(pat_ident(ident));
                                 }
                                 _ => panic!("->13"),
                             },
