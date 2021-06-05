@@ -1,6 +1,6 @@
 [package]
 name = "rust-spice-derive"
-version = "0.6.9"
+version = "0.6.10"
 authors = ["Greg Henry <contact@greghenry.xyz>"]
 edition = "2018"
 description = "WOW! The complete NASA/NAIF Spice toolkit is actually usable on Rust."
@@ -14,7 +14,6 @@ name = "spice_derive"
 proc-macro = true
 
 [dependencies]
-proc-macro2 = "1.0.26"
-syn = {version = "1.0.72", features = ["full"]}
-quote = "1.0.9"
-# rustool = {git = "https://github.com/GregoireHENRY/rustool", branch = "dev"}
+proc-macro2 = "1.0"
+syn = {version = "1.0", features = ["full"]}
+quote = "1.0"
