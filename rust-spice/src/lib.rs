@@ -118,6 +118,7 @@ request for the implementation of a specific function.
 
 extern crate cspice_sys;
 extern crate itertools;
+extern crate libc;
 extern crate nalgebra as na;
 extern crate serial_test;
 extern crate spice_derive;

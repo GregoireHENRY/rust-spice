@@ -31,11 +31,11 @@ CSPICE | **rust-spice** | Description
 [dskgd_c][dskgd_c link] | [`raw::dskgd`] | DSK, return DSK segment descriptor
 [dskn02_c][dskn02_c link] | [`raw::dskn02`] | DSK, type 2, compute normal vector for plate
 [dskobj_c][dskobj_c link] | *TODO*
-[dskp02_c][dskp02_c link] | *TODO*
+[dskp02_c][dskp02_c link] | [`raw::dskp02`] | DSK, fetch type 2 plate data
 [dsksrf_c][dsksrf_c link] | *TODO*
 [dskv02_c][dskv02_c link] | *TODO*
 [dskx02_c][dskx02_c link] | [`raw::dskx02`] | DSK, ray-surface intercept, type 2
-[dskz02_c][dskz02_c link] | *TODO*
+[dskz02_c][dskz02_c link] | [`raw::dskz02`] | DSK, fetch type 2 model size parameters
 [furnsh_c][furnsh_c link] | [`raw::furnsh`] | Furnish a program with SPICE kernels
 [gcpool_c][gcpool_c link] | *TODO*
 [gdpool_c][gdpool_c link] | *TODO*
@@ -136,10 +136,10 @@ CSPICE | **rust-spice** | Description
 pub mod neat;
 pub mod raw;
 
-pub use self::neat::timout;
+pub use self::neat::{dskp02, timout};
 pub use self::raw::{
-    dascls, dasopr, dlabfs, dskgd, dskn02, dskx02, furnsh, kclear, latrec, pxform, pxfrm2, recrad,
-    spkpos, str2et, unload, vsep, DLADSC, DSKDSC,
+    dascls, dasopr, dlabfs, dskgd, dskn02, dskx02, dskz02, furnsh, kclear, latrec, pxform, pxfrm2,
+    recrad, spkpos, str2et, unload, vsep, DLADSC, DSKDSC,
 };
 
 /**
@@ -173,4 +173,54 @@ macro_rules! fcstr {
     ($s:expr) => {{
         unsafe { std::ffi::CStr::from_ptr($s).to_str().unwrap().to_string() }
     }};
+}
+
+/**
+Pointer to expression.
+*/
+#[macro_export]
+macro_rules! mptr {
+    ($e:expr) => {
+        $e.as_mut_ptr()
+    };
+}
+
+/**
+General solution to initialize a value to be sent as a pointer.
+*/
+#[macro_export]
+macro_rules! init_scalar {
+    () => {
+        std::mem::MaybeUninit::uninit();
+    };
+}
+
+/**
+General solution to get a value that has been updated after having sent its pointer.
+*/
+#[macro_export]
+macro_rules! get_scalar {
+    ($e:expr) => {
+        $e.assume_init()
+    };
+}
+
+/**
+Initialize a vector of array to be sent as a pointer.
+*/
+#[macro_export]
+macro_rules! ptr_vec_arr {
+    ($a:ty, $n:expr) => {
+        unsafe { libc::malloc(std::mem::size_of::<$a>() * $n as usize) as *mut $a }
+    };
+}
+
+/**
+Get a vector of array from the pointer to the array.
+*/
+#[macro_export]
+macro_rules! get_vec_arr {
+    ($e:expr, $n:expr) => {
+        std::slice::from_raw_parts($e, $n as usize).to_vec();
+    };
 }

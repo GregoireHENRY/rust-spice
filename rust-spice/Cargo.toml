@@ -22,6 +22,7 @@ serde_repr = "0.1"
 serial_test = "0.5.1"
 log = "0.4"
 thiserror = "1.0"
+libc = "0.2"
 cspice-sys = "0.0.1"
 rust-spice-derive = { version = "0.6.0", path = "../rust-spice-derive" }
 rustool = "0.3.20"

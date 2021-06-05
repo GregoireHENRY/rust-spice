@@ -2,7 +2,7 @@
 A Rust idiomatic CSPICE wrapper built with [procedural macros][`spice_derive`].
 */
 
-use crate::c;
+use crate::{c, get_scalar, get_vec_arr, init_scalar, mptr, ptr_vec_arr};
 use spice_derive::{cspice_proc, return_output};
 
 #[allow(clippy::upper_case_acronyms)]
@@ -45,6 +45,21 @@ cspice_proc!(
     pub fn dskn02(handle: i32, dladsc: DLADSC, plid: i32) -> [f64; 3] {}
 );
 
+/**
+Fetch triangular plates from a type 2 DSK segment.
+*/
+pub fn dskp02(handle: i32, mut dladsc: DLADSC, start: i32, room: i32) -> (i32, Vec<[i32; 3]>) {
+    let mut varout_0 = init_scalar!();
+    let varout_1 = ptr_vec_arr!([i32; 3], room);
+    unsafe {
+        crate::c::dskp02_c(handle, &mut dladsc, start, room, mptr!(varout_0), varout_1);
+        (
+            get_scalar!(varout_0),
+            get_vec_arr!(varout_1, get_scalar!(varout_0)),
+        )
+    }
+}
+
 cspice_proc!(
     /**
     Determine the plate ID and body-fixed coordinates of the intersection of a specified ray with
@@ -57,6 +72,13 @@ cspice_proc!(
         raydir: [f64; 3],
     ) -> (i32, [f64; 3], bool) {
     }
+);
+
+cspice_proc!(
+    /**
+    Return plate model size parameters---plate count and vertex count---for a type 2 DSK segment.
+    */
+    pub fn dskz02(handle: i32, dladsc: DLADSC) -> (i32, i32) {}
 );
 
 cspice_proc!(

@@ -23,7 +23,8 @@ use syn::{
     parse_macro_input, parse_quote,
     punctuated::Punctuated,
     token::{Colon, Eq, Let, Semi},
-    Expr, FnArg, ItemFn, Lit, Local, Pat, PatType, ReturnType, Token, Type, TypeArray, TypePath,
+    Expr, FnArg, GenericArgument, ItemFn, Lit, Local, Pat, PatType, PathArguments, ReturnType,
+    Token, Type, TypeArray, TypePath,
 };
 
 /**
@@ -151,8 +152,9 @@ fn array_get_size(arr: &TypeArray) -> usize {
 /**
 Get the [`String`] representation of the last [`PathSegment`] of a [`TypePath`].
 */
-fn path_get_last_s_ident(path: &TypePath) -> String {
-    path.path.segments.last().unwrap().ident.to_string()
+fn path_get_last_s_ident(path: &TypePath) -> (String, PathArguments) {
+    let seg = path.path.segments.last().unwrap();
+    (seg.ident.to_string(), seg.arguments.clone())
 }
 
 #[allow(unused)]
@@ -161,6 +163,18 @@ fn semi(b: bool) -> TS2 {
         Semi::default().to_token_stream()
     } else {
         TS2::new()
+    }
+}
+
+/**
+Get list of [`GenericArgument`]s in [`PathArguments`].
+*/
+#[allow(unused)]
+fn generic_arguments(pargs: &PathArguments) -> Vec<GenericArgument> {
+    if let PathArguments::AngleBracketed(abga) = &pargs {
+        abga.args.iter().cloned().collect::<Vec<_>>()
+    } else {
+        unreachable!("ParthArguments is not an AngleBracketed.")
     }
 }
 
@@ -196,7 +210,7 @@ pub fn cspice_proc(input: TokenStream) -> TokenStream {
                     let ty = *pt.clone().ty;
 
                     match ty.clone() {
-                        Type::Path(tp) => match path_get_last_s_ident(&tp).as_str() {
+                        Type::Path(tp) => match path_get_last_s_ident(&tp).0.as_str() {
                             "DLADSC" => new_pat_type(format!("mut {}", tts!(pat)), tts!(ty)),
                             _ => pt.clone(),
                         },
@@ -221,7 +235,7 @@ pub fn cspice_proc(input: TokenStream) -> TokenStream {
                 let ident = tts!(&pat);
 
                 match ty {
-                    Type::Path(tp) => match path_get_last_s_ident(&tp).as_str() {
+                    Type::Path(tp) => match path_get_last_s_ident(&tp).0.as_str() {
                         "S" => pat_macro("crate::cstr", &format!("{}.into()", ident)),
                         "String" => pat_macro("crate::cstr", &ident),
                         "f64" | "i32" => new_pat(ident),
@@ -230,7 +244,7 @@ pub fn cspice_proc(input: TokenStream) -> TokenStream {
                         _ => panic!("->1"),
                     },
                     Type::Reference(tr) => match *tr.elem {
-                        Type::Path(tp) => match path_get_last_s_ident(&tp).as_str() {
+                        Type::Path(tp) => match path_get_last_s_ident(&tp).0.as_str() {
                             "str" => pat_macro("crate::cstr", &format!("{}.to_string()", ident)),
                             _ => panic!("->2"),
                         },
@@ -254,45 +268,48 @@ pub fn cspice_proc(input: TokenStream) -> TokenStream {
             if !return_output {
                 match *ty.clone() {
                     Type::Tuple(tt) => tt.elems.iter().for_each(|e| match e {
-                        Type::Path(tp) => match path_get_last_s_ident(tp).as_str() {
-                            "f64" => {
-                                let ident = format!("varout_{}", vars_out_decl.len());
-                                vars_out_decl.push(declare(
-                                    format!("mut {}", ident),
-                                    Some("0.0f64".to_string()),
-                                ));
-                                cspice_inputs.push(pat_ident(format!("&mut {}", ident)));
-                                vars_out.push(pat_ident(ident));
+                        Type::Path(tp) => {
+                            let tpp = path_get_last_s_ident(tp);
+                            match tpp.0.as_str() {
+                                "f64" => {
+                                    let ident = format!("varout_{}", vars_out_decl.len());
+                                    vars_out_decl.push(declare(
+                                        format!("mut {}", ident),
+                                        Some("0.0f64".to_string()),
+                                    ));
+                                    cspice_inputs.push(pat_ident(format!("&mut {}", ident)));
+                                    vars_out.push(pat_ident(ident));
+                                }
+                                "i32" => {
+                                    let ident = format!("varout_{}", vars_out_decl.len());
+                                    vars_out_decl.push(declare(
+                                        format!("mut {}", ident),
+                                        Some("0i32".to_string()),
+                                    ));
+                                    cspice_inputs.push(pat_ident(format!("&mut {}", ident)));
+                                    vars_out.push(pat_ident(ident));
+                                }
+                                "bool" => {
+                                    let ident = format!("varout_{}", vars_out_decl.len());
+                                    vars_out_decl.push(declare(
+                                        format!("mut {}", ident),
+                                        Some("0i32".to_string()),
+                                    ));
+                                    cspice_inputs.push(pat_ident(format!("&mut {}", ident)));
+                                    vars_out.push(new_pat(format!("{} != 0", ident)));
+                                }
+                                "DLADSC" => {
+                                    let ident = format!("varout_{}", vars_out_decl.len());
+                                    vars_out_decl.push(declare(
+                                        format!("mut {}", ident),
+                                        Some("std::mem::MaybeUninit::uninit()".to_string()),
+                                    ));
+                                    cspice_inputs.push(new_pat(format!("{}.as_mut_ptr()", ident)));
+                                    vars_out.push(new_pat(format!("{}.assume_init()", ident)));
+                                }
+                                _ => panic!("->6: {}", tpp.0.as_str()),
                             }
-                            "i32" => {
-                                let ident = format!("varout_{}", vars_out_decl.len());
-                                vars_out_decl.push(declare(
-                                    format!("mut {}", ident),
-                                    Some("0i32".to_string()),
-                                ));
-                                cspice_inputs.push(pat_ident(format!("&mut {}", ident)));
-                                vars_out.push(pat_ident(ident));
-                            }
-                            "bool" => {
-                                let ident = format!("varout_{}", vars_out_decl.len());
-                                vars_out_decl.push(declare(
-                                    format!("mut {}", ident),
-                                    Some("0i32".to_string()),
-                                ));
-                                cspice_inputs.push(pat_ident(format!("&mut {}", ident)));
-                                vars_out.push(new_pat(format!("{} != 0", ident)));
-                            }
-                            "DLADSC" => {
-                                let ident = format!("varout_{}", vars_out_decl.len());
-                                vars_out_decl.push(declare(
-                                    format!("mut {}", ident),
-                                    Some("std::mem::MaybeUninit::uninit()".to_string()),
-                                ));
-                                cspice_inputs.push(new_pat(format!("{}.as_mut_ptr()", ident)));
-                                vars_out.push(new_pat(format!("{}.assume_init()", ident)));
-                            }
-                            _ => panic!("->6"),
-                        },
+                        }
                         Type::Array(ta) => {
                             let ident = format!("varout_{}", vars_out_decl.len());
                             let pat_ident_fc = new_pat(format!("{}.as_mut_ptr()", ident));
@@ -304,7 +321,7 @@ pub fn cspice_proc(input: TokenStream) -> TokenStream {
                         }
                         _ => panic!("->7"),
                     }),
-                    Type::Path(tp) => match path_get_last_s_ident(&tp).as_str() {
+                    Type::Path(tp) => match path_get_last_s_ident(&tp).0.as_str() {
                         "f64" => {
                             let ident = format!("varout_{}", vars_out_decl.len());
                             vars_out_decl.push(declare(
@@ -340,7 +357,7 @@ pub fn cspice_proc(input: TokenStream) -> TokenStream {
                         _ => panic!("->8"),
                     },
                     Type::Array(ta) => match *ta.clone().elem {
-                        Type::Path(tp) => match path_get_last_s_ident(&tp).as_str() {
+                        Type::Path(tp) => match path_get_last_s_ident(&tp).0.as_str() {
                             "f64" => {
                                 let ident = format!("varout_{}", vars_out_decl.len());
                                 let pat_ident_fc = new_pat(format!("{}.as_mut_ptr()", ident));
@@ -353,7 +370,7 @@ pub fn cspice_proc(input: TokenStream) -> TokenStream {
                             _ => panic!("->12"),
                         },
                         Type::Array(ta_2) => match *ta_2.clone().elem {
-                            Type::Path(tp) => match path_get_last_s_ident(&tp).as_str() {
+                            Type::Path(tp) => match path_get_last_s_ident(&tp).0.as_str() {
                                 "f64" => {
                                     let ident = format!("varout_{}", vars_out_decl.len());
                                     let pat_ident_fc = new_pat(format!("{}.as_mut_ptr()", ident));
@@ -396,7 +413,7 @@ pub fn cspice_proc(input: TokenStream) -> TokenStream {
             }
         }
     };
-    if fname == "greg" {
+    if fname == "dskp02" {
         println!("{}", tokens);
     }
     tokens.into()

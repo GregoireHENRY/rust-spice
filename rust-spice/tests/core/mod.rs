@@ -21,6 +21,36 @@ fn das() {
 
 #[test]
 #[serial]
+fn dskp02() {
+    spice::furnsh("rsc/krn/hera_study_PO_EMA_2024.tm");
+
+    let handle = spice::dasopr("rsc/krn/g_08438mm_lgt_obj_didb_0000n00000_v002.bds");
+    let (dladsc, _) = spice::dlabfs(handle);
+
+    let plates = spice::dskp02(handle, dladsc);
+
+    let expected_first_plate = [1, 2, 3];
+    let expected_last_plate = [1538, 849, 848];
+
+    assert_eq!(plates.len(), 3072);
+
+    for (component, expected_component) in
+        multizip((plates.first().unwrap().iter(), expected_first_plate.iter()))
+    {
+        assert_eq!(component, expected_component);
+    }
+
+    for (component, expected_component) in
+        multizip((plates.last().unwrap().iter(), expected_last_plate.iter()))
+    {
+        assert_eq!(component, expected_component);
+    }
+
+    spice::kclear();
+}
+
+#[test]
+#[serial]
 fn pxform() {
     spice::furnsh("rsc/krn/hera_study_PO_EMA_2024.tm");
 
