@@ -60,6 +60,21 @@ pub fn dskp02(handle: i32, mut dladsc: DLADSC, start: i32, room: i32) -> (i32, V
     }
 }
 
+/**
+Fetch vertices from a type 2 DSK segment.
+*/
+pub fn dskv02(handle: i32, mut dladsc: DLADSC, start: i32, room: i32) -> (i32, Vec<[f64; 3]>) {
+    let mut varout_0 = init_scalar!();
+    let varout_1 = ptr_vec_arr!([f64; 3], room);
+    unsafe {
+        crate::c::dskv02_c(handle, &mut dladsc, start, room, mptr!(varout_0), varout_1);
+        (
+            get_scalar!(varout_0),
+            get_vec_arr!(varout_1, get_scalar!(varout_0)),
+        )
+    }
+}
+
 cspice_proc!(
     /**
     Determine the plate ID and body-fixed coordinates of the intersection of a specified ray with

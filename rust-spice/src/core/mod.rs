@@ -31,9 +31,9 @@ CSPICE | **rust-spice** | Description
 [dskgd_c][dskgd_c link] | [`raw::dskgd`] | DSK, return DSK segment descriptor
 [dskn02_c][dskn02_c link] | [`raw::dskn02`] | DSK, type 2, compute normal vector for plate
 [dskobj_c][dskobj_c link] | *TODO*
-[dskp02_c][dskp02_c link] | [`raw::dskp02`] | DSK, fetch type 2 plate data
+[dskp02_c][dskp02_c link] | [`neat::dskp02`] | DSK, fetch type 2 plate data
 [dsksrf_c][dsksrf_c link] | *TODO*
-[dskv02_c][dskv02_c link] | *TODO*
+[dskv02_c][dskv02_c link] | [`neat::dskv02`] | DSK, fetch type 2 vertex data
 [dskx02_c][dskx02_c link] | [`raw::dskx02`] | DSK, ray-surface intercept, type 2
 [dskz02_c][dskz02_c link] | [`raw::dskz02`] | DSK, fetch type 2 model size parameters
 [furnsh_c][furnsh_c link] | [`raw::furnsh`] | Furnish a program with SPICE kernels
@@ -136,7 +136,7 @@ CSPICE | **rust-spice** | Description
 pub mod neat;
 pub mod raw;
 
-pub use self::neat::{dskp02, timout};
+pub use self::neat::{dskp02, dskv02, timout};
 pub use self::raw::{
     dascls, dasopr, dlabfs, dskgd, dskn02, dskx02, dskz02, furnsh, kclear, latrec, pxform, pxfrm2,
     recrad, spkpos, str2et, unload, vsep, DLADSC, DSKDSC,

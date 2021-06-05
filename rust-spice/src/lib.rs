@@ -124,6 +124,9 @@ extern crate serial_test;
 extern crate spice_derive;
 extern crate tool;
 
+/// The string version of **kalast**.
+pub const VERSION: &str = env!("CARGO_PKG_VERSION");
+
 pub mod c {
     /*!
     Complete NASA/NAIF C SPICE binded functions, very unsafe.
