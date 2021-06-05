@@ -98,6 +98,30 @@ cspice_proc!(
 
 cspice_proc!(
     /**
+    Compute the illumination angles---phase, incidence, and emission---at a specified point on a
+    target body. Return logical flags indicating whether the surface point is visible from the
+    observer's position and whether the surface point is illuminated.
+
+    The target body's surface is represented using topographic data provided by DSK files, or by a
+    reference ellipsoid.
+
+    The illumination source is a specified ephemeris object.
+    */
+    pub fn illumf<S: Into<String>>(
+        method: S,
+        target: S,
+        ilusrc: S,
+        et: f64,
+        fixref: S,
+        abcorr: S,
+        obsrvr: S,
+        spoint: [f64; 3],
+    ) -> (f64, [f64; 3], f64, f64, f64, bool, bool) {
+    }
+);
+
+cspice_proc!(
+    /**
     Load one or more SPICE kernels into a program.
     */
     pub fn furnsh<S: Into<String>>(name: S) {}

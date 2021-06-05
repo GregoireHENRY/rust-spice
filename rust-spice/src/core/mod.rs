@@ -41,6 +41,7 @@ CSPICE | **rust-spice** | Description
 [gdpool_c][gdpool_c link] | *TODO*
 [getfov_c][getfov_c link] | *TODO*
 [gipool_c][gipool_c link] | *TODO*
+[illumf_c][illumf_c link] | [`raw::illumf`] | Illumination angles, general source, return flags
 [kclear_c][kclear_c link] | [`raw::kclear`] | Keeper clear
 [latrec_c][latrec_c link] | [`raw::latrec`] | Latitudinal to rectangular coordinates
 [latsrf_c][latsrf_c link] | *TODO*
@@ -98,6 +99,7 @@ CSPICE | **rust-spice** | Description
 [gdpool_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/gdpool_c.html
 [getfov_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/getfov_c.html
 [gipool_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/gipool_c.html
+[illumf_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/illumf_c.html
 [kclear_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/kclear_c.html
 [latrec_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/latrec_c.html
 [latsrf_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/latsrf_c.html
@@ -138,8 +140,8 @@ pub mod raw;
 
 pub use self::neat::{dskp02, dskv02, timout};
 pub use self::raw::{
-    dascls, dasopr, dlabfs, dskgd, dskn02, dskx02, dskz02, furnsh, kclear, latrec, pxform, pxfrm2,
-    recrad, spkpos, str2et, unload, vsep, DLADSC, DSKDSC,
+    dascls, dasopr, dlabfs, dskgd, dskn02, dskx02, dskz02, furnsh, illumf, kclear, latrec, pxform,
+    pxfrm2, recrad, spkpos, str2et, unload, vsep, DLADSC, DSKDSC,
 };
 
 /**

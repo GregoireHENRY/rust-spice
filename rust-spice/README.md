@@ -9,7 +9,7 @@
 [![coverage doc badge]][coverage doc link]
 [![coverage test badge]][coverage test link]
 
-> WOW! The complete **NASA/NAIF Spice** toolkit is actually usable on Rust
+> **WOW! The complete NASA/NAIF Spice toolkit is actually usable on Rust**
 
 ---
 
