@@ -289,6 +289,13 @@ pub fn cspice_proc(input: TokenStream) -> TokenStream {
                                     cspice_inputs.push(pat_ident(format!("&mut {}", ident)));
                                     vars_out.push(pat_ident(ident));
                                 }
+                                "String" => {
+                                    let ident = format!("varout_{}", vars_out_decl.len());
+                                    vars_out_decl
+                                        .push(declare(&ident, Some(&"crate::cstr!()".to_string())));
+                                    cspice_inputs.push(pat_ident(ident.clone()));
+                                    vars_out.push(new_pat(format!("crate::fcstr!({})", ident)));
+                                }
                                 "bool" => {
                                     let ident = format!("varout_{}", vars_out_decl.len());
                                     vars_out_decl.push(declare(

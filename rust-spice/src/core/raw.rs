@@ -137,6 +137,29 @@ cspice_proc!(
 
 cspice_proc!(
     /**
+    Return the current number of kernels that have been loaded via the KEEPER interface that are of
+    a specified type.
+    */
+    pub fn kdata<S: Into<String>>(
+        which: i32,
+        kind: S,
+        fillen: i32,
+        typlen: i32,
+        srclen: i32,
+    ) -> (String, String, String, i32, bool) {
+    }
+);
+
+cspice_proc!(
+    /**
+    Return the current number of kernels that have been loaded via the KEEPER interface that are of
+    a specified type.
+    */
+    pub fn ktotal<S: Into<String>>(kind: S) -> i32 {}
+);
+
+cspice_proc!(
+    /**
     Convert from latitudinal coordinates to rectangular coordinates.
     */
     pub fn latrec(radius: f64, longitude: f64, latitude: f64) -> [f64; 3] {}

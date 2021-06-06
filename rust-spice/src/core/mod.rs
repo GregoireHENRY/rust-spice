@@ -43,6 +43,8 @@ CSPICE | **rust-spice** | Description
 [gipool_c][gipool_c link] | *TODO*
 [illumf_c][illumf_c link] | [`raw::illumf`] | Illumination angles, general source, return flags
 [kclear_c][kclear_c link] | [`raw::kclear`] | Keeper clear
+[kdata_c][kdata_c link] | [`raw::kdata`] | Kernel Data
+[ktotal_c][ktotal_c link] | [`raw::ktotal`] | Kernel Totals
 [latrec_c][latrec_c link] | [`raw::latrec`] | Latitudinal to rectangular coordinates
 [latsrf_c][latsrf_c link] | *TODO*
 [occult_c][occult_c link] | [`raw::occult`] | Find occultation type at time
@@ -101,6 +103,8 @@ CSPICE | **rust-spice** | Description
 [gipool_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/gipool_c.html
 [illumf_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/illumf_c.html
 [kclear_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/kclear_c.html
+[kdata_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/kdata_c.html
+[ktotal_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/ktotal_c.html
 [latrec_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/latrec_c.html
 [latsrf_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/latsrf_c.html
 [occult_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/occult_c.html
@@ -140,8 +144,8 @@ pub mod raw;
 
 pub use self::neat::{dskp02, dskv02, timout};
 pub use self::raw::{
-    dascls, dasopr, dlabfs, dskgd, dskn02, dskx02, dskz02, furnsh, illumf, kclear, latrec, pxform,
-    pxfrm2, recrad, spkpos, str2et, unload, vsep, DLADSC, DSKDSC,
+    dascls, dasopr, dlabfs, dskgd, dskn02, dskx02, dskz02, furnsh, illumf, kclear, kdata, ktotal,
+    latrec, pxform, pxfrm2, recrad, spkpos, str2et, unload, vsep, DLADSC, DSKDSC,
 };
 
 /**

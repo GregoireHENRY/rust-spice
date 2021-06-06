@@ -12,7 +12,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.6.7 - 0.6.9] - 2021-06-05
+## [0.6.11] - 2021-06-06
+
+### Added
+
++ ktotal
++ kdata
+
+## [0.6.7 - 0.6.10] - 2021-06-05
 
 ### Added
 
