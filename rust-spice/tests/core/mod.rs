@@ -147,3 +147,27 @@ fn vsep() {
     assert_relative_eq!(ang_1, 0.0, epsilon = f64::EPSILON);
     assert_relative_eq!(ang_2, tool::TAU / 4., epsilon = f64::EPSILON);
 }
+
+#[test]
+#[serial]
+fn kdata() {
+    spice::furnsh("/home/greg/doc/krn/hera/mk/hera_study_PO_EMA_2024.tm");
+
+    let count = spice::ktotal("dsk");
+    assert_eq!(count, 2);
+
+    let (file, filtyp, source, handle, found) = spice::kdata(0, "dsk");
+    assert_eq!(
+        file,
+        "/home/greg/doc/krn/hera/dsk/g_50677mm_rad_obj_dida_0000n00000_v001.bds"
+    );
+    assert_eq!(filtyp, "DSK");
+    assert_eq!(
+        source,
+        "/home/greg/doc/krn/hera/mk/hera_study_PO_EMA_2024.tm"
+    );
+    assert!(handle.is_positive());
+    assert_eq!(found, true);
+
+    spice::kclear();
+}

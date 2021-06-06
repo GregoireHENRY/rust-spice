@@ -420,7 +420,7 @@ pub fn cspice_proc(input: TokenStream) -> TokenStream {
             }
         }
     };
-    if fname == "dskp02" {
+    if fname == "greg" {
         println!("{}", tokens);
     }
     tokens.into()

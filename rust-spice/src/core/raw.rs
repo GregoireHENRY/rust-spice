@@ -2,7 +2,7 @@
 A Rust idiomatic CSPICE wrapper built with [procedural macros][`spice_derive`].
 */
 
-use crate::{c, get_scalar, get_vec_arr, init_scalar, mptr, ptr_vec_arr};
+use crate::{c, cstr, fcstr, get_scalar, get_varr, init_scalar, malloc, mallocstr, mptr};
 use spice_derive::{cspice_proc, return_output};
 
 #[allow(clippy::upper_case_acronyms)]
@@ -47,30 +47,34 @@ cspice_proc!(
 
 /**
 Fetch triangular plates from a type 2 DSK segment.
+
+This function has a [neat version][crate::neat::dskp02].
 */
 pub fn dskp02(handle: i32, mut dladsc: DLADSC, start: i32, room: i32) -> (i32, Vec<[i32; 3]>) {
     let mut varout_0 = init_scalar!();
-    let varout_1 = ptr_vec_arr!([i32; 3], room);
+    let varout_1 = malloc!([i32; 3], room);
     unsafe {
         crate::c::dskp02_c(handle, &mut dladsc, start, room, mptr!(varout_0), varout_1);
         (
             get_scalar!(varout_0),
-            get_vec_arr!(varout_1, get_scalar!(varout_0)),
+            get_varr!(varout_1, get_scalar!(varout_0)),
         )
     }
 }
 
 /**
 Fetch vertices from a type 2 DSK segment.
+
+This function has a [neat version][crate::neat::dskv02].
 */
 pub fn dskv02(handle: i32, mut dladsc: DLADSC, start: i32, room: i32) -> (i32, Vec<[f64; 3]>) {
     let mut varout_0 = init_scalar!();
-    let varout_1 = ptr_vec_arr!([f64; 3], room);
+    let varout_1 = malloc!([f64; 3], room);
     unsafe {
         crate::c::dskv02_c(handle, &mut dladsc, start, room, mptr!(varout_0), varout_1);
         (
             get_scalar!(varout_0),
-            get_vec_arr!(varout_1, get_scalar!(varout_0)),
+            get_varr!(varout_1, get_scalar!(varout_0)),
         )
     }
 }
@@ -135,20 +139,46 @@ cspice_proc!(
     pub fn kclear() {}
 );
 
-cspice_proc!(
-    /**
-    Return the current number of kernels that have been loaded via the KEEPER interface that are of
-    a specified type.
-    */
-    pub fn kdata<S: Into<String>>(
-        which: i32,
-        kind: S,
-        fillen: i32,
-        typlen: i32,
-        srclen: i32,
-    ) -> (String, String, String, i32, bool) {
+/**
+Fetch vertices from a type 2 DSK segment.
+
+This function has a [neat version][crate::neat::kdata].
+*/
+pub fn kdata<S: Into<String>>(
+    which: i32,
+    kind: S,
+    fillen: i32,
+    typlen: i32,
+    srclen: i32,
+) -> (String, String, String, i32, bool) {
+    #[allow(unused_unsafe)]
+    unsafe {
+        let varout_0 = mallocstr!(fillen);
+        let varout_1 = mallocstr!(typlen);
+        let varout_2 = mallocstr!(srclen);
+        let mut varout_3 = 0i32;
+        let mut varout_4 = 0i32;
+        crate::c::kdata_c(
+            which,
+            cstr!(kind.into()),
+            fillen,
+            typlen,
+            srclen,
+            varout_0,
+            varout_1,
+            varout_2,
+            &mut varout_3,
+            &mut varout_4,
+        );
+        (
+            fcstr!(varout_0),
+            fcstr!(varout_1),
+            fcstr!(varout_2),
+            varout_3,
+            varout_4 != 0,
+        )
     }
-);
+}
 
 cspice_proc!(
     /**
@@ -236,6 +266,7 @@ cspice_proc!(
     /**
     This routine converts an input epoch represented in TDB seconds past the TDB epoch of J2000 to a
     character string formatted to the specifications of a user's format picture.
+
     This function has a [neat version][crate::neat::timout].
     */
     pub fn timout<S: Into<String>>(et: f64, pictur: S, lenout: usize) -> String {}

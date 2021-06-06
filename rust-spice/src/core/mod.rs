@@ -43,7 +43,7 @@ CSPICE | **rust-spice** | Description
 [gipool_c][gipool_c link] | *TODO*
 [illumf_c][illumf_c link] | [`raw::illumf`] | Illumination angles, general source, return flags
 [kclear_c][kclear_c link] | [`raw::kclear`] | Keeper clear
-[kdata_c][kdata_c link] | [`raw::kdata`] | Kernel Data
+[kdata_c][kdata_c link] | [`neat::kdata`] | Kernel Data
 [ktotal_c][ktotal_c link] | [`raw::ktotal`] | Kernel Totals
 [latrec_c][latrec_c link] | [`raw::latrec`] | Latitudinal to rectangular coordinates
 [latsrf_c][latsrf_c link] | *TODO*
@@ -161,7 +161,27 @@ pub const TIME_FORMAT_SIZE: usize = TIME_FORMAT.len();
 /**
 Maximum size of string outputs.
 */
-pub const MAX_LEN_OUT: usize = 1024;
+pub const MAX_LEN_OUT: usize = 256;
+
+/**
+Allocate for a given type and number of elements.
+*/
+#[macro_export]
+macro_rules! malloc {
+    ($a:ty, $n:expr) => {
+        unsafe { libc::malloc(std::mem::size_of::<$a>() * $n as usize) as *mut $a }
+    };
+}
+
+/**
+Allocate [`*mut i8`][`std::os::raw::c_char`] to be sent as a pointer to a string.
+*/
+#[macro_export]
+macro_rules! mallocstr {
+    ($s:expr) => {
+        crate::malloc!(i8, $s);
+    };
+}
 
 /**
 Convert [`String`] to [`*mut i8`][`std::os::raw::c_char`].
@@ -197,7 +217,7 @@ macro_rules! mptr {
 }
 
 /**
-General solution to initialize a value to be sent as a pointer.
+Allocate a scalar to be sent as a pointer.
 */
 #[macro_export]
 macro_rules! init_scalar {
@@ -207,7 +227,7 @@ macro_rules! init_scalar {
 }
 
 /**
-General solution to get a value that has been updated after having sent its pointer.
+Retrieve a value from a pointer to a scalar created using [`init_scalar`].
 */
 #[macro_export]
 macro_rules! get_scalar {
@@ -217,20 +237,10 @@ macro_rules! get_scalar {
 }
 
 /**
-Initialize a vector of array to be sent as a pointer.
-*/
-#[macro_export]
-macro_rules! ptr_vec_arr {
-    ($a:ty, $n:expr) => {
-        unsafe { libc::malloc(std::mem::size_of::<$a>() * $n as usize) as *mut $a }
-    };
-}
-
-/**
 Get a vector of array from the pointer to the array.
 */
 #[macro_export]
-macro_rules! get_vec_arr {
+macro_rules! get_varr {
     ($e:expr, $n:expr) => {
         std::slice::from_raw_parts($e, $n as usize).to_vec();
     };
