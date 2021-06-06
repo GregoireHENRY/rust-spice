@@ -41,3 +41,17 @@ pub fn dskv02(handle: i32, dladsc: raw::DLADSC) -> Vec<[f64; 3]> {
     let (nv, _) = raw::dskz02(handle, dladsc);
     raw::dskv02(handle, dladsc, 1, nv).1
 }
+
+/**
+Return the current number of kernels that have been loaded via the KEEPER interface that are of
+a specified type.
+*/
+pub fn kdata<S: Into<String>>(which: i32, kind: S) -> (String, String, String, i32, bool) {
+    raw::kdata(
+        which,
+        kind,
+        super::MAX_LEN_OUT as i32,
+        super::MAX_LEN_OUT as i32,
+        super::MAX_LEN_OUT as i32,
+    )
+}

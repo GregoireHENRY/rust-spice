@@ -142,10 +142,10 @@ CSPICE | **rust-spice** | Description
 pub mod neat;
 pub mod raw;
 
-pub use self::neat::{dskp02, dskv02, timout};
+pub use self::neat::{dskp02, dskv02, kdata, timout};
 pub use self::raw::{
-    dascls, dasopr, dlabfs, dskgd, dskn02, dskx02, dskz02, furnsh, illumf, kclear, kdata, ktotal,
-    latrec, pxform, pxfrm2, recrad, spkpos, str2et, unload, vsep, DLADSC, DSKDSC,
+    dascls, dasopr, dlabfs, dskgd, dskn02, dskx02, dskz02, furnsh, illumf, kclear, ktotal, latrec,
+    pxform, pxfrm2, recrad, spkpos, str2et, unload, vsep, DLADSC, DSKDSC,
 };
 
 /**
@@ -157,6 +157,11 @@ pub const TIME_FORMAT: &str = "YYYY-MON-DD HR:MN:SC ::RND";
 Size of the default date format.
 */
 pub const TIME_FORMAT_SIZE: usize = TIME_FORMAT.len();
+
+/**
+Maximum size of string outputs.
+*/
+pub const MAX_LEN_OUT: usize = 1024;
 
 /**
 Convert [`String`] to [`*mut i8`][`std::os::raw::c_char`].
