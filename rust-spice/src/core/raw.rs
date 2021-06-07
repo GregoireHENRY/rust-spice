@@ -66,8 +66,17 @@ impl DerefMut for Cell {
 cspice_proc!(
     /**
     Translate the SPICE integer code of a body into a common name for that body.
+
+    This function has a [neat version][crate::neat::bodyc2n].
     */
     pub fn bodc2n(code: i32, lenout: i32) -> (String, bool) {}
+);
+
+cspice_proc!(
+    /**
+    Translate the name of a body or object to the corresponding SPICE integer ID code.
+    */
+    pub fn bodn2c<S: Into<String>>(name: S) -> (i32, bool) {}
 );
 
 cspice_proc!(

@@ -9,13 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.6.14] - 2021-06-07
+## [0.6.14 - 0.6.15] - 2021-06-07
 
 ### Added
 
 + dskobj
 + Cell (only integer for now)
 + bodc2n
++ bodn2c
 
 ## [0.6.11 - 0.6.13] - 2021-06-06
 

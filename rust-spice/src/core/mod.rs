@@ -17,9 +17,9 @@ the source of this lib to deal with the FFI types and unsafe code.
 
 CSPICE | **rust-spice** | Description
 -------|--------------|------------
-[bodc2n_c][bodc2n_c link] | [`raw::bodc2n`] | Body ID code to name translation
+[bodc2n_c][bodc2n_c link] | [`neat::bodc2n`] | Body ID code to name translation
 [bodfnd_c][bodfnd_c link] | *TODO*
-[bodn2c_c][bodn2c_c link] | *TODO*
+[bodn2c_c][bodn2c_c link] | [`raw::bodn2c`] | Body name to ID code translation
 [bodvrd_c][bodvrd_c link] | *TODO*
 [ckcov_c][ckcov_c link] | *TODO*
 [ckgp_c][ckgp_c link] | *TODO*
@@ -144,8 +144,8 @@ pub mod raw;
 
 pub use self::neat::{bodc2n, dskp02, dskv02, kdata, timout};
 pub use self::raw::{
-    dascls, dasopr, dlabfs, dskgd, dskn02, dskobj, dskx02, dskz02, furnsh, illumf, kclear, ktotal,
-    latrec, pxform, pxfrm2, recrad, spkpos, str2et, unload, vsep, Cell, DLADSC, DSKDSC,
+    bodn2c, dascls, dasopr, dlabfs, dskgd, dskn02, dskobj, dskx02, dskz02, furnsh, illumf, kclear,
+    ktotal, latrec, pxform, pxfrm2, recrad, spkpos, str2et, unload, vsep, Cell, DLADSC, DSKDSC,
 };
 
 /**
