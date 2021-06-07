@@ -17,10 +17,19 @@ use crate::raw;
 use crate::MAX_LEN_OUT;
 
 /**
+Translate the SPICE integer code of a body into a common name for that body.
+
+See [`raw::bodc2n`] for the raw interface.
+*/
+pub fn bodc2n(code: i32) -> (String, bool) {
+    raw::bodc2n(code, MAX_LEN_OUT as i32)
+}
+
+/**
 This routine converts an input epoch represented in TDB seconds past the TDB epoch of J2000 to a
 character string formatted to the specifications of a user's format picture.
 
-See [`raw::dskp02`] for the raw interface.
+See [`raw::timout`] for the raw interface.
 */
 pub fn timout<S>(et: f64, pictur: S) -> String
 where

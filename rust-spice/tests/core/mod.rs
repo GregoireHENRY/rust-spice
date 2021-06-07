@@ -171,3 +171,21 @@ fn kdata() {
 
     spice::kclear();
 }
+
+#[test]
+#[serial]
+fn cell() {
+    spice::furnsh("/home/greg/doc/krn/hera/mk/hera_study_PO_EMA_2024.tm");
+
+    let (file, _, _, _, found) = spice::kdata(1, "dsk");
+    assert!(found);
+
+    let cell = spice::dskobj(file);
+
+    assert_eq!(cell.card, 1);
+    assert_eq!(cell.get_data_int(0), -658031);
+
+    assert_eq!(spice::bodc2n(cell.get_data_int(0)).0, "DIMORPHOS");
+
+    spice::kclear();
+}

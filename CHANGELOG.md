@@ -7,10 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## TODO
 
-+ write idiomatic Rust wrapper for every "most common" spice functions
-+ write idiomatic Rust wrapper for every spice functions
-
 ## [Unreleased]
+
+## [0.6.14] - 2021-06-07
+
+### Added
+
++ dskobj
++ Cell (only integer for now)
++ bodc2n
 
 ## [0.6.11 - 0.6.13] - 2021-06-06
 

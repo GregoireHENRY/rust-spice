@@ -17,7 +17,7 @@ the source of this lib to deal with the FFI types and unsafe code.
 
 CSPICE | **rust-spice** | Description
 -------|--------------|------------
-[bodc2n_c][bodc2n_c link] | *TODO*
+[bodc2n_c][bodc2n_c link] | [`raw::bodc2n`] | Body ID code to name translation
 [bodfnd_c][bodfnd_c link] | *TODO*
 [bodn2c_c][bodn2c_c link] | *TODO*
 [bodvrd_c][bodvrd_c link] | *TODO*
@@ -30,7 +30,7 @@ CSPICE | **rust-spice** | Description
 [dlabfs_c][dlabfs_c link] | [`raw::dlabfs`] | DLA, begin forward search
 [dskgd_c][dskgd_c link] | [`raw::dskgd`] | DSK, return DSK segment descriptor
 [dskn02_c][dskn02_c link] | [`raw::dskn02`] | DSK, type 2, compute normal vector for plate
-[dskobj_c][dskobj_c link] | *TODO*
+[dskobj_c][dskobj_c link] | [`raw::dskobj`] | DSK, get object IDs
 [dskp02_c][dskp02_c link] | [`neat::dskp02`] | DSK, fetch type 2 plate data
 [dsksrf_c][dsksrf_c link] | *TODO*
 [dskv02_c][dskv02_c link] | [`neat::dskv02`] | DSK, fetch type 2 vertex data
@@ -142,10 +142,10 @@ CSPICE | **rust-spice** | Description
 pub mod neat;
 pub mod raw;
 
-pub use self::neat::{dskp02, dskv02, kdata, timout};
+pub use self::neat::{bodc2n, dskp02, dskv02, kdata, timout};
 pub use self::raw::{
-    dascls, dasopr, dlabfs, dskgd, dskn02, dskx02, dskz02, furnsh, illumf, kclear, ktotal, latrec,
-    pxform, pxfrm2, recrad, spkpos, str2et, unload, vsep, DLADSC, DSKDSC,
+    dascls, dasopr, dlabfs, dskgd, dskn02, dskobj, dskx02, dskz02, furnsh, illumf, kclear, ktotal,
+    latrec, pxform, pxfrm2, recrad, spkpos, str2et, unload, vsep, Cell, DLADSC, DSKDSC,
 };
 
 /**

@@ -347,8 +347,10 @@ pub fn cspice_proc(input: TokenStream) -> TokenStream {
                         }
                         "String" => {
                             let ident = format!("varout_{}", vars_out_decl.len());
-                            vars_out_decl
-                                .push(declare(&ident, Some(&"crate::cstr!()".to_string())));
+                            vars_out_decl.push(declare(
+                                &ident,
+                                Some(&"mallocstr!(MAX_LEN_OUT)".to_string()),
+                            ));
                             cspice_inputs.push(pat_ident(ident.clone()));
                             vars_out.push(new_pat(format!("crate::fcstr!({})", ident)));
                         }
@@ -360,6 +362,15 @@ pub fn cspice_proc(input: TokenStream) -> TokenStream {
                             ));
                             cspice_inputs.push(new_pat(format!("{}.as_mut_ptr()", ident)));
                             vars_out.push(new_pat(format!("{}.assume_init()", ident)));
+                        }
+                        "Cell" => {
+                            let ident = format!("varout_{}", vars_out_decl.len());
+                            vars_out_decl.push(declare(
+                                format!("mut {}", ident),
+                                Some("Cell::new_int()".to_string()),
+                            ));
+                            cspice_inputs.push(new_pat(format!("&mut {}.0", ident)));
+                            vars_out.push(new_pat(ident));
                         }
                         _ => panic!("->8"),
                     },
@@ -420,7 +431,7 @@ pub fn cspice_proc(input: TokenStream) -> TokenStream {
             }
         }
     };
-    if fname == "greg" {
+    if fname == "timout" {
         println!("{}", tokens);
     }
     tokens.into()

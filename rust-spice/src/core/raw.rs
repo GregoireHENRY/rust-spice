@@ -4,15 +4,75 @@ A Rust idiomatic CSPICE wrapper built with [procedural macros][`spice_derive`].
 
 use crate::{c, cstr, fcstr, get_scalar, get_varr, init_scalar, malloc, mallocstr, mptr};
 use spice_derive::{cspice_proc, return_output};
+use std::ops::{Deref, DerefMut};
 
 #[allow(clippy::upper_case_acronyms)]
 pub type DLADSC = c::SpiceDLADescr;
 #[allow(clippy::upper_case_acronyms)]
 pub type DSKDSC = c::SpiceDSKDescr;
+#[allow(clippy::upper_case_acronyms)]
+pub type CELL = c::SpiceCell;
+pub const CELL_MAXID: usize = 10_000;
+
+/**
+A cell is a data structure intended to provide safe array access within the applications.
+
+See the [C documentation](https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/req/cells.html).
+*/
+#[derive(Debug)]
+pub struct Cell(c::SpiceCell);
+
+impl Cell {
+    /**
+    Declare a cell from integer.
+    */
+    pub fn new_int() -> Self {
+        let base = malloc!(i32, CELL_MAXID + c::SPICE_CELL_CTRLSZ as usize);
+        Self(CELL {
+            dtype: c::_SpiceDataType_SPICE_INT,
+            length: 0i32,
+            size: CELL_MAXID as i32,
+            card: 0i32,
+            isSet: 1i32,
+            adjust: 0i32,
+            init: 0i32,
+            base: base as *mut libc::c_void,
+            data: base.wrapping_add(c::SPICE_CELL_CTRLSZ as usize) as *mut libc::c_void,
+        })
+    }
+
+    /**
+    Declare data from a cell at index.
+    */
+    pub fn get_data_int(&self, index: usize) -> i32 {
+        unsafe { *(self.data as *mut i32).wrapping_add(index) }
+    }
+}
+
+impl Deref for Cell {
+    type Target = c::SpiceCell;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl DerefMut for Cell {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
 
 cspice_proc!(
     /**
-    Close a DAS file.
+    Translate the SPICE integer code of a body into a common name for that body.
+    */
+    pub fn bodc2n(code: i32, lenout: i32) -> (String, bool) {}
+);
+
+cspice_proc!(
+    /**
+    close a das file.
     */
     pub fn dascls(handle: i32) {}
 );
@@ -43,6 +103,14 @@ cspice_proc!(
     Compute the unit normal vector for a specified plate from a type 2 DSK segment.
     */
     pub fn dskn02(handle: i32, dladsc: DLADSC, plid: i32) -> [f64; 3] {}
+);
+
+cspice_proc!(
+    /**
+    Find the set of body ID codes of all objects for which topographic data are provided in a
+    specified DSK file.
+    */
+    pub fn dskobj<S: Into<String>>(dsk: S) -> Cell {}
 );
 
 /**
@@ -262,15 +330,19 @@ cspice_proc!(
     pub fn str2et<S: Into<String>>(targ: S) -> f64 {}
 );
 
-cspice_proc!(
-    /**
-    This routine converts an input epoch represented in TDB seconds past the TDB epoch of J2000 to a
-    character string formatted to the specifications of a user's format picture.
+/**
+This routine converts an input epoch represented in TDB seconds past the TDB epoch of J2000 to a
+character string formatted to the specifications of a user's format picture.
 
-    This function has a [neat version][crate::neat::timout].
-    */
-    pub fn timout<S: Into<String>>(et: f64, pictur: S, lenout: usize) -> String {}
-);
+This function has a [neat version][crate::neat::timout].
+*/
+pub fn timout<S: Into<String>>(et: f64, pictur: S, lenout: usize) -> String {
+    let varout_0 = mallocstr!(lenout);
+    unsafe {
+        crate::c::timout_c(et, crate::cstr!(pictur.into()), lenout as i32, varout_0);
+    }
+    crate::fcstr!(varout_0)
+}
 
 cspice_proc!(
     /**
