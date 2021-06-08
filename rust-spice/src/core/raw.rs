@@ -205,7 +205,7 @@ cspice_proc!(
     /**
     Load one or more SPICE kernels into a program.
     */
-    pub fn furnsh<S: Into<String>>(name: S) {}
+    pub fn furnsh(name: &str) {}
 );
 
 cspice_proc!(
@@ -321,14 +321,7 @@ cspice_proc!(
     Return the position of a target body relative to an observing body, optionally corrected for
     light time (planetary aberration) and stellar aberration.
     */
-    pub fn spkpos<S: Into<String>>(
-        targ: S,
-        et: f64,
-        frame: S,
-        abcorr: S,
-        obs: S,
-    ) -> ([f64; 3], f64) {
-    }
+    pub fn spkpos(targ: &str, et: f64, frame: &str, abcorr: &str, obs: &str) -> ([f64; 3], f64) {}
 );
 
 cspice_proc!(
@@ -336,7 +329,7 @@ cspice_proc!(
     Convert a string representing an epoch to a double precision value representing the number of
     TDB seconds past the J2000 epoch corresponding to the input epoch.
     */
-    pub fn str2et<S: Into<String>>(targ: S) -> f64 {}
+    pub fn str2et(targ: &str) -> f64 {}
 );
 
 /**

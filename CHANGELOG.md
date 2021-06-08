@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.16] - 2021-06-08
+
+### Changed
+
+String to &str input:
+
++ furnsh
++ spkpos
++ str2et
+
 ## [0.6.14 - 0.6.15] - 2021-06-07
 
 ### Added
