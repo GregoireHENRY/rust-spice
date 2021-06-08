@@ -9,15 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.6.16] - 2021-06-08
+## [0.6.16 - 0.6.17] - 2021-06-08
 
 ### Changed
 
-String to &str input:
++ strings in input are now `&str`
++ strings in output stay `String`
 
-+ furnsh
-+ spkpos
-+ str2et
+Quick recall that functions in C that ouput string always ask for allocation
+size. In this lib, neat functions default to `spice::MAX_LEN_OUT`, and you are
+free to call the raw version of the fonction to get the hand of the signature
+with the size argument.
 
 ## [0.6.14 - 0.6.15] - 2021-06-07
 

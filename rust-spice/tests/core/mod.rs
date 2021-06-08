@@ -180,7 +180,7 @@ fn cell() {
     let (file, _, _, _, found) = spice::kdata(1, "dsk");
     assert!(found);
 
-    let cell = spice::dskobj(file);
+    let cell = spice::dskobj(&file);
 
     assert_eq!(cell.card, 1);
     assert_eq!(cell.get_data_int(0), -658031);

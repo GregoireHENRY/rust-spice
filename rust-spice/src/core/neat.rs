@@ -31,12 +31,8 @@ character string formatted to the specifications of a user's format picture.
 
 See [`raw::timout`] for the raw interface.
 */
-pub fn timout<S>(et: f64, pictur: S) -> String
-where
-    S: Into<String>,
-{
-    let pictur_ = pictur.into();
-    raw::timout(et, pictur_.clone(), pictur_.len())
+pub fn timout(et: f64, pictur: &str) -> String {
+    raw::timout(et, pictur, pictur.len())
 }
 
 /**
@@ -64,7 +60,7 @@ Fetch vertices from a type 2 DSK segment.
 
 See [`raw::kdata`] for the raw interface.
 */
-pub fn kdata<S: Into<String>>(which: i32, kind: S) -> (String, String, String, i32, bool) {
+pub fn kdata(which: i32, kind: &str) -> (String, String, String, i32, bool) {
     raw::kdata(
         which,
         kind,

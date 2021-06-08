@@ -76,7 +76,7 @@ cspice_proc!(
     /**
     Translate the name of a body or object to the corresponding SPICE integer ID code.
     */
-    pub fn bodn2c<S: Into<String>>(name: S) -> (i32, bool) {}
+    pub fn bodn2c(name: &str) -> (i32, bool) {}
 );
 
 cspice_proc!(
@@ -90,7 +90,7 @@ cspice_proc!(
     /**
     Open a DAS file for reading.
     */
-    pub fn dasopr<S: Into<String>>(fname: S) -> i32 {}
+    pub fn dasopr(fname: &str) -> i32 {}
 );
 
 cspice_proc!(
@@ -119,7 +119,7 @@ cspice_proc!(
     Find the set of body ID codes of all objects for which topographic data are provided in a
     specified DSK file.
     */
-    pub fn dskobj<S: Into<String>>(dsk: S) -> Cell {}
+    pub fn dskobj(dsk: &str) -> Cell {}
 );
 
 /**
@@ -188,14 +188,14 @@ cspice_proc!(
 
     The illumination source is a specified ephemeris object.
     */
-    pub fn illumf<S: Into<String>>(
-        method: S,
-        target: S,
-        ilusrc: S,
+    pub fn illumf(
+        method: &str,
+        target: &str,
+        ilusrc: &str,
         et: f64,
-        fixref: S,
-        abcorr: S,
-        obsrvr: S,
+        fixref: &str,
+        abcorr: &str,
+        obsrvr: &str,
         spoint: [f64; 3],
     ) -> (f64, [f64; 3], f64, f64, f64, bool, bool) {
     }
@@ -221,9 +221,9 @@ Fetch vertices from a type 2 DSK segment.
 
 This function has a [neat version][crate::neat::kdata].
 */
-pub fn kdata<S: Into<String>>(
+pub fn kdata(
     which: i32,
-    kind: S,
+    kind: &str,
     fillen: i32,
     typlen: i32,
     srclen: i32,
@@ -237,7 +237,7 @@ pub fn kdata<S: Into<String>>(
         let mut varout_4 = 0i32;
         crate::c::kdata_c(
             which,
-            cstr!(kind.into()),
+            cstr!(kind),
             fillen,
             typlen,
             srclen,
@@ -262,7 +262,7 @@ cspice_proc!(
     Return the current number of kernels that have been loaded via the KEEPER interface that are of
     a specified type.
     */
-    pub fn ktotal<S: Into<String>>(kind: S) -> i32 {}
+    pub fn ktotal(kind: &str) -> i32 {}
 );
 
 cspice_proc!(
@@ -279,15 +279,15 @@ cspice_proc!(
     ellipsoids, or digital shapes (DSK)
     */
     #[allow(clippy::too_many_arguments)]
-    pub fn occult<S: Into<String>>(
-        targ1: S,
-        shape1: S,
-        frame1: S,
-        targ2: S,
-        shape2: S,
-        frame2: S,
-        abcorr: S,
-        obsrvr: S,
+    pub fn occult(
+        targ1: &str,
+        shape1: &str,
+        frame1: &str,
+        targ2: &str,
+        shape2: &str,
+        frame2: &str,
+        abcorr: &str,
+        obsrvr: &str,
         et: f64,
     ) -> i32 {
     }
@@ -298,7 +298,7 @@ cspice_proc!(
     Return the matrix that transforms position vectors from one specified frame to another at a
     specified epoch.
     */
-    pub fn pxform<S: Into<String>>(from: S, to: S, et: f64) -> [[f64; 3]; 3] {}
+    pub fn pxform(from: &str, to: &str, et: f64) -> [[f64; 3]; 3] {}
 );
 
 cspice_proc!(
@@ -306,7 +306,7 @@ cspice_proc!(
     Return the 3x3 matrix that transforms position vectors from one specified frame at a specified
     epoch to another specified frame at another specified epoch.
     */
-    pub fn pxfrm2<S: Into<String>>(from: S, to: S, etfrom: f64, etto: f64) -> [[f64; 3]; 3] {}
+    pub fn pxfrm2(from: &str, to: &str, etfrom: f64, etto: f64) -> [[f64; 3]; 3] {}
 );
 
 cspice_proc!(
@@ -338,10 +338,10 @@ character string formatted to the specifications of a user's format picture.
 
 This function has a [neat version][crate::neat::timout].
 */
-pub fn timout<S: Into<String>>(et: f64, pictur: S, lenout: usize) -> String {
+pub fn timout(et: f64, pictur: &str, lenout: usize) -> String {
     let varout_0 = mallocstr!(lenout);
     unsafe {
-        crate::c::timout_c(et, crate::cstr!(pictur.into()), lenout as i32, varout_0);
+        crate::c::timout_c(et, crate::cstr!(pictur), lenout as i32, varout_0);
     }
     crate::fcstr!(varout_0)
 }
@@ -350,7 +350,7 @@ cspice_proc!(
     /**
     Unload a SPICE kernel.
     */
-    pub fn unload<S: Into<String>>(name: S) {}
+    pub fn unload(name: &str) {}
 );
 
 cspice_proc!(

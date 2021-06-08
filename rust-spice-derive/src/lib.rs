@@ -236,7 +236,6 @@ pub fn cspice_proc(input: TokenStream) -> TokenStream {
 
                 match ty {
                     Type::Path(tp) => match path_get_last_s_ident(&tp).0.as_str() {
-                        "S" => pat_macro("crate::cstr", &format!("{}.into()", ident)),
                         "String" => pat_macro("crate::cstr", &ident),
                         "f64" | "i32" => new_pat(ident),
                         "usize" => new_pat(format!("{} as i32", ident)),
@@ -291,8 +290,10 @@ pub fn cspice_proc(input: TokenStream) -> TokenStream {
                                 }
                                 "String" => {
                                     let ident = format!("varout_{}", vars_out_decl.len());
-                                    vars_out_decl
-                                        .push(declare(&ident, Some(&"crate::cstr!()".to_string())));
+                                    vars_out_decl.push(declare(
+                                        &ident,
+                                        Some(&"crate::mallocstr!(crate::MAX_LEN_OUT)".to_string()),
+                                    ));
                                     cspice_inputs.push(pat_ident(ident.clone()));
                                     vars_out.push(new_pat(format!("crate::fcstr!({})", ident)));
                                 }
@@ -349,7 +350,7 @@ pub fn cspice_proc(input: TokenStream) -> TokenStream {
                             let ident = format!("varout_{}", vars_out_decl.len());
                             vars_out_decl.push(declare(
                                 &ident,
-                                Some(&"mallocstr!(MAX_LEN_OUT)".to_string()),
+                                Some(&"mallocstr!(crate::MAX_LEN_OUT)".to_string()),
                             ));
                             cspice_inputs.push(pat_ident(ident.clone()));
                             vars_out.push(new_pat(format!("crate::fcstr!({})", ident)));
