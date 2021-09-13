@@ -131,7 +131,7 @@ fn pxfrm2() {
 
 #[test]
 #[serial]
-fn radec() {
+fn radrec() {
     spice::furnsh("rsc/krn/hera_study_PO_EMA_2024.tm");
 
     // Mirfak J2000 RA and DEC
