@@ -1,6 +1,6 @@
 KPL/MK
 
-Meta-kernel for HERA Dataset v101 -- Studies 20210415_001
+Meta-kernel for HERA Dataset v103 -- Studies 20210701_001
 ==========================================================================
 
    This meta-kernel lists the hera Studies SPICE kernels
@@ -38,12 +38,12 @@ Implementation Notes
 
 -------------------
 
-   This file was created on April 15, 2021 by Alfredo Escalante ESAC/ESA.
+   This file was created on July 1, 2021 by Alfredo Escalante ESAC/ESA.
 
 
    \begindata
 
-     PATH_VALUES       = ( '/home/greg/rob/hera/kernels' )
+     PATH_VALUES       = ( '/home/greg/doc/spice/missions/hera/kernels' )
 
      PATH_SYMBOLS      = ( 'KERNELS' )
 
@@ -51,7 +51,7 @@ Implementation Notes
 
                            '$KERNELS/fk/hera_v06.tf'
                            '$KERNELS/fk/hera_ops_v02.tf'
-                           '$KERNELS/fk/hera_dsk_surfaces_v03.tf'
+                           '$KERNELS/fk/hera_dsk_surfaces_v04.tf'
 
                            '$KERNELS/ik/hera_afc_v03.ti'
                            '$KERNELS/ik/hera_palt_v00.ti'
@@ -61,12 +61,12 @@ Implementation Notes
 
                            '$KERNELS/pck/pck00010.tpc'
                            '$KERNELS/pck/de-403-masses.tpc'
-                           '$KERNELS/pck/hera_didymos_v02.tpc'
+                           '$KERNELS/pck/hera_didymos_v03.tpc'
 
                            '$KERNELS/sclk/hera_fict_20181203.tsc'
 
                            '$KERNELS/spk/de432s.bsp'
-                           '$KERNELS/spk/didymos_hor_200101_400101_v01.bsp'
+                           '$KERNELS/spk/didymos_hor_200101_400101_v02.bsp'
                            '$KERNELS/spk/didymos_gmv_270101_330623_v02.bsp'
                            '$KERNELS/spk/hera_dart_impact_site_v01.bsp'
 
@@ -90,7 +90,7 @@ SPICE Kernel Dataset Version
 
    \begindata
 
-      SKD_VERSION = 'v101_20210415_001'
+      SKD_VERSION = 'v103_20210701_001'
 
    \begintext
 
