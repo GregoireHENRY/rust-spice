@@ -134,7 +134,7 @@ Licensed under the [Apache License, Version 2.0][license link].
 [repository link]: https://github.com/GregoireHENRY/rust-spice
 [logo image]: https://raw.githubusercontent.com/GregoireHENRY/rust-spice/main/rust-spice/rsc/img/logo_bg.png
 [crate link]: https://crates.io/crates/rust-spice
-[crate badge]: https://meritbadge.herokuapp.com/rust-spice?style=flat-square
+[crate badge]: https://img.shields.io/crates/v/rust-spice.svg
 [doc link]: https://docs.rs/rust-spice
 [doc badge]: https://docs.rs/rust-spice/badge.svg
 [license link]: https://raw.githubusercontent.com/GregoireHENRY/rust-spice/main/LICENSE
