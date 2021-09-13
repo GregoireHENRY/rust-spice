@@ -131,7 +131,7 @@ request for the implementation of a specific function.
 ## Contributors
 
 Hall of fame:
-+ @s-rah: #2
++ [@s-rah][s-rah url]: [#2][PR 2]
 
 A huge thanks for their contributions!!
 
@@ -159,3 +159,6 @@ Licensed under the [Apache License, Version 2.0][license link].
 [cspice install link]: https://naif.jpl.nasa.gov/naif/toolkit_C.html
 [cspice-sys link]: https://crates.io/crates/cspice-sys/0.0.1
 [config doc]: https://doc.rust-lang.org/cargo/reference/config.html
+
+[s-rah url]: https://github.com/s-rah
+[PR 2]: https://github.com/GregoireHENRY/rust-spice/pull/2
