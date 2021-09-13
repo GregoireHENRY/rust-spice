@@ -179,6 +179,13 @@ cspice_proc!(
 
 cspice_proc!(
     /**
+    Convert geodetic coordinates to rectangular coordinates.
+     */
+    pub fn georec(lon: f64, lat: f64, alt: f64, re: f64, f: f64) -> [f64; 3] {}
+);
+
+cspice_proc!(
+    /**
     Compute the illumination angles---phase, incidence, and emission---at a specified point on a
     target body. Return logical flags indicating whether the surface point is visible from the
     observer's position and whether the surface point is illuminated.
@@ -274,6 +281,13 @@ cspice_proc!(
 
 cspice_proc!(
     /**
+       Multiply a 3x3 double precision matrix with a 3-dimensional double precision vector.
+    */
+    pub fn mxv(m1: [[f64; 3]; 3], vin: [f64; 3]) -> [f64; 3] {}
+);
+
+cspice_proc!(
+    /**
     Determines the occultation condition (not occulted, partially, etc.) of one target relative to
     another target as seen by an observer at a given time, with targets modeled as points,
     ellipsoids, or digital shapes (DSK)
@@ -311,6 +325,13 @@ cspice_proc!(
 
 cspice_proc!(
     /**
+    Convert range, right ascension, and declination to rectangular coordinates
+     */
+    pub fn radrec(range: f64, ra: f64, dec: f64) -> [f64; 3] {}
+);
+
+cspice_proc!(
+    /**
     Convert rectangular coordinates to range, right ascension, and declination.
     */
     pub fn recrad(rectan: [f64; 3]) -> (f64, f64, f64) {}
@@ -322,6 +343,15 @@ cspice_proc!(
     light time (planetary aberration) and stellar aberration.
     */
     pub fn spkpos(targ: &str, et: f64, frame: &str, abcorr: &str, obs: &str) -> ([f64; 3], f64) {}
+);
+
+cspice_proc!(
+    /**
+      Return the state (position and velocity) of a target body
+      relative to an observing body, optionally corrected for light
+      time (planetary aberration) and stellar aberration.
+    */
+    pub fn spkezr(targ: &str, et: f64, frame: &str, abcorr: &str, obs: &str) -> ([f64; 6], f64) {}
 );
 
 cspice_proc!(
@@ -360,4 +390,26 @@ cspice_proc!(
     */
     #[return_output]
     pub fn vsep(v1: [f64; 3], v2: [f64; 3]) -> f64 {}
+);
+
+cspice_proc!(
+    /**
+    Compute the dot product of two double precision, 3-dimensional vectors.
+     */
+    #[return_output]
+    pub fn vdot(v1: [f64; 3], v2: [f64; 3]) -> f64 {}
+);
+
+cspice_proc!(
+    /**
+    Compute the cross product of two 3-dimensional vectors.
+     */
+    pub fn vcrss(v1: [f64; 3], v2: [f64; 3]) -> [f64; 3] {}
+);
+
+cspice_proc!(
+    /**
+    Transpose a 3x3 matrix.
+     */
+    pub fn xpose(m1: [[f64; 3]; 3]) -> [[f64; 3]; 3] {}
 );

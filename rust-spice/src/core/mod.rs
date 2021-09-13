@@ -39,6 +39,7 @@ CSPICE | **rust-spice** | Description
 [furnsh_c][furnsh_c link] | [`raw::furnsh`] | Furnish a program with SPICE kernels
 [gcpool_c][gcpool_c link] | *TODO*
 [gdpool_c][gdpool_c link] | *TODO*
+[georec_c][georec_c link] | [`raw::georec`] |  Geodetic to rectangular coordinates
 [getfov_c][getfov_c link] | *TODO*
 [gipool_c][gipool_c link] | *TODO*
 [illumf_c][illumf_c link] | [`raw::illumf`] | Illumination angles, general source, return flags
@@ -47,6 +48,7 @@ CSPICE | **rust-spice** | Description
 [ktotal_c][ktotal_c link] | [`raw::ktotal`] | Kernel Totals
 [latrec_c][latrec_c link] | [`raw::latrec`] | Latitudinal to rectangular coordinates
 [latsrf_c][latsrf_c link] | *TODO*
+[mxv_c][mxv_c link] | [`raw::mxv`] |  Matrix times vector, 3x3
 [occult_c][occult_c link] | [`raw::occult`] | Find occultation type at time
 [pckcov_c][pckcov_c link] | *TODO*
 [pxform_c][pxform_c link] | [`raw::pxform`] | Position Transformation Matrix
@@ -62,7 +64,7 @@ CSPICE | **rust-spice** | Description
 [spkcpt_c][spkcpt_c link] | *TODO*
 [spkcvo_c][spkcvo_c link] | *TODO*
 [spkcvt_c][spkcvt_c link] | *TODO*
-[spkezr_c][spkezr_c link] | *TODO*
+[spkezr_c][spkezr_c link] | [`raw::spkezr`] | S/P Kernel, easier reader
 [spkobj_c][spkobj_c link] | *TODO*
 [spkpos_c][spkpos_c link] | [`raw::spkpos`] | S/P Kernel, position
 [srfc2s_c][srfc2s_c link] | *TODO*
@@ -72,10 +74,14 @@ CSPICE | **rust-spice** | Description
 [srfscc_c][srfscc_c link] | *TODO*
 [str2et_c][str2et_c link] | [`raw::str2et`] | String to ET
 [sxform_c][sxform_c link] | *TODO*
+[radrec_c][radrec_c link] | [`raw::radrec`] |  RA and DEC to rectangular coordinates
 [recrad_c][recrad_c link] | [`raw::recrad`] | Rectangular coordinates to RA and DEC
 [timout_c][timout_c link] | [`neat::timout`] | Time Output
 [unload_c][unload_c link] | [`raw::unload`] | Unload a kernel
+[vcrss_c][vcrss_c link] | [`raw::vcrss`] | Vector cross product, 3 dimensions
+[vdot_c][vdot_c link] | [`raw::vdot`] |  Vector dot product, 3 dimensions
 [vsep_c][vsep_c link] | [`raw::vsep`] | Angular separation of vectors, 3 dimensions
+[xpose_c][xpose_c link] | [`raw::xpose`] | Transpose a matrix, 3x3
 
 [bodc2n_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/bodc2n_c.html
 [bodfnd_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/bodfnd_c.html
@@ -100,6 +106,7 @@ CSPICE | **rust-spice** | Description
 [gcpool_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/gcpool_c.html
 [gdpool_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/gdpool_c.html
 [getfov_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/getfov_c.html
+[georec_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/georec_c.html
 [gipool_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/gipool_c.html
 [illumf_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/illumf_c.html
 [kclear_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/kclear_c.html
@@ -107,6 +114,7 @@ CSPICE | **rust-spice** | Description
 [ktotal_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/ktotal_c.html
 [latrec_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/latrec_c.html
 [latsrf_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/latsrf_c.html
+[mxv_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/mxv_c.html
 [occult_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/occult_c.html
 [pxform_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/pxform_c.html
 [pckcov_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/pckcov_c.html
@@ -133,10 +141,14 @@ CSPICE | **rust-spice** | Description
 [srfscc_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/srfscc_c.html
 [str2et_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/str2et_c.html
 [sxform_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/sxform_c.html
+[radrec_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/radrec_c.html
 [recrad_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/recrad_c.html
 [timout_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/timout_c.html
 [unload_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/unload_c.html
+[vcrss_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/vcrss_c.html
+[vdot_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/vdot_c.html
 [vsep_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/vsep_c.html
+[xpose_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/xpose_c.html
 */
 
 pub mod neat;
@@ -144,8 +156,9 @@ pub mod raw;
 
 pub use self::neat::{bodc2n, dskp02, dskv02, kdata, timout};
 pub use self::raw::{
-    bodn2c, dascls, dasopr, dlabfs, dskgd, dskn02, dskobj, dskx02, dskz02, furnsh, illumf, kclear,
-    ktotal, latrec, pxform, pxfrm2, recrad, spkpos, str2et, unload, vsep, Cell, DLADSC, DSKDSC,
+    bodn2c, dascls, dasopr, dlabfs, dskgd, dskn02, dskobj, dskx02, dskz02, furnsh, georec, illumf,
+    kclear, ktotal, latrec, mxv, pxform, pxfrm2, radrec, recrad, spkezr, spkpos, str2et, unload,
+    vcrss, vdot, vsep, xpose, DLADSC, DSKDSC,
 };
 
 /**
