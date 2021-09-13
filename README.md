@@ -18,6 +18,7 @@
 [In action](#in-action) |
 [In development](#in-development) |
 [Usage](#usage) |
+[Contributors](#contributors) |
 [License](#license)
 
 ---
@@ -126,6 +127,13 @@ unsafe {
 Much less friendly.. yet it is available. I would love some help in order to
 complete the idiomatic development. You can raise an issue or propose a pull
 request for the implementation of a specific function.
+
+## Contributors
+
+Hall of fame:
++ @s-rah: #2
+
+A huge thanks for their contributions!!
 
 ## License
 
