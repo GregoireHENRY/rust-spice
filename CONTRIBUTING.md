@@ -1,10 +1,10 @@
-# Contributing to `rust-spice`
+# Contributing to **rust-spice**
 
 ## Contributing to code
 
 ### Local development
 
-You will need the source of `rust-spice` to start contributing on the codebase.
+You will need the source of **rust-spice** to start contributing on the codebase.
 You will need to fork the project, clone your forked repository and place
 yourself in its directory.
 
@@ -18,7 +18,7 @@ git clone git@github.com:USERNAME/rust-spice.git
 cd rust-spice
 ```
 
-`rust-spice` uses [`pre-commit`][pre-commit url] to make sure that you don't
+**rust-spice** uses [`pre-commit`][pre-commit url] to make sure that you don't
 accidentally commit code that does not follow the coding style. The codebase
 will be check against the run of the tests, the build of the documentation, the
 preparation of publication. But also the `fmt`, `check` and `clippy` tools from

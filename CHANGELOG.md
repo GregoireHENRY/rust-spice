@@ -9,6 +9,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.0] - 2021-09-14
+
+### Fixed
+
++ crate badge
+
+### Changed
+
++ updated Hera test kernels
++ path to test kernels
+
+### Added
+
++ functions: georec, mxv, radrec, spkezr, vcrss, vdot, xpose
++ contributing guideline and contributor list in readme
++ roadmap in readme
+
 ## [0.6.16 - 0.6.17] - 2021-06-08
 
 ### Changed

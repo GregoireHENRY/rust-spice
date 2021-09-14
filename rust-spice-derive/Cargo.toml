@@ -1,7 +1,7 @@
 [package]
 name = "rust-spice-derive"
-version = "0.6.17"
-authors = ["Greg Henry <contact@greghenry.xyz>"]
+version = "0.7.0"
+authors = ["Greg Henry <greg.henry@mail.com>"]
 edition = "2018"
 description = "WOW! The complete NASA/NAIF Spice toolkit is actually usable on Rust."
 license = "Apache-2.0"

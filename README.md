@@ -18,6 +18,7 @@
 [In action](#in-action) |
 [In development](#in-development) |
 [Usage](#usage) |
+[Roadmap](#roadmap) |
 [Contributors](#contributors) |
 [License](#license)
 
@@ -127,6 +128,14 @@ unsafe {
 Much less friendly.. yet it is available. I would love some help in order to
 complete the idiomatic development. You can raise an issue or propose a pull
 request for the implementation of a specific function.
+
+## Roadmap
+
++ provide a packaging of the test assets
++ complete most-used API
++ complete whole API
++ refactoring of the procedural macros
++ refactoring of Cell
 
 ## Contributors
 
