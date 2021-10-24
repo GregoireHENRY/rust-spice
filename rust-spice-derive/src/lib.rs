@@ -461,7 +461,7 @@ pub fn cspice_proc(input: TokenStream) -> TokenStream {
             }
         }
     };
-    if ["dascls"].contains(&fname.to_string().as_str()) {
+    if [].contains(&fname.to_string().as_str()) {
         println!("{}", tokens);
     }
     tokens.into()
