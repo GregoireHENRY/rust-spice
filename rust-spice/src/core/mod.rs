@@ -18,7 +18,7 @@ the source of this lib to deal with the FFI types and unsafe code.
 CSPICE | **rust-spice** | Description
 -------|--------------|------------
 [bodc2n_c][bodc2n_c link] | [`neat::bodc2n`] | Body ID code to name translation
-[bodfnd_c][bodfnd_c link] | *TODO*
+[bodfnd_c][bodfnd_c link] | [`neat::bodfnd`] | Find values from the kernel pool
 [bodn2c_c][bodn2c_c link] | [`raw::bodn2c`] | Body name to ID code translation
 [bodvrd_c][bodvrd_c link] | *TODO*
 [ckcov_c][ckcov_c link] | *TODO*
@@ -156,9 +156,9 @@ pub mod raw;
 
 pub use self::neat::{bodc2n, dskp02, dskv02, kdata, timout};
 pub use self::raw::{
-    bodn2c, dascls, dasopr, dlabfs, dskgd, dskn02, dskobj, dskx02, dskz02, furnsh, georec, illumf,
-    kclear, ktotal, latrec, mxv, pxform, pxfrm2, radrec, recrad, spkezr, spkpos, str2et, unload,
-    vcrss, vdot, vsep, xpose, DLADSC, DSKDSC,
+    bodfnd, bodn2c, dascls, dasopr, dlabfs, dskgd, dskn02, dskobj, dskx02, dskz02, furnsh, georec,
+    illumf, kclear, ktotal, latrec, mxv, pxform, pxfrm2, radrec, recrad, spkezr, spkpos, str2et,
+    unload, vcrss, vdot, vsep, xpose, DLADSC, DSKDSC,
 };
 
 /**
@@ -192,7 +192,7 @@ Allocate [`*mut i8`][`std::os::raw::c_char`] to be sent as a pointer to a string
 #[macro_export]
 macro_rules! mallocstr {
     ($s:expr) => {
-        crate::malloc!(i8, $s + 1);
+        crate::malloc!(i8, $s + 1)
     };
 }
 
@@ -235,7 +235,7 @@ Allocate a scalar to be sent as a pointer.
 #[macro_export]
 macro_rules! init_scalar {
     () => {
-        std::mem::MaybeUninit::uninit();
+        std::mem::MaybeUninit::uninit()
     };
 }
 
@@ -255,6 +255,6 @@ Get a vector of array from the pointer to the array.
 #[macro_export]
 macro_rules! get_varr {
     ($e:expr, $n:expr) => {
-        std::slice::from_raw_parts($e, $n as usize).to_vec();
+        std::slice::from_raw_parts($e, $n as usize).to_vec()
     };
 }
