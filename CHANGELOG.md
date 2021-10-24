@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.1] - 2021-10-24
+
+### Added
+
++ func: bodfnd
++ test for above function
++ possibility to return bool directly
+
+### Changed
+
++ logo squared on docs.rs
+
 ## [0.7.0] - 2021-09-14
 
 ### Fixed

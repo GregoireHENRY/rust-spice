@@ -63,64 +63,72 @@ impl DerefMut for Cell {
     }
 }
 
-cspice_proc!(
+cspice_proc! {
     /**
     Translate the SPICE integer code of a body into a common name for that body.
 
     This function has a [neat version][crate::neat::bodyc2n].
     */
     pub fn bodc2n(code: i32, lenout: i32) -> (String, bool) {}
-);
+}
 
-cspice_proc!(
+cspice_proc! {
+    /**
+    Determine whether values exist for some item for any body in the kernel pool.
+    */
+    #[return_output]
+    pub fn bodfnd(body: i32, item: &str) -> bool {}
+}
+
+cspice_proc! {
     /**
     Translate the name of a body or object to the corresponding SPICE integer ID code.
     */
     pub fn bodn2c(name: &str) -> (i32, bool) {}
-);
+}
 
-cspice_proc!(
+cspice_proc! {
     /**
     close a das file.
     */
     pub fn dascls(handle: i32) {}
-);
+}
 
-cspice_proc!(
+cspice_proc! {
     /**
     Open a DAS file for reading.
     */
     pub fn dasopr(fname: &str) -> i32 {}
-);
+}
 
-cspice_proc!(
+cspice_proc! {
     /**
     Begin a forward segment search in a DLA file.
     */
     pub fn dlabfs(handle: i32) -> (DLADSC, bool) {}
-);
+}
 
-cspice_proc!(
+cspice_proc! {
     /**
     Return the DSK descriptor from a DSK segment identified  by a DAS handle and DLA descriptor.
     */
     pub fn dskgd(handle: i32, dladsc: DLADSC) -> DSKDSC {}
-);
+}
 
-cspice_proc!(
+cspice_proc! {
     /**
     Compute the unit normal vector for a specified plate from a type 2 DSK segment.
     */
     pub fn dskn02(handle: i32, dladsc: DLADSC, plid: i32) -> [f64; 3] {}
-);
+}
 
-cspice_proc!(
+cspice_proc! {
     /**
     Find the set of body ID codes of all objects for which topographic data are provided in a
     specified DSK file.
     */
     pub fn dskobj(dsk: &str) -> Cell {}
-);
+}
 
 /**
 Fetch triangular plates from a type 2 DSK segment.
@@ -156,7 +164,7 @@ pub fn dskv02(handle: i32, mut dladsc: DLADSC, start: i32, room: i32) -> (i32, V
     }
 }
 
-cspice_proc!(
+cspice_proc! {
     /**
     Determine the plate ID and body-fixed coordinates of the intersection of a specified ray with
     the surface defined by a type 2 DSK plate model.
@@ -168,23 +176,23 @@ cspice_proc!(
         raydir: [f64; 3],
     ) -> (i32, [f64; 3], bool) {
     }
-);
+}
 
-cspice_proc!(
+cspice_proc! {
     /**
     Return plate model size parameters---plate count and vertex count---for a type 2 DSK segment.
     */
     pub fn dskz02(handle: i32, dladsc: DLADSC) -> (i32, i32) {}
-);
+}
 
-cspice_proc!(
+cspice_proc! {
     /**
     Convert geodetic coordinates to rectangular coordinates.
      */
     pub fn georec(lon: f64, lat: f64, alt: f64, re: f64, f: f64) -> [f64; 3] {}
-);
+}
 
-cspice_proc!(
+cspice_proc! {
     /**
     Compute the illumination angles---phase, incidence, and emission---at a specified point on a
     target body. Return logical flags indicating whether the surface point is visible from the
@@ -206,22 +214,22 @@ cspice_proc!(
         spoint: [f64; 3],
     ) -> (f64, [f64; 3], f64, f64, f64, bool, bool) {
     }
-);
+}
 
-cspice_proc!(
+cspice_proc! {
     /**
     Load one or more SPICE kernels into a program.
     */
     pub fn furnsh(name: &str) {}
-);
+}
 
-cspice_proc!(
+cspice_proc! {
     /**
     Clear the KEEPER subsystem: unload all kernels, clear the kernel pool, and re-initialize the
     subsystem. Existing watches on kernel variables are retained.
     */
     pub fn kclear() {}
-);
+}
 
 /**
 Fetch vertices from a type 2 DSK segment.
@@ -264,29 +272,29 @@ pub fn kdata(
     }
 }
 
-cspice_proc!(
+cspice_proc! {
     /**
     Return the current number of kernels that have been loaded via the KEEPER interface that are of
     a specified type.
     */
     pub fn ktotal(kind: &str) -> i32 {}
-);
+}
 
-cspice_proc!(
+cspice_proc! {
     /**
     Convert from latitudinal coordinates to rectangular coordinates.
     */
     pub fn latrec(radius: f64, longitude: f64, latitude: f64) -> [f64; 3] {}
-);
+}
 
-cspice_proc!(
+cspice_proc! {
     /**
        Multiply a 3x3 double precision matrix with a 3-dimensional double precision vector.
     */
     pub fn mxv(m1: [[f64; 3]; 3], vin: [f64; 3]) -> [f64; 3] {}
-);
+}
 
-cspice_proc!(
+cspice_proc! {
     /**
     Determines the occultation condition (not occulted, partially, etc.) of one target relative to
     another target as seen by an observer at a given time, with targets modeled as points,
@@ -305,62 +313,62 @@ cspice_proc!(
         et: f64,
     ) -> i32 {
     }
-);
+}
 
-cspice_proc!(
+cspice_proc! {
     /**
     Return the matrix that transforms position vectors from one specified frame to another at a
     specified epoch.
     */
     pub fn pxform(from: &str, to: &str, et: f64) -> [[f64; 3]; 3] {}
-);
+}
 
-cspice_proc!(
+cspice_proc! {
     /**
     Return the 3x3 matrix that transforms position vectors from one specified frame at a specified
     epoch to another specified frame at another specified epoch.
     */
     pub fn pxfrm2(from: &str, to: &str, etfrom: f64, etto: f64) -> [[f64; 3]; 3] {}
-);
+}
 
-cspice_proc!(
+cspice_proc! {
     /**
     Convert range, right ascension, and declination to rectangular coordinates
      */
     pub fn radrec(range: f64, ra: f64, dec: f64) -> [f64; 3] {}
-);
+}
 
-cspice_proc!(
+cspice_proc! {
     /**
     Convert rectangular coordinates to range, right ascension, and declination.
     */
     pub fn recrad(rectan: [f64; 3]) -> (f64, f64, f64) {}
-);
+}
 
-cspice_proc!(
+cspice_proc! {
     /**
     Return the position of a target body relative to an observing body, optionally corrected for
     light time (planetary aberration) and stellar aberration.
     */
     pub fn spkpos(targ: &str, et: f64, frame: &str, abcorr: &str, obs: &str) -> ([f64; 3], f64) {}
-);
+}
 
-cspice_proc!(
+cspice_proc! {
     /**
       Return the state (position and velocity) of a target body
       relative to an observing body, optionally corrected for light
       time (planetary aberration) and stellar aberration.
     */
     pub fn spkezr(targ: &str, et: f64, frame: &str, abcorr: &str, obs: &str) -> ([f64; 6], f64) {}
-);
+}
 
-cspice_proc!(
+cspice_proc! {
     /**
     Convert a string representing an epoch to a double precision value representing the number of
     TDB seconds past the J2000 epoch corresponding to the input epoch.
     */
     pub fn str2et(targ: &str) -> f64 {}
-);
+}
 
 /**
 This routine converts an input epoch represented in TDB seconds past the TDB epoch of J2000 to a
@@ -376,40 +384,40 @@ pub fn timout(et: f64, pictur: &str, lenout: usize) -> String {
     crate::fcstr!(varout_0)
 }
 
-cspice_proc!(
+cspice_proc! {
     /**
     Unload a SPICE kernel.
     */
     pub fn unload(name: &str) {}
-);
+}
 
-cspice_proc!(
+cspice_proc! {
     /**
     Find the separation angle in radians between two double precision, 3-dimensional vectors. This
     angle is defined as zero if either vector is zero.
     */
     #[return_output]
     pub fn vsep(v1: [f64; 3], v2: [f64; 3]) -> f64 {}
-);
+}
 
-cspice_proc!(
+cspice_proc! {
     /**
     Compute the dot product of two double precision, 3-dimensional vectors.
      */
     #[return_output]
     pub fn vdot(v1: [f64; 3], v2: [f64; 3]) -> f64 {}
-);
+}
 
-cspice_proc!(
+cspice_proc! {
     /**
     Compute the cross product of two 3-dimensional vectors.
      */
     pub fn vcrss(v1: [f64; 3], v2: [f64; 3]) -> [f64; 3] {}
-);
+}
 
-cspice_proc!(
+cspice_proc! {
     /**
     Transpose a 3x3 matrix.
      */
     pub fn xpose(m1: [[f64; 3]; 3]) -> [[f64; 3]; 3] {}
-);
+}

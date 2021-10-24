@@ -300,3 +300,18 @@ fn cell() {
 
     spice::kclear();
 }
+
+#[test]
+#[serial]
+fn bodfnd() {
+    spice::furnsh("rsc/krn/hera_study_PO_EMA_2024.tm");
+
+    let (target, found) = spice::bodn2c("DIMORPHOS");
+    assert!(found);
+    assert_eq!(target, -658031);
+
+    let found = spice::bodfnd(target, "RADII");
+    assert!(found);
+
+    spice::kclear();
+}
