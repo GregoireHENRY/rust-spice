@@ -21,14 +21,28 @@ fn das() {
 
 #[test]
 #[serial]
+fn bodvcd() {
+    spice::furnsh("rsc/krn/hera_study_PO_EMA_2024.tm");
+
+    // Mars body id is 499
+    let radii = spice::bodvcd(499, "RADII", 3);
+    let expected_radii = [3396.19, 3396.19, 3376.2];
+
+    for (component, expected_component) in multizip((radii.iter(), expected_radii.iter())) {
+        assert_relative_eq!(component, expected_component, epsilon = f64::EPSILON);
+    }
+
+    spice::unload("rsc/krn/hera_study_PO_EMA_2024.tm");
+}
+
+#[test]
+#[serial]
 fn bodvrd() {
     spice::furnsh("rsc/krn/hera_study_PO_EMA_2024.tm");
 
-    let (n, radii) = spice::bodvrd("MARS", "RADII", 3);
-    let expected_n: i32 = 3;
+    let radii = spice::bodvrd("MARS", "RADII", 3);
     let expected_radii = [3396.19, 3396.19, 3376.2];
 
-    assert_eq!(n, expected_n);
     for (component, expected_component) in multizip((radii.iter(), expected_radii.iter())) {
         assert_relative_eq!(component, expected_component, epsilon = f64::EPSILON);
     }

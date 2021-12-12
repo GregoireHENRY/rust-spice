@@ -87,6 +87,37 @@ cspice_proc! {
     pub fn bodn2c(name: &str) -> (i32, bool) {}
 }
 
+/**
+Fetch from the kernel pool the double precision values of an item
+associated with a body, where the body is specified by an integer ID
+code.
+
+This function has a [neat version][crate::neat::bodvcd].
+*/
+pub fn bodvcd(body: i32, item: &str, maxn: i32) -> (i32, Vec<f64>) {
+    let mut varout_0 = init_scalar!();
+    let varout_1 = malloc!(f64, maxn);
+    unsafe {
+        crate::c::bodvcd_c(
+            body,
+            cstr!(item),
+            maxn,
+            mptr!(varout_0),
+            varout_1
+        );
+        (
+            get_scalar!(varout_0),
+            get_varr!(varout_1, get_scalar!(varout_0)),
+        )
+    }
+}
+
+/**
+Fetch from the kernel pool the double precision values  
+of an item associated with a body.
+
+This function has a [neat version][crate::neat::bodvrd].
+*/
 pub fn bodvrd(body: &str, item: &str, maxn: i32) -> (i32, Vec<f64>) {
     let mut varout_0 = init_scalar!();
     let varout_1 = malloc!(f64, maxn);

@@ -154,9 +154,9 @@ CSPICE | **rust-spice** | Description
 pub mod neat;
 pub mod raw;
 
-pub use self::neat::{bodc2n, dskp02, dskv02, kdata, timout};
+pub use self::neat::{bodc2n, bodvcd, bodvrd, dskp02, dskv02, kdata, timout};
 pub use self::raw::{
-    bodfnd, bodn2c, bodvrd, dascls, dasopr, dlabfs, dskgd, dskn02, dskobj, dskx02, dskz02, furnsh, georec,
+    bodfnd, bodn2c, dascls, dasopr, dlabfs, dskgd, dskn02, dskobj, dskx02, dskz02, furnsh, georec,
     illumf, kclear, ktotal, latrec, mxv, pxform, pxfrm2, radrec, recrad, spkezr, spkpos, str2et,
     unload, vcrss, vdot, vsep, xpose, DLADSC, DSKDSC,
 };
