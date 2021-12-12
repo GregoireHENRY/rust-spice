@@ -20,7 +20,8 @@ CSPICE | **rust-spice** | Description
 [bodc2n_c][bodc2n_c link] | [`neat::bodc2n`] | Body ID code to name translation
 [bodfnd_c][bodfnd_c link] | [`neat::bodfnd`] | Find values from the kernel pool
 [bodn2c_c][bodn2c_c link] | [`raw::bodn2c`] | Body name to ID code translation
-[bodvrd_c][bodvrd_c link] | *TODO*
+[bodvcd_c][bodvcd_c link] | [`neat::bodvcd`] | Find values associated with body ID from the kernel pool
+[bodvrd_c][bodvrd_c link] | [`neat::bodvcd`] | Find values associated with body from the kernel pool
 [ckcov_c][ckcov_c link] | *TODO*
 [ckgp_c][ckgp_c link] | *TODO*
 [ckgpav_c][ckgpav_c link] | *TODO*
@@ -86,6 +87,7 @@ CSPICE | **rust-spice** | Description
 [bodc2n_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/bodc2n_c.html
 [bodfnd_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/bodfnd_c.html
 [bodn2c_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/bodn2c_c.html
+[bodvrd_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/bodvcd_c.html
 [bodvrd_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/bodvrd_c.html
 [ckcov_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/ckcov_c.html
 [ckgp_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/ckgp_c.html
