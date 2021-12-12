@@ -87,6 +87,24 @@ cspice_proc! {
     pub fn bodn2c(name: &str) -> (i32, bool) {}
 }
 
+pub fn bodvrd(body: &str, item: &str, maxn: i32) -> (i32, Vec<f64>) {
+    let mut varout_0 = init_scalar!();
+    let varout_1 = malloc!(f64, maxn);
+    unsafe {
+        crate::c::bodvrd_c(
+            cstr!(body),
+            cstr!(item),
+            maxn,
+            mptr!(varout_0),
+            varout_1
+        );
+        (
+            get_scalar!(varout_0),
+            get_varr!(varout_1, get_scalar!(varout_0)),
+        )
+    }
+}
+
 cspice_proc! {
     /**
     close a das file.
