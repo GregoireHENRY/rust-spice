@@ -22,7 +22,7 @@ fn das() {
 #[test]
 #[serial]
 fn bodvrd() {
-    spice::furnsh("rsc/krn/kernels.tm");
+    spice::furnsh("rsc/krn/hera_study_PO_EMA_2024.tm");
 
     let (n, radii) = spice::bodvrd("MARS", "RADII", 3);
     let expected_n: i32 = 3;
@@ -33,7 +33,7 @@ fn bodvrd() {
         assert_relative_eq!(component, expected_component, epsilon = f64::EPSILON);
     }
 
-    spice::unload("rsc/krn/kernels.tm");
+    spice::unload("rsc/krn/hera_study_PO_EMA_2024.tm");
 }
 
 #[test]
