@@ -52,6 +52,46 @@ fn bodvrd() {
 
 #[test]
 #[serial]
+fn cyllat() {
+    let cyl_coords = [1.2, 3.4, -5.6];
+    
+    let (radius, lon, lat) = spice::cyllat(cyl_coords[0], cyl_coords[1], cyl_coords[2]);
+    let expected_lat_coords = [5.72712842531054, 3.4, -1.35970299357215];
+    
+    for (component, expected_component) in multizip((expected_lat_coords.iter(), [radius, lon, lat].iter())) {
+        assert_relative_eq!(component, expected_component, epsilon = f64::EPSILON);
+    }
+}
+
+#[test]
+#[serial]
+fn cylrec() {
+    let cyl_coords = [1.2, 3.4, -5.6];
+    
+    let rec_coords = spice::cylrec(cyl_coords[0], cyl_coords[1], cyl_coords[2]);
+    let expected_rec_coords = [-1.1601578310953533, -0.30664932243219745, -5.6];
+    
+    for (component, expected_component) in multizip((expected_rec_coords.iter(), rec_coords.iter())) {
+        assert_relative_eq!(component, expected_component, epsilon = f64::EPSILON);
+    }
+}
+
+#[test]
+#[serial]
+fn cylsph() {
+    let cyl_coords = [1.2, 3.4, -5.6];
+    
+    let (radius, colat, lon) = spice::cylsph(cyl_coords[0], cyl_coords[1], cyl_coords[2]);
+    let expected_sph_coords = [5.72712842531054, 2.930499320367047, 3.4];
+    println!("{:#?}", [radius, colat, lon]);
+    
+    for (component, expected_component) in multizip((expected_sph_coords.iter(), [radius, colat, lon].iter())) {
+        assert_relative_eq!(component, expected_component, epsilon = f64::EPSILON);
+    }
+}
+
+#[test]
+#[serial]
 fn dskp02() {
     spice::furnsh("rsc/krn/hera_study_PO_EMA_2024.tm");
 
