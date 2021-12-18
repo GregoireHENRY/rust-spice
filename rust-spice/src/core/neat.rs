@@ -26,6 +26,27 @@ pub fn bodc2n(code: i32) -> (String, bool) {
 }
 
 /**
+Fetch from the kernel pool the double precision values of an item
+associated with a body, where the body is specified by an integer ID
+code.
+
+See [`raw::bodvcd`] for the raw interface.
+*/
+pub fn bodvcd(body: i32, item: &str, maxn: i32) -> Vec<f64> {
+    raw::bodvcd(body, item, maxn).1
+}
+
+/**
+Fetch from the kernel pool the double precision values  
+of an item associated with a body.
+
+See [`raw::bodvrd`] for the raw interface.
+*/
+pub fn bodvrd(body: &str, item: &str, maxn: i32) -> Vec<f64> {
+    raw::bodvrd(body, item, maxn).1
+}
+
+/**
 This routine converts an input epoch represented in TDB seconds past the TDB epoch of J2000 to a
 character string formatted to the specifications of a user's format picture.
 

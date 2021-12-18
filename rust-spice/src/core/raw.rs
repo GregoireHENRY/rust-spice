@@ -87,6 +87,76 @@ cspice_proc! {
     pub fn bodn2c(name: &str) -> (i32, bool) {}
 }
 
+/**
+Fetch from the kernel pool the double precision values of an item
+associated with a body, where the body is specified by an integer ID
+code.
+
+This function has a [neat version][crate::neat::bodvcd].
+*/
+pub fn bodvcd(body: i32, item: &str, maxn: i32) -> (i32, Vec<f64>) {
+    let mut varout_0 = init_scalar!();
+    let varout_1 = malloc!(f64, maxn);
+    unsafe {
+        crate::c::bodvcd_c(
+            body,
+            cstr!(item),
+            maxn,
+            mptr!(varout_0),
+            varout_1
+        );
+        (
+            get_scalar!(varout_0),
+            get_varr!(varout_1, get_scalar!(varout_0)),
+        )
+    }
+}
+
+/**
+Fetch from the kernel pool the double precision values  
+of an item associated with a body.
+
+This function has a [neat version][crate::neat::bodvrd].
+*/
+pub fn bodvrd(body: &str, item: &str, maxn: i32) -> (i32, Vec<f64>) {
+    let mut varout_0 = init_scalar!();
+    let varout_1 = malloc!(f64, maxn);
+    unsafe {
+        crate::c::bodvrd_c(
+            cstr!(body),
+            cstr!(item),
+            maxn,
+            mptr!(varout_0),
+            varout_1
+        );
+        (
+            get_scalar!(varout_0),
+            get_varr!(varout_1, get_scalar!(varout_0)),
+        )
+    }
+}
+
+cspice_proc! {
+    /**
+    Convert from cylindrical to latitudinal coordinates.
+    */
+    pub fn cyllat(r: f64, lon: f64, z: f64) -> (f64, f64, f64) {}
+}
+
+cspice_proc! {
+    /**
+    Convert from cylindrical to rectangular coordinates.
+    */
+    pub fn cylrec(r: f64, lon: f64, z: f64) -> [f64; 3] {}
+}
+
+cspice_proc! {
+    /**
+    Convert from cylindrical to spherical coordinates.
+    */
+    pub fn cylsph(r: f64, lon: f64, z: f64) -> (f64, f64, f64) {}
+}
+
 cspice_proc! {
     /**
     close a das file.
@@ -288,6 +358,10 @@ cspice_proc! {
 }
 
 cspice_proc! {
+    pub fn m2q(m: [[f64; 3]; 3]) -> [f64; 4] {}
+}
+
+cspice_proc! {
     /**
        Multiply a 3x3 double precision matrix with a 3-dimensional double precision vector.
     */
@@ -329,6 +403,10 @@ cspice_proc! {
     epoch to another specified frame at another specified epoch.
     */
     pub fn pxfrm2(from: &str, to: &str, etfrom: f64, etto: f64) -> [[f64; 3]; 3] {}
+}
+
+cspice_proc! {
+    pub fn q2m(q: [f64; 4]) -> [[f64; 3]; 3] {}
 }
 
 cspice_proc! {
@@ -390,14 +468,26 @@ cspice_proc! {
     */
     pub fn unload(name: &str) {}
 }
+cspice_proc! {
+    /**
+    Add two 3 dimensional vectors.
+    */
+    pub fn vadd(v1: [f64; 3], v2: [f64; 3]) -> [f64; 3] {}
+}
 
 cspice_proc! {
     /**
-    Find the separation angle in radians between two double precision, 3-dimensional vectors. This
-    angle is defined as zero if either vector is zero.
+    Compute the cross product of two 3-dimensional vectors.
+     */
+    pub fn vcrss(v1: [f64; 3], v2: [f64; 3]) -> [f64; 3] {}
+}
+
+cspice_proc! {
+    /**
+    Return the distance between two three-dimensional vectors.
     */
     #[return_output]
-    pub fn vsep(v1: [f64; 3], v2: [f64; 3]) -> f64 {}
+    pub fn vdist(v1: [f64; 3], v2: [f64; 3]) -> f64 {}
 }
 
 cspice_proc! {
@@ -410,10 +500,137 @@ cspice_proc! {
 
 cspice_proc! {
     /**
-    Compute the cross product of two 3-dimensional vectors.
+    Make one double precision 3-dimensional vector equal to 
+    another.
      */
-    pub fn vcrss(v1: [f64; 3], v2: [f64; 3]) -> [f64; 3] {}
+    pub fn vequ(v: [f64; 3]) -> [f64; 3] {}
 }
+
+cspice_proc! {
+    /**
+    Find the unit vector along a double precision 3-dimensional vector.
+     */
+    pub fn vhat(v: [f64; 3]) -> [f64; 3] {}
+}
+
+cspice_proc! {
+    /**
+    This subroutine computes the vector linear combination
+    a*v1 + b*v2 + c*v3 of double precision, 3-dimensional vectors. 
+    */
+    pub fn vlcom3(a: f64, v1: [f64; 3], b: f64, v2: [f64; 3], c: f64, v3: [f64; 3]) -> [f64; 3] {}
+}
+
+cspice_proc! {
+    /**
+    Compute a vector linear combination of two double precision, 
+    3-dimensional vectors. 
+    */
+    pub fn vlcom(a: f64, v1: [f64; 3], b: f64, v2: [f64; 3]) -> [f64; 3] {}
+}
+
+cspice_proc! {
+    /**
+    Negate a double precision 3-dimensional vector.
+    */
+    pub fn vminus(v: [f64; 3]) -> [f64; 3] {}
+}
+
+cspice_proc! {
+    /**
+    Compute the magnitude of a double precision, 3-dimensional vector.
+    */
+    #[return_output]
+    pub fn vnorm(v: [f64; 3]) -> f64 {}
+}
+
+cspice_proc! {
+    /**
+    Pack three scalar components into a vector.
+    */
+    pub fn vpack(x: f64, y: f64, z: f64) -> [f64; 3] {}
+}
+
+cspice_proc! {
+    /**
+    Find the component of a vector that is perpendicular to a second
+    vector.  All vectors are 3-dimensional.
+    */
+    pub fn vperp(a: [f64; 3], b: [f64; 3]) -> [f64; 3] {}
+}
+
+cspice_proc! {
+    /**
+    vproj_c finds the projection of one vector onto another vector.
+    All vectors are 3-dimensional.
+    */
+    pub fn vproj(a: [f64; 3], b: [f64; 3]) -> [f64; 3] {}
+}
+
+cspice_proc! {
+    /**
+    Return the relative difference between two 3-dimensional vectors.
+    */
+    #[return_output]
+    pub fn vrel(v1: [f64; 3], v2: [f64; 3]) -> f64 {}
+}
+
+cspice_proc! {
+    /**
+    Rotate a vector about a specified axis vector by a specified 
+    angle and return the rotated vector.
+    */
+    pub fn vrotv(v: [f64; 3], axis: [f64; 3], theta: f64) -> [f64; 3] {}
+}
+
+cspice_proc! {
+    /**
+    Multiply a scalar and a 3-dimensional double precision vector. 
+    */
+    pub fn vscl(s: f64, v: [f64; 3]) -> [f64; 3] {}
+}
+
+cspice_proc! {
+    /**
+    Find the separation angle in radians between two double precision, 3-dimensional vectors. This
+    angle is defined as zero if either vector is zero.
+    */
+    #[return_output]
+    pub fn vsep(v1: [f64; 3], v2: [f64; 3]) -> f64 {}
+}
+
+cspice_proc! {
+    /**
+    Compute the difference between two 3-dimensional, double 
+    precision vectors.
+    */
+    pub fn vsub(v1: [f64; 3], v2: [f64; 3]) -> [f64; 3] {}
+}
+
+cspice_proc! {
+    /**
+    Multiply the transpose of a 3-dimensional column vector, 
+    a 3x3 matrix, and a 3-dimensional column vector.
+    */
+    #[return_output]
+    pub fn vtmv(v1: [f64; 3],  matrix: [[f64; 3]; 3], v2: [f64; 3]) -> f64 {}
+}
+
+cspice_proc! {
+    /**
+    Unpack three scalar components from a vector.
+    */
+    pub fn vupack(v: [f64; 3]) -> (f64, f64, f64) {}
+}
+
+cspice_proc! {
+    /**
+    Indicate whether a 3-vector is the zero vector.
+    */
+    #[return_output]
+    pub fn vzero(v: [f64; 3]) -> bool {}
+}
+
 
 cspice_proc! {
     /**
