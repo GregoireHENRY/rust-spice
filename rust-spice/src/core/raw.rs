@@ -358,6 +358,10 @@ cspice_proc! {
 }
 
 cspice_proc! {
+    pub fn m2q(m: [[f64; 3]; 3]) -> [f64; 4] {}
+}
+
+cspice_proc! {
     /**
        Multiply a 3x3 double precision matrix with a 3-dimensional double precision vector.
     */
@@ -399,6 +403,10 @@ cspice_proc! {
     epoch to another specified frame at another specified epoch.
     */
     pub fn pxfrm2(from: &str, to: &str, etfrom: f64, etto: f64) -> [[f64; 3]; 3] {}
+}
+
+cspice_proc! {
+    pub fn q2m(q: [f64; 4]) -> [[f64; 3]; 3] {}
 }
 
 cspice_proc! {

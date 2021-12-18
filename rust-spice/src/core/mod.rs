@@ -159,7 +159,7 @@ pub mod raw;
 pub use self::neat::{bodc2n, bodvcd, bodvrd, dskp02, dskv02, kdata, timout};
 pub use self::raw::{
     bodfnd, bodn2c, cyllat, cylrec, cylsph, dascls, dasopr, dlabfs, dskgd, dskn02, dskobj, dskx02,
-    dskz02, furnsh, georec, illumf, kclear, ktotal, latrec, mxv, pxform, pxfrm2, radrec, recrad,
+    dskz02, furnsh, georec, illumf, kclear, ktotal, latrec, m2q, mxv, pxform, pxfrm2, q2m, radrec, recrad,
     spkezr, spkpos, str2et, unload, vadd, vcrss, vdist, vdot, vhat, vlcom3, vlcom, vminus, vnorm,
     vpack, vperp, vproj, vrel, vrotv, vscl, vsep, vsub, vtmv, vupack, vzero, xpose, DLADSC, DSKDSC,
 };
