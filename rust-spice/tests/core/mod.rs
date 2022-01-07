@@ -187,6 +187,57 @@ fn spkezr() {
 
 #[test]
 #[serial]
+fn spkopn() {
+    // Get file path to create kernel file in temporary directory
+    let mut filepath = std::env::temp_dir()
+        .into_os_string()
+        .into_string()
+        .expect("Failed to get temporary directory path");
+
+    // Push file name to tempdir path
+    filepath.push_str("/spkopn_test_kernel.bsp");
+
+    let file = std::path::Path::new(&filepath);
+
+    // Delete file from previous test in case it wasn't cleaned up. Otherwise, write will fail with IOSTAT=128
+    if file.exists() {
+        std::fs::remove_file(&filepath)
+            .expect("Failed to clean up test SPK kernel from previous test");
+    }
+
+    let handle = spice::spkopn(&filepath, "SPK Kernel File", 60);
+
+    // Write one nonsense type 9 SPK segment to the file. spkcls_c will fail with zero segments
+    let segid = spice::cstr!("Test type 9 SPK segment");
+    let frame = spice::cstr!("J2000");
+    let mut epochs = (0..10).map(|i| f64::from(i * 1000)).collect::<Vec<f64>>();
+    let mut data = [[0f64; 6]; 10];
+
+    unsafe {
+        spice::c::spkw09_c(
+            handle,
+            399, // NAIF-ID of Earth
+            10,  // NAIF-ID of the sun
+            frame,
+            epochs[0],                // t0
+            epochs[epochs.len() - 1], // final t
+            segid,
+            7, // Degree of polynomial used for interpolation. Arbitrary
+            10i32,
+            data.as_mut_ptr(),
+            epochs.as_mut_ptr(),
+        );
+    }
+
+    unsafe { spice::c::spkcls_c(handle) }
+
+    assert!(file.exists());
+
+    std::fs::remove_file(&filepath).unwrap();
+}
+
+#[test]
+#[serial]
 fn spkpos() {
     spice::furnsh("rsc/krn/hera_study_PO_EMA_2024.tm");
 
