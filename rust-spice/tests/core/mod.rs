@@ -202,7 +202,7 @@ fn get_temp_filepath(fname: &str) -> String {
 /// Deletes specified file if it exists
 fn delete_if_exists(file: &std::path::Path) {
     if file.exists() {
-        std::fs::remove_file(&file).unwrap()
+        std::fs::remove_file(&file).unwrap();
     }
 }
 
@@ -230,6 +230,36 @@ fn junk_spkw09_c(handle: i32) {
     }
 }
 
+/// Opens a new SPK file for writing
+fn open_test_spk(filepath: &str) -> i32 {
+    let mut handle = 0;
+    unsafe {
+        spice::c::spkopn_c(
+            spice::cstr!(filepath),
+            spice::cstr!("SPK Kernel File"),
+            0,
+            &mut handle,
+        )
+    }
+    handle
+}
+
+#[test]
+#[serial]
+fn spkcls() {
+    let filepath = get_temp_filepath("spkclstestkernel.bsp");
+    let file = std::path::Path::new(&filepath);
+    delete_if_exists(file);
+
+    let handle = open_test_spk(&filepath);
+    // Write one nonsense segment to the file so that spkcls_c doesn't fail
+    junk_spkw09_c(handle);
+    spice::spkcls(handle);
+
+    assert!(file.exists());
+    std::fs::remove_file(file).unwrap();
+}
+
 #[test]
 #[serial]
 fn spkopn() {
@@ -253,15 +283,7 @@ fn spkw09() {
     let file = std::path::Path::new(&filepath);
     delete_if_exists(file);
 
-    let mut handle = 0;
-    unsafe {
-        spice::c::spkopn_c(
-            spice::cstr!(&*filepath),
-            spice::cstr!("SPK Kernel File"),
-            60,
-            &mut handle,
-        )
-    }
+    let handle = open_test_spk(&filepath);
 
     const N_STATES: usize = 4;
     spice::spkw09(

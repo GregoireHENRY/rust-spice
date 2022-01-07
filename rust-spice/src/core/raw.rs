@@ -347,6 +347,13 @@ cspice_proc! {
 
 cspice_proc! {
     /**
+    Close a SPK file opened for read or write.
+    */
+    pub fn spkcls(handle: i32) {}
+}
+
+cspice_proc! {
+    /**
     Create a new SPK file, returning the handle of the opened file
      */
     pub fn spkopn(fname: &str, ifname: &str, ncomch: i32) -> i32 {}
