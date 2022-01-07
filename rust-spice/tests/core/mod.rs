@@ -185,55 +185,103 @@ fn spkezr() {
     spice::unload("rsc/krn/hera_study_PO_EMA_2024.tm");
 }
 
-#[test]
-#[serial]
-fn spkopn() {
-    // Get file path to create kernel file in temporary directory
+/// Assembles a filepath to 'fname' in a temporary directory
+/// Useful for testing kernel writer modules
+fn get_temp_filepath(fname: &str) -> String {
     let mut filepath = std::env::temp_dir()
         .into_os_string()
         .into_string()
         .expect("Failed to get temporary directory path");
 
     // Push file name to tempdir path
-    filepath.push_str("/spkopn_test_kernel.bsp");
+    filepath.push_str(fname);
 
-    let file = std::path::Path::new(&filepath);
+    filepath
+}
 
-    // Delete file from previous test in case it wasn't cleaned up. Otherwise, write will fail with IOSTAT=128
+/// Deletes specified file if it exists
+fn delete_if_exists(file: &std::path::Path) {
     if file.exists() {
-        std::fs::remove_file(&filepath)
-            .expect("Failed to clean up test SPK kernel from previous test");
+        std::fs::remove_file(&file).unwrap()
     }
+}
 
-    let handle = spice::spkopn(&filepath, "SPK Kernel File", 60);
-
-    // Write one nonsense type 9 SPK segment to the file. spkcls_c will fail with zero segments
-    let segid = spice::cstr!("Test type 9 SPK segment");
-    let frame = spice::cstr!("J2000");
-    let mut epochs = (0..10).map(|i| f64::from(i * 1000)).collect::<Vec<f64>>();
-    let mut data = [[0f64; 6]; 10];
-
+/// Writes a type 9 SPK segment containing junk data to the SPK kernel with the provided handle
+/// Necessary in some SPK writer related tests as spkcls_c will fail with no segments present
+fn junk_spkw09_c(handle: i32) {
+    const N_STATES: usize = 4;
     unsafe {
         spice::c::spkw09_c(
             handle,
-            399, // NAIF-ID of Earth
-            10,  // NAIF-ID of the sun
-            frame,
-            epochs[0],                // t0
-            epochs[epochs.len() - 1], // final t
-            segid,
-            7, // Degree of polynomial used for interpolation. Arbitrary
-            10i32,
-            data.as_mut_ptr(),
-            epochs.as_mut_ptr(),
+            399,
+            10,
+            spice::cstr!("J2000"),
+            0.0,
+            (N_STATES - 1) as f64,
+            spice::cstr!("Segment ID"),
+            3,
+            N_STATES as i32,
+            [[0f64; 6]; N_STATES].as_mut_ptr(),
+            (0..N_STATES)
+                .map(|i| i as f64)
+                .collect::<Vec<f64>>()
+                .as_mut_ptr(),
         );
     }
+}
+
+#[test]
+#[serial]
+fn spkopn() {
+    let filepath = get_temp_filepath("spkopntestkernel.bsp");
+    let file = std::path::Path::new(&filepath);
+    delete_if_exists(file);
+
+    let handle = spice::spkopn(&filepath, "SPK Kernel File", 60);
+    // Write one nonsense segment to the file so that spkcls_c doesn't fail
+    junk_spkw09_c(handle);
+    unsafe { spice::c::spkcls_c(handle) }
+
+    assert!(file.exists());
+    std::fs::remove_file(file).unwrap();
+}
+
+#[test]
+#[serial]
+fn spkw09() {
+    let filepath = get_temp_filepath("spkw09testkernel.bsp");
+    let file = std::path::Path::new(&filepath);
+    delete_if_exists(file);
+
+    let mut handle = 0;
+    unsafe {
+        spice::c::spkopn_c(
+            spice::cstr!(&*filepath),
+            spice::cstr!("SPK Kernel File"),
+            60,
+            &mut handle,
+        )
+    }
+
+    const N_STATES: usize = 4;
+    spice::spkw09(
+        handle,
+        399,
+        10,
+        "J2000",
+        0.0,
+        (N_STATES - 1) as f64,
+        "Segment ID",
+        3,
+        4,
+        &mut [[0f64; 6]; N_STATES],
+        &mut (0..N_STATES).map(|i| i as f64).collect::<Vec<f64>>(),
+    );
 
     unsafe { spice::c::spkcls_c(handle) }
 
     assert!(file.exists());
-
-    std::fs::remove_file(&filepath).unwrap();
+    std::fs::remove_file(file).unwrap();
 }
 
 #[test]

@@ -354,6 +354,13 @@ cspice_proc! {
 
 cspice_proc! {
     /**
+    Write a type 9 segment to an SPK file.
+     */
+    pub fn spkw09(handle: i32, body: i32, center: i32, frame: &str, first: f64, last: f64, segid: &str, degree: i32, n: i32, states: &mut [[f64; 6]], epochs: &mut [f64]) {}
+}
+
+cspice_proc! {
+    /**
     Return the position of a target body relative to an observing body, optionally corrected for
     light time (planetary aberration) and stellar aberration.
     */
