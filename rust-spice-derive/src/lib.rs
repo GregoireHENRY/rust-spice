@@ -247,6 +247,7 @@ pub fn cspice_proc(input: TokenStream) -> TokenStream {
                             "str" => pat_macro("crate::cstr", &format!("{}.to_string()", ident)),
                             _ => panic!("->2"),
                         },
+                        Type::Slice(_) => new_pat(format!("{}.as_mut_ptr()", ident)),
                         _ => panic!("->3"),
                     },
                     Type::Array(_) => new_pat(format!("{}.as_mut_ptr()", ident)),

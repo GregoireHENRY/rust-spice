@@ -185,6 +185,127 @@ fn spkezr() {
     spice::unload("rsc/krn/hera_study_PO_EMA_2024.tm");
 }
 
+/// Assembles a filepath to 'fname' in a temporary directory
+/// Useful for testing kernel writer modules
+fn get_temp_filepath(fname: &str) -> String {
+    let mut filepath = std::env::temp_dir()
+        .into_os_string()
+        .into_string()
+        .expect("Failed to get temporary directory path");
+
+    // Push file name to tempdir path
+    filepath.push_str(fname);
+
+    filepath
+}
+
+/// Deletes specified file if it exists
+fn delete_if_exists(file: &std::path::Path) {
+    if file.exists() {
+        std::fs::remove_file(&file).unwrap();
+    }
+}
+
+/// Writes a type 9 SPK segment containing junk data to the SPK kernel with the provided handle
+/// Necessary in some SPK writer related tests as spkcls_c will fail with no segments present
+fn junk_spkw09_c(handle: i32) {
+    const N_STATES: usize = 4;
+    unsafe {
+        spice::c::spkw09_c(
+            handle,
+            399,
+            10,
+            spice::cstr!("J2000"),
+            0.0,
+            (N_STATES - 1) as f64,
+            spice::cstr!("Segment ID"),
+            3,
+            N_STATES as i32,
+            [[0f64; 6]; N_STATES].as_mut_ptr(),
+            (0..N_STATES)
+                .map(|i| i as f64)
+                .collect::<Vec<f64>>()
+                .as_mut_ptr(),
+        );
+    }
+}
+
+/// Opens a new SPK file for writing
+fn open_test_spk(filepath: &str) -> i32 {
+    let mut handle = 0;
+    unsafe {
+        spice::c::spkopn_c(
+            spice::cstr!(filepath),
+            spice::cstr!("SPK Kernel File"),
+            0,
+            &mut handle,
+        )
+    }
+    handle
+}
+
+#[test]
+#[serial]
+fn spkcls() {
+    let filepath = get_temp_filepath("/spkclstestkernel.bsp");
+    let file = std::path::Path::new(&filepath);
+    delete_if_exists(file);
+
+    let handle = open_test_spk(&filepath);
+    // Write one nonsense segment to the file so that spkcls_c doesn't fail
+    junk_spkw09_c(handle);
+    spice::spkcls(handle);
+
+    assert!(file.exists());
+    std::fs::remove_file(file).unwrap();
+}
+
+#[test]
+#[serial]
+fn spkopn() {
+    let filepath = get_temp_filepath("/spkopntestkernel.bsp");
+    let file = std::path::Path::new(&filepath);
+    delete_if_exists(file);
+
+    let handle = spice::spkopn(&filepath, "SPK Kernel File", 60);
+    // Write one nonsense segment to the file so that spkcls_c doesn't fail
+    junk_spkw09_c(handle);
+    unsafe { spice::c::spkcls_c(handle) }
+
+    assert!(file.exists());
+    std::fs::remove_file(file).unwrap();
+}
+
+#[test]
+#[serial]
+fn spkw09() {
+    let filepath = get_temp_filepath("/spkw09testkernel.bsp");
+    let file = std::path::Path::new(&filepath);
+    delete_if_exists(file);
+
+    let handle = open_test_spk(&filepath);
+
+    const N_STATES: usize = 4;
+    spice::spkw09(
+        handle,
+        399,
+        10,
+        "J2000",
+        0.0,
+        (N_STATES - 1) as f64,
+        "Segment ID",
+        3,
+        4,
+        &mut [[0f64; 6]; N_STATES],
+        &mut (0..N_STATES).map(|i| i as f64).collect::<Vec<f64>>(),
+    );
+
+    unsafe { spice::c::spkcls_c(handle) }
+
+    assert!(file.exists());
+    std::fs::remove_file(file).unwrap();
+}
+
 #[test]
 #[serial]
 fn spkpos() {
