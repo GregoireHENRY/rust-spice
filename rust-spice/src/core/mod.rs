@@ -59,6 +59,7 @@ CSPICE | **rust-spice** | Description
 [scdecd_c][scdecd_c link] | *TODO*
 [scs2e_c][scs2e_c link] | *TODO*
 [sct2e_c][sct2e_c link] | *TODO*
+[spkcls_c][spkcov_c link] | [`raw::spkcls`] | SPK, Close file
 [spkcov_c][spkcov_c link] | *TODO*
 [spkcpo_c][spkcpo_c link] | *TODO*
 [spkcpt_c][spkcpt_c link] | *TODO*
@@ -66,7 +67,9 @@ CSPICE | **rust-spice** | Description
 [spkcvt_c][spkcvt_c link] | *TODO*
 [spkezr_c][spkezr_c link] | [`raw::spkezr`] | S/P Kernel, easier reader
 [spkobj_c][spkobj_c link] | *TODO*
+[spkopn_c][spkopn_c link] | [`raw::spkopn`] | SPK, open new file.
 [spkpos_c][spkpos_c link] | [`raw::spkpos`] | S/P Kernel, position
+[spkw09_c][spkopn_c link] | [`raw::spkw09`] | Write SPK segment, type 9
 [srfc2s_c][srfc2s_c link] | *TODO*
 [srfcss_c][srfcss_c link] | *TODO*
 [srfnrm_c][srfnrm_c link] | *TODO*
@@ -126,6 +129,7 @@ CSPICE | **rust-spice** | Description
 [scencd_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/scencd_c.html
 [scs2e_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/scs2e_c.html
 [sct2e_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/sct2e_c.html
+[spkcls_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/spkcls_c.html
 [spkcpo_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/spkcpo_c.html
 [spkcov_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/spkcov_c.html
 [spkcpt_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/spkcpt_c.html
@@ -133,7 +137,9 @@ CSPICE | **rust-spice** | Description
 [spkcvt_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/spkcvt_c.html
 [spkezr_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/spkezr_c.html
 [spkobj_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/spkobj_c.html
+[spkopn_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/spkopn_c.html
 [spkpos_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/spkpos_c.html
+[spkw09_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/spkw09_c.html
 [srfc2s_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/srfc2s_c.html
 [srfcss_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/srfcss_c.html
 [srfnrm_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/srfnrm_c.html
