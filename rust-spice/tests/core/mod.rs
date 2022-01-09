@@ -247,7 +247,7 @@ fn open_test_spk(filepath: &str) -> i32 {
 #[test]
 #[serial]
 fn spkcls() {
-    let filepath = get_temp_filepath("spkclstestkernel.bsp");
+    let filepath = get_temp_filepath("/spkclstestkernel.bsp");
     let file = std::path::Path::new(&filepath);
     delete_if_exists(file);
 
@@ -263,7 +263,7 @@ fn spkcls() {
 #[test]
 #[serial]
 fn spkopn() {
-    let filepath = get_temp_filepath("spkopntestkernel.bsp");
+    let filepath = get_temp_filepath("/spkopntestkernel.bsp");
     let file = std::path::Path::new(&filepath);
     delete_if_exists(file);
 
@@ -279,7 +279,7 @@ fn spkopn() {
 #[test]
 #[serial]
 fn spkw09() {
-    let filepath = get_temp_filepath("spkw09testkernel.bsp");
+    let filepath = get_temp_filepath("/spkw09testkernel.bsp");
     let file = std::path::Path::new(&filepath);
     delete_if_exists(file);
 
