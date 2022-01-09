@@ -248,7 +248,7 @@ pub fn cspice_proc(input: TokenStream) -> TokenStream {
                             _ => panic!("->2"),
                         },
                         Type::Slice(_) => new_pat(format!("{}.as_mut_ptr()", ident)),
-                        _ => panic!("->3")
+                        _ => panic!("->3"),
                     },
                     Type::Array(_) => new_pat(format!("{}.as_mut_ptr()", ident)),
                     _ => panic!("->4"),
