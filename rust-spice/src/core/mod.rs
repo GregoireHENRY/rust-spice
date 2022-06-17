@@ -77,7 +77,7 @@ CSPICE | **rust-spice** | Description
 [srfscc_c][srfscc_c link] | *TODO*
 [str2et_c][str2et_c link] | [`raw::str2et`] | String to ET
 [sxform_c][sxform_c link] | *TODO*
-[radeec_c][radrec_c link] | [`raw::radrec`] |  RA and DEC to rectangular coordinates
+[radrec_c][radrec_c link] | [`raw::radrec`] |  RA and DEC to rectangular coordinates
 [recazl_c][recazl_c link] | [`raw::recazl`] | Rectangular coordinates to AZ and EL
 [recrad_c][recrad_c link] | [`raw::recrad`] | Rectangular coordinates to RA and DEC
 [timout_c][timout_c link] | [`neat::timout`] | Time Output
