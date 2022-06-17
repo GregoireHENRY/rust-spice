@@ -3627,6 +3627,16 @@ extern "C" {
     );
 }
 extern "C" {
+    pub fn recazl_c(
+        rectan: *mut ConstSpiceDouble,
+        azccw: SpiceBoolean,
+        elplsz: SpiceBoolean,
+        range: *mut SpiceDouble,
+        az: *mut SpiceDouble,
+        el: *mut SpiceDouble,
+    );
+}
+extern "C" {
     pub fn reccyl_c(
         rectan: *mut ConstSpiceDouble,
         r: *mut SpiceDouble,

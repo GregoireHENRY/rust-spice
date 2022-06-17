@@ -163,6 +163,36 @@ fn radrec() {
 
 #[test]
 #[serial]
+fn recazl() {
+    // Test vectors are from https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/recazl_c.html
+    const NUM_TESTS: usize = 11;
+
+    // x, y, z -> range, az, el
+    let test_data: [[f64; 6]; NUM_TESTS] = [
+        [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+        [1.0, 0.0, 0.0, 1.0, 0.0, 0.0],
+        [0.0, 1.0, 0.0, 1.0, 270.0, 0.0],
+        [0.0, 0.0, 1.0, 1.0, 0.0, -90.0],
+        [-1.0, 0.0, 0.0, 1.0, 180.0, 0.0],
+        [0.0, -1.0, 0.0, 1.0, 90.0, 0.0],
+        [0.0, 0.0, -1.0, 1.0, 0.0, 90.0],
+        [1.0, 1.0, 0.0, 1.414, 315.0, 0.0],
+        [1.0, 0.0, 1.0, 1.414, 0.0, -45.0],
+        [0.0, 1.0, 1.0, 1.414, 270.0, -45.0],
+        [1.0, 1.0, 1.0, 1.732, 315.0, -35.264],
+    ];
+
+    for test in test_data.iter() {
+        let (rng, az, el) = spice::recazl([test[0], test[1], test[2]], false, false);
+        println!("{} {}", &test[3], &rng);
+        assert_relative_eq!(test[3], rng, epsilon = 0.001);
+        assert_relative_eq!(test[4].to_radians(), az, epsilon = 0.001);
+        assert_relative_eq!(test[5].to_radians(), el, epsilon = 0.001);
+    }
+}
+
+#[test]
+#[serial]
 fn spkezr() {
     spice::furnsh("rsc/krn/hera_study_PO_EMA_2024.tm");
 

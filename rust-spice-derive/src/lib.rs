@@ -239,6 +239,7 @@ pub fn cspice_proc(input: TokenStream) -> TokenStream {
                         "String" => pat_macro("crate::cstr", &ident),
                         "f64" | "i32" => new_pat(ident),
                         "usize" => new_pat(format!("{} as i32", ident)),
+                        "bool" => new_pat(format!("{} as i32", ident)),
                         "DLADSC" => new_pat(format!("&mut {}", ident)),
                         _ => panic!("->1"),
                     },

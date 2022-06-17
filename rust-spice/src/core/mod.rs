@@ -77,7 +77,8 @@ CSPICE | **rust-spice** | Description
 [srfscc_c][srfscc_c link] | *TODO*
 [str2et_c][str2et_c link] | [`raw::str2et`] | String to ET
 [sxform_c][sxform_c link] | *TODO*
-[radrec_c][radrec_c link] | [`raw::radrec`] |  RA and DEC to rectangular coordinates
+[radeec_c][radrec_c link] | [`raw::radrec`] |  RA and DEC to rectangular coordinates
+[recazl_c][recazl_c link] | [`raw::recazl`] | Rectangular coordinates to AZ and EL
 [recrad_c][recrad_c link] | [`raw::recrad`] | Rectangular coordinates to RA and DEC
 [timout_c][timout_c link] | [`neat::timout`] | Time Output
 [unload_c][unload_c link] | [`raw::unload`] | Unload a kernel
@@ -148,6 +149,7 @@ CSPICE | **rust-spice** | Description
 [str2et_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/str2et_c.html
 [sxform_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/sxform_c.html
 [radrec_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/radrec_c.html
+[recazl_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/recazl_c.html
 [recrad_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/recrad_c.html
 [timout_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/timout_c.html
 [unload_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/unload_c.html
@@ -163,8 +165,8 @@ pub mod raw;
 pub use self::neat::{bodc2n, dskp02, dskv02, kdata, timout};
 pub use self::raw::{
     bodfnd, bodn2c, dascls, dasopr, dlabfs, dskgd, dskn02, dskobj, dskx02, dskz02, furnsh, georec,
-    illumf, kclear, ktotal, latrec, mxv, pxform, pxfrm2, radrec, recrad, spkcls, spkezr, spkopn,
-    spkpos, spkw09, str2et, unload, vcrss, vdot, vsep, xpose, DLADSC, DSKDSC,
+    illumf, kclear, ktotal, latrec, mxv, pxform, pxfrm2, radrec, recazl, recrad, spkcls, spkezr,
+    spkopn, spkpos, spkw09, str2et, unload, vcrss, vdot, vsep, xpose, DLADSC, DSKDSC,
 };
 
 /**

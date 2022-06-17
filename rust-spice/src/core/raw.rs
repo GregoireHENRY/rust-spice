@@ -340,6 +340,13 @@ cspice_proc! {
 
 cspice_proc! {
     /**
+    Convert rectangular coordinates of a point to range, azimuth and elevation.
+    */
+    pub fn recazl(rectan: [f64; 3], azccw: bool, elplsz: bool) -> (f64, f64, f64) {}
+}
+
+cspice_proc! {
+    /**
     Convert rectangular coordinates to range, right ascension, and declination.
     */
     pub fn recrad(rectan: [f64; 3]) -> (f64, f64, f64) {}
