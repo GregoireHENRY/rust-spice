@@ -1,0 +1,19 @@
+[package]
+name = "cspice-sys"
+version = "0.0.1"
+authors = ["AlexApps99"]
+edition = "2018"
+description = "CSPICE Rust bindings"
+repository = "https://github.com/ZoussCity/cspice-sys"
+keywords = ["astronomy", "space", "naif", "cspice", "spice"]
+categories = ["external-ffi-bindings", "mathematics", "science", "simulation"]
+license-file = "DISCLAIMER.txt"
+exclude = ["/kernels"]
+links = "cspice"
+
+[build-dependencies.bindgen]
+version = "0.56.0"
+optional = true
+
+[features]
+generate = ["bindgen"]

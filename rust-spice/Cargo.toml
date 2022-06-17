@@ -23,6 +23,6 @@ serial_test = "0.5.1"
 log = "0.4"
 thiserror = "1.0"
 libc = "0.2"
-cspice-sys = "0.0.1"
+cspice-sys = { version = "0.0.1", path = "../cspice-sys" }
 rust-spice-derive = { version = "0.7", path = "../rust-spice-derive" }
 rustool = "0.3"
