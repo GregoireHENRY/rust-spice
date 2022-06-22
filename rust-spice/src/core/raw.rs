@@ -187,9 +187,31 @@ cspice_proc! {
 
 cspice_proc! {
     /**
+    Retrieve or set the default error action.
+    */
+    pub fn erract(op: &str, actlen: i32, action: &str) {}
+}
+
+cspice_proc! {
+    /**
+    Return SPICETRUE if an error condition has been signaled via sigerr_c. failed_c is the CSPICE status indicator.
+    */
+    #[return_output]
+    pub fn failed() -> bool {}
+}
+
+cspice_proc! {
+    /**
     Convert geodetic coordinates to rectangular coordinates.
      */
     pub fn georec(lon: f64, lat: f64, alt: f64, re: f64, f: f64) -> [f64; 3] {}
+}
+
+cspice_proc! {
+    /**
+    Retrieve the current short error message, the explanation of the short error message, or the long error message.
+    */
+    pub fn getmsg(option: &str, msglen: i32) -> String {}
 }
 
 cspice_proc! {
@@ -350,6 +372,13 @@ cspice_proc! {
     Convert rectangular coordinates to range, right ascension, and declination.
     */
     pub fn recrad(rectan: [f64; 3]) -> (f64, f64, f64) {}
+}
+
+cspice_proc! {
+    /**
+    Reset the CSPICE error status to a value of "no error." As a result, the status routine, failed_c, will return a value of SPICEFALSE
+    */
+    pub fn reset() {}
 }
 
 cspice_proc! {

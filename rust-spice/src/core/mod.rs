@@ -161,6 +161,7 @@ CSPICE | **rust-spice** | Description
 
 pub mod neat;
 pub mod raw;
+pub mod result;
 
 pub use self::neat::{bodc2n, dskp02, dskv02, kdata, timout};
 pub use self::raw::{
@@ -168,6 +169,7 @@ pub use self::raw::{
     illumf, kclear, ktotal, latrec, mxv, pxform, pxfrm2, radrec, recazl, recrad, spkcls, spkezr,
     spkopn, spkpos, spkw09, str2et, unload, vcrss, vdot, vsep, xpose, DLADSC, DSKDSC,
 };
+pub use self::result::{furnsh_safe, SpiceError};
 
 /**
 Default date format.
