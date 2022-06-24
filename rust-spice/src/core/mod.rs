@@ -167,8 +167,8 @@ pub use self::neat::{bodc2n, dskp02, dskv02, kdata, timout};
 pub use self::raw::{
     bodfnd, bodn2c, dascls, dasopr, dlabfs, dskgd, dskn02, dskobj, dskx02, dskz02, erract, failed,
     furnsh, georec, getmsg, illumf, kclear, ktotal, latrec, mxv, pxform, pxfrm2, radrec, recazl,
-    recrad, spkcls, spkezr, spkopn, spkpos, spkw09, str2et, unload, vcrss, vdot, vsep, xpose,
-    DLADSC, DSKDSC,
+    recrad, reset, spkcls, spkezr, spkopn, spkpos, spkw09, str2et, unload, vcrss, vdot, vsep,
+    xpose, DLADSC, DSKDSC,
 };
 pub use self::result::{furnsh_safe, SpiceError};
 
