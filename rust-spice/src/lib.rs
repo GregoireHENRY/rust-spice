@@ -124,6 +124,7 @@ extern crate libc;
 extern crate nalgebra as na;
 extern crate serial_test;
 extern crate spice_derive;
+#[cfg(results)]
 extern crate spice_results;
 extern crate tool;
 

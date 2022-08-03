@@ -25,5 +25,8 @@ thiserror = "1.0"
 libc = "0.2"
 cspice-sys = { version = "0.0.1", path = "../cspice-sys" }
 rust-spice-derive = { version = "0.7", path = "../rust-spice-derive" }
-rust-spice-results = { path = "../rust-spice-results" }
+rust-spice-results = { path = "../rust-spice-results", optional = true }
 rustool = "0.3"
+
+[features]
+results = ["dep:rust-spice-results"]

@@ -242,7 +242,7 @@ cspice_proc! {
     /**
     Load one or more SPICE kernels into a program.
     */
-    #[return_result]
+    #[cfg_attr(feature = "results", return_result)]
     pub fn furnsh(name: &str) {}
 }
 

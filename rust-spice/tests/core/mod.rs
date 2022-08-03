@@ -2,7 +2,8 @@ use itertools::multizip;
 
 #[test]
 #[serial]
-fn furnsh() {
+#[cfg(results)]
+fn furnsh_err() {
     let result = spice::furnsh("");
     match result {
         Err(e) => assert_eq!(e.kind, spice_results::error::Kind::EmptyString),

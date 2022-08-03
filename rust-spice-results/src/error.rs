@@ -12,7 +12,7 @@ pub enum Kind {
     NoSuchFile,
     UnknownFrame,
     IdCodeNotFound,
-    Unknown,
+    UnknownError,
 }
 
 impl From<String> for Kind {
@@ -22,7 +22,7 @@ impl From<String> for Kind {
             "SPICE(EMPTYSTRING)" => Kind::EmptyString,
             "SPICE(UNKNOWNFRAME)" => Kind::UnknownFrame,
             "SPICE(IDCODENOTFOUND)" => Kind::IdCodeNotFound,
-            _ => Kind::Unknown,
+            _ => Kind::UnknownError,
         }
     }
 }
