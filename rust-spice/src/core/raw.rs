@@ -242,6 +242,7 @@ cspice_proc! {
     /**
     Load one or more SPICE kernels into a program.
     */
+    #[return_result]
     pub fn furnsh(name: &str) {}
 }
 

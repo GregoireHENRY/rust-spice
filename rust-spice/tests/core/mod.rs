@@ -2,6 +2,16 @@ use itertools::multizip;
 
 #[test]
 #[serial]
+fn furnsh() {
+    let result = spice::furnsh("");
+    match result {
+        Err(e) => assert_eq!(e.kind, spice_results::error::Kind::EmptyString),
+        _ => panic!("Furnishing an empty string should result in an error."),
+    }
+}
+
+#[test]
+#[serial]
 fn das() {
     spice::furnsh("rsc/krn/hera_study_PO_EMA_2024.tm");
     let handle = spice::dasopr("rsc/krn/g_08438mm_lgt_obj_didb_0000n00000_v002.bds");
