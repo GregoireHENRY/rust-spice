@@ -3,7 +3,7 @@ A Rust idiomatic CSPICE wrapper built with [procedural macros][`spice_derive`].
 */
 
 use crate::{c, cstr, fcstr, get_scalar, get_varr, init_scalar, malloc, mallocstr, mptr};
-use spice_derive::{cspice_proc, return_output};
+use spice_derive::{cspice_proc, return_output, return_result};
 use std::ops::{Deref, DerefMut};
 
 #[allow(clippy::upper_case_acronyms)]

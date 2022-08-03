@@ -3,4 +3,5 @@ members = [
     "cspice-sys",
     "rust-spice",
     "rust-spice-derive",
+    "rust-spice-results",
 ]

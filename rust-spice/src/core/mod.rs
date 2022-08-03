@@ -170,6 +170,7 @@ pub use self::raw::{
     xpose, DLADSC, DSKDSC,
 };
 
+pub use self::c_raw::{erract, failed, getmsg, reset};
 
 /**
 Default date format.
