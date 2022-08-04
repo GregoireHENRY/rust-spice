@@ -32,27 +32,32 @@ their [website][naif link].
 ## Requirements
 
 1) Install [CSPICE library][cspice install link] for your platform.
-2) In your folder `/path/to/cspice/lib`, rename the static libraries to match standards:
-    1) `cspice.a` -> `libcspice.a`
-    2) `csupport.a` -> `libcsupport.a`
-3) Tell Cargo where to look for the CSPICE library. This is done by adding some
-lines to `$HOME/.cargo/config.toml`. If the file doesn't exist, create it (read
-[Configuration doc][config doc]). You need to write:
+2) [for Unix systems only] In your folder `/path/to/cspice/lib`, rename the
+   static library to match standards: `cspice.a` -> `libcspice.a`
+3) Tell Cargo where to look for the CSPICE library. This is done by either:
+   1) Setting the environment variable `CSPICE_DIR` to your folder
+      `/path/to/cspice/` (where subfolders `include` and `lib` are located)
+   2) Or, by adding some lines to `$HOME/.cargo/config.toml`. If the file
+      doesn't exist, create it (read [Configuration doc][config doc]). You need
+      to write:
 
-```toml
-[target.YOUR_PLATFORM.cspice]
-rustc-link-lib = ["cspice"]
-rustc-link-search = ["/path/to/cspice/lib"]
-rustc-cdylib-link-arg = ["-I/path/to/cspice/include"]
-```
+      ```toml
+      [target.YOUR_PLATFORM.cspice]
+      rustc-link-lib = ["cspice"]
+      rustc-link-search = ["/path/to/cspice/lib"]
+      rustc-cdylib-link-arg = ["-I/path/to/cspice/include"]
+      ```
 
-replace `YOUR_PLATFORM` by either:
+      replace `YOUR_PLATFORM` by either:
 
-+ for linux: `x86_64-unknown-linux-gnu`
-+ for mac: `x86_64-apple-darwin`
-+ for windows: `x86_64-pc-windows-msvc`
+      + for linux: `x86_64-unknown-linux-gnu`
+      + for mac: `x86_64-apple-darwin`
+      + for windows: `x86_64-pc-windows-msvc`
 
-and replace `/path/to/cspice` with the absolute path to your CSPICE installation.
+Replace `/path/to/cspice` with the absolute path to your CSPICE installation.
+
+See other requirements at [`cspice-sys`][cspice-sys link] library which provides
+unsafe bindings to CSPICE.
 
 ## Usage
 
@@ -82,7 +87,7 @@ let (position, light_time) = spice::spkpos("DIMORPHOS", et, "J2000", "NONE", "SU
 spice::unload("hera/kernels/mk/hera_study_PO_EMA_2024.tm");
 ```
 
-You can look for some inspirations in the [tests][tests link].
+You can look for some inspirations in the [core tests][core tests link].
 
 ## In development
 
@@ -98,22 +103,22 @@ use spice;
 use std::ffi::CString;
 
 unsafe {
-    let kernel = CString::new("/path/to/metakernel.mk").unwrap().into_raw();
+    let kernel = CString::new("hera/kernels/mk/hera_study_PO_EMA_2024.tm").unwrap().into_raw();
     spice::c::furnsh_c(kernel);
 
-    let mut ephemeris_time = 0.0;
+    let mut et = 0.0;
     let date = CString::new("2027-MAR-23 16:00:00").unwrap().into_raw();
-    spice::c::str2et_c(date, &mut ephemeris_time);
+    spice::c::str2et_c(date, &mut et);
 
-    let target_c = CString::new("TARGET_NAME").unwrap().into_raw();
-    let frame_c = CString::new("FRAME_NAME").unwrap().into_raw();
+    let target_c = CString::new("DIMORPHOS").unwrap().into_raw();
+    let frame_c = CString::new("J2000").unwrap().into_raw();
     let abcorr_c = CString::new("NONE").unwrap().into_raw();
     let observer_c = CString::new("SUN").unwrap().into_raw();
     let mut light_time = 0.0;
     let mut position = [0.0, 0.0, 0.0];
     spice::c::spkpos_c(
         target_c,
-        ephemeris_time,
+        et,
         frame_c,
         abcorr_c,
         observer_c,
@@ -145,9 +150,6 @@ Hall of fame:
 
 A huge thanks for their contributions!!
 
-In addition, this crate is based on the unsafe bindings to CSPICE provided by
-[@jacob-pro][jacob-pro url] in [`cspice-sys`][cspice-sys link].
-
 ## License
 
 Licensed under the [Apache License, Version 2.0][license link].
@@ -166,13 +168,12 @@ Licensed under the [Apache License, Version 2.0][license link].
 [coverage doc link]: https://docs.rs/crate/rust-spice
 [coverage test badge]: https://img.shields.io/badge/Tests-90%25-green
 [coverage test link]: https://docs.rs/crate/rust-spice
-[tests link]: https://github.com/GregoireHENRY/rust-spice/tree/main/rust-spice/tests
+[core tests link]: https://github.com/GregoireHENRY/rust-spice/tree/main/rust-spice/tests/core/mod.rs
 [naif link]: https://naif.jpl.nasa.gov/naif
 [cspice api]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/index.html
 [cspice install link]: https://naif.jpl.nasa.gov/naif/toolkit_C.html
 [cspice-sys link]: https://github.com/jacob-pro/cspice-rs/tree/master/cspice-sys
 [config doc]: https://doc.rust-lang.org/cargo/reference/config.html
 
-[jacob-pro url]: https://github.com/jacob-pro
 [s-rah url]: https://github.com/s-rah
 [PR 2]: https://github.com/GregoireHENRY/rust-spice/pull/2
