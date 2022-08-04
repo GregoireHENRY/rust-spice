@@ -146,7 +146,7 @@ Hall of fame:
 A huge thanks for their contributions!!
 
 In addition, this crate is based on the unsafe bindings to CSPICE provided by
-@jacob-pro in [`cspice-sys`][cspice-sys link].
+[@jacob-pro][jacob-pro url] in [`cspice-sys`][cspice-sys link].
 
 ## License
 
@@ -173,5 +173,6 @@ Licensed under the [Apache License, Version 2.0][license link].
 [cspice-sys link]: https://github.com/jacob-pro/cspice-rs/tree/master/cspice-sys
 [config doc]: https://doc.rust-lang.org/cargo/reference/config.html
 
+[jacob-pro url]: https://github.com/jacob-pro
 [s-rah url]: https://github.com/s-rah
 [PR 2]: https://github.com/GregoireHENRY/rust-spice/pull/2
