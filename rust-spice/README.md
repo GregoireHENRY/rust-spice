@@ -1,6 +1,6 @@
 # rust-spice
 
-[![logo image]][crate link]
+[![logo image]][repository link]
 
 [![crate badge]][crate link]
 [![doc badge]][doc link]
@@ -71,7 +71,7 @@ A nice and idiomatic interface to Spice,
 ```rust
 use spice;
 
-let mut kernel = spice::furnsh("rsc/krn/hera_study_PO_EMA_2024.tm");
+let mut kernel = spice::furnsh("hera/kernels/mk/hera_study_PO_EMA_2024.tm");
 
 let et = spice::str2et("2027-MAR-23 16:00:00");
 let (position, light_time) = spice::spkpos("DIMORPHOS", et, "J2000", "NONE", "SUN");
@@ -79,7 +79,7 @@ let (position, light_time) = spice::spkpos("DIMORPHOS", et, "J2000", "NONE", "SU
 // position -> 18.62640405424448, 21.054373008357004, -7.136291402940499
 // light time -> 0.00009674257074746383
 
-spice::unload("rsc/krn/hera_study_PO_EMA_2024.tm");
+spice::unload("hera/kernels/mk/hera_study_PO_EMA_2024.tm");
 ```
 
 You can look for some inspirations in the [tests][tests link].
@@ -140,9 +140,13 @@ request for the implementation of a specific function.
 ## Contributors
 
 Hall of fame:
+
 + [@s-rah][s-rah url]: [#2][PR 2]
 
 A huge thanks for their contributions!!
+
+In addition, this crate is based on the unsafe bindings to CSPICE provided by
+@jacob-pro in [`cspice-sys`][cspice-sys link].
 
 ## License
 
@@ -166,7 +170,7 @@ Licensed under the [Apache License, Version 2.0][license link].
 [naif link]: https://naif.jpl.nasa.gov/naif
 [cspice api]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/index.html
 [cspice install link]: https://naif.jpl.nasa.gov/naif/toolkit_C.html
-[cspice-sys link]: https://crates.io/crates/cspice-sys/0.0.1
+[cspice-sys link]: https://github.com/jacob-pro/cspice-rs/tree/master/cspice-sys
 [config doc]: https://doc.rust-lang.org/cargo/reference/config.html
 
 [s-rah url]: https://github.com/s-rah
