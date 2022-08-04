@@ -203,6 +203,7 @@ cspice_proc! {
 
     The illumination source is a specified ephemeris object.
     */
+    #[allow(clippy::too_many_arguments)]
     pub fn illumf(
         method: &str,
         target: &str,

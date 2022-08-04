@@ -197,7 +197,7 @@ pub fn cspice_proc(input: TokenStream) -> TokenStream {
 
     let semi_call = semi(!return_output);
 
-    let cspice_func = Ident::new(&format!("{}_c", fname.to_string()), Span::call_site());
+    let cspice_func = Ident::new(&format!("{}_c", fname), Span::call_site());
 
     // Update wrapper input.
     let inputs = sig

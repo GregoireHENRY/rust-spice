@@ -47,7 +47,7 @@ A nice and idiomatic interface to Spice,
 ```
 use spice;
 
-let mut kernel = spice::furnsh("rsc/krn/hera_study_PO_EMA_2024.tm");
+let mut kernel = spice::furnsh("hera/kernels/mk/hera_study_PO_EMA_2024.tm");
 
 let et = spice::str2et("2027-MAR-23 16:00:00");
 let (position, light_time) = spice::spkpos("DIMORPHOS", et, "J2000", "NONE", "SUN");
@@ -55,7 +55,7 @@ let (position, light_time) = spice::spkpos("DIMORPHOS", et, "J2000", "NONE", "SU
 // position -> 18.62640405424448, 21.54373008357003, -7.136291402940499
 // light time -> 0.00009674257074746383
 
-spice::unload("rsc/krn/hera_study_PO_EMA_2024.tm");
+spice::unload("hera/kernels/mk/hera_study_PO_EMA_2024.tm");
 ```
 
 You can look for some inspirations in the [tests][tests link].
@@ -75,7 +75,7 @@ use spice;
 use std::ffi::CString;
 
 unsafe {
-    let kernel = CString::new("rsc/krn/hera_study_PO_EMA_2024.tm").unwrap().into_raw();
+    let kernel = CString::new("hera/kernels/mk/hera_study_PO_EMA_2024.tm").unwrap().into_raw();
     spice::c::furnsh_c(kernel);
 
     let mut ephemeris_time = 0.0;

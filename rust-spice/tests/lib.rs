@@ -13,7 +13,7 @@ use std::ffi::CString;
 #[serial]
 fn test_c() {
     unsafe {
-        let kernel = CString::new("rsc/krn/hera_study_PO_EMA_2024.tm")
+        let kernel = CString::new("hera/kernels/mk/hera_study_PO_EMA_2024.tm")
             .unwrap()
             .into_raw();
         spice::c::furnsh_c(kernel);

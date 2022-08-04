@@ -198,7 +198,7 @@ Allocate [`*mut i8`][`std::os::raw::c_char`] to be sent as a pointer to a string
 #[macro_export]
 macro_rules! mallocstr {
     ($s:expr) => {
-        crate::malloc!(i8, $s + 1)
+        $crate::malloc!(i8, $s + 1)
     };
 }
 
