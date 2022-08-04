@@ -115,7 +115,7 @@ fn pxfrm2() {
     spice::furnsh("hera/kernels/mk/hera_study_PO_EMA_2024.tm");
 
     let etfrom = spice::str2et("2027-MAR-23 16:00:00");
-    let etto = etfrom + 30.0 * tool::MINUTE;
+    let etto = etfrom + 30.0 * 60.0; // 30 minutes.
     let matrix = spice::pxfrm2("J2000", "J2000", etfrom, etto);
 
     let expected_matrix = [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]];
@@ -379,7 +379,7 @@ fn vsep() {
     let ang_2 = spice::vsep([1., 0., 0.], [0., 1., 0.]);
 
     assert_relative_eq!(ang_1, 0.0, epsilon = f64::EPSILON);
-    assert_relative_eq!(ang_2, tool::TAU / 4., epsilon = f64::EPSILON);
+    assert_relative_eq!(ang_2, std::f64::consts::TAU / 4., epsilon = f64::EPSILON);
 }
 
 #[test]
