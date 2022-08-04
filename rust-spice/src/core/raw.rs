@@ -67,7 +67,7 @@ cspice_proc! {
     /**
     Translate the SPICE integer code of a body into a common name for that body.
 
-    This function has a [neat version][crate::neat::bodyc2n].
+    This function has a [neat version][crate::neat::bodc2n].
     */
     pub fn bodc2n(code: i32, lenout: i32) -> (String, bool) {}
 }

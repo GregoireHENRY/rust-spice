@@ -10,7 +10,7 @@ an idiomatic usage. The improvements consists in functions:
 + taking a string as input in C requires to also send the size of the pointer to a char array. In Rust, you
   only send the string.
 + taking taking input for array size and outputing size whereas a vector can be used
-+ which ouputs string that be allocated from default length sometimes
++ which outputs string that be allocated from default length sometimes
 */
 
 use crate::raw;

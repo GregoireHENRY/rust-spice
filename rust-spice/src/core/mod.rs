@@ -18,7 +18,7 @@ the source of this lib to deal with the FFI types and unsafe code.
 CSPICE | **rust-spice** | Description
 -------|--------------|------------
 [bodc2n_c][bodc2n_c link] | [`neat::bodc2n`] | Body ID code to name translation
-[bodfnd_c][bodfnd_c link] | [`neat::bodfnd`] | Find values from the kernel pool
+[bodfnd_c][bodfnd_c link] | [`raw::bodfnd`] | Find values from the kernel pool
 [bodn2c_c][bodn2c_c link] | [`raw::bodn2c`] | Body name to ID code translation
 [bodvrd_c][bodvrd_c link] | *TODO*
 [ckcov_c][ckcov_c link] | *TODO*
