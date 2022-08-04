@@ -32,29 +32,11 @@ their [website][naif link].
 ## Requirements
 
 1) Install [CSPICE library][cspice install link] for your platform.
-2) [for Unix systems only] In your folder `/path/to/cspice/lib`, rename the
+2) Set the environment variable `CSPICE_DIR` to your CSPICE installation folder
+   (where CSPICE subfolders `include` and `lib` are located. You can do that in the
+   [Cargo configuration][config doc]).
+3) In the `cspice/lib` folder you might need for Unix systems to rename the
    static library to match standards: `cspice.a` -> `libcspice.a`
-3) Tell Cargo where to look for the CSPICE library. This is done by either:
-   1) Setting the environment variable `CSPICE_DIR` to your folder
-      `/path/to/cspice/` (where subfolders `include` and `lib` are located)
-   2) Or, by adding some lines to `$HOME/.cargo/config.toml`. If the file
-      doesn't exist, create it (read [Configuration doc][config doc]). You need
-      to write:
-
-      ```toml
-      [target.YOUR_PLATFORM.cspice]
-      rustc-link-lib = ["cspice"]
-      rustc-link-search = ["/path/to/cspice/lib"]
-      rustc-cdylib-link-arg = ["-I/path/to/cspice/include"]
-      ```
-
-      replace `YOUR_PLATFORM` by either:
-
-      + for linux: `x86_64-unknown-linux-gnu`
-      + for mac: `x86_64-apple-darwin`
-      + for windows: `x86_64-pc-windows-msvc`
-
-Replace `/path/to/cspice` with the absolute path to your CSPICE installation.
 
 See other requirements at [`cspice-sys`][cspice-sys link] library which provides
 unsafe bindings to CSPICE.
@@ -64,7 +46,6 @@ unsafe bindings to CSPICE.
 Add the dependency **rust-spice** to your `Cargo.toml`:
 
 ```toml
-...
 [dependencies]
 rust-spice = "*" # replace * by the latest version of the crate
 ```
