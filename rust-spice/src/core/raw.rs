@@ -402,9 +402,9 @@ This function has a [neat version][crate::neat::timout].
 pub fn timout(et: f64, pictur: &str, lenout: usize) -> String {
     let varout_0 = mallocstr!(lenout);
     unsafe {
-        crate::c::timout_c(et, crate::cstr!(pictur), lenout as i32, varout_0);
+        crate::c::timout_c(et, cstr!(pictur), lenout as i32, varout_0);
     }
-    crate::fcstr!(varout_0)
+    fcstr!(varout_0)
 }
 
 cspice_proc! {
