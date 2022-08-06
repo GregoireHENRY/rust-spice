@@ -1,12 +1,4 @@
-use std::fmt;
-
-#[derive(Debug)]
-pub struct SpiceError {
-    pub kind: Kind,
-    pub long: String,
-}
-
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub enum Kind {
     AGENTLISTOVERFLOW,
     ARRAYTOOSMALL,
@@ -324,9 +316,9 @@ pub enum Kind {
     ZEROVELOCITY,
 }
 
-impl From<String> for Kind {
-    fn from(short_err: String) -> Self {
-        match short_err.as_str() {
+impl From<&str> for Kind {
+    fn from(short_err: &str) -> Self {
+        match short_err {
             "SPICE(AGENTLISTOVERFLOW)" => Kind::AGENTLISTOVERFLOW,
             "SPICE(ARRAYTOOSMALL)" => Kind::ARRAYTOOSMALL,
             "SPICE(AXISUNDERFLOW)" => Kind::AXISUNDERFLOW,
@@ -642,13 +634,5 @@ impl From<String> for Kind {
             "SPICE(ZEROVELOCITY)" => Kind::ZEROVELOCITY,
             _ => Kind::UNKNOWN,
         }
-    }
-}
-
-impl std::error::Error for SpiceError {}
-
-impl fmt::Display for SpiceError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.long)
     }
 }

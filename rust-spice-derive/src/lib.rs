@@ -481,7 +481,7 @@ pub fn cspice_proc(input: TokenStream) -> TokenStream {
                         if crate::c_raw::failed() {
                             let short = crate::c_raw::getmsg("SHORT", crate::MAX_LEN_OUT as i32);
                             let long = crate::c_raw::getmsg("LONG", crate::MAX_LEN_OUT as i32);
-                            let e = spice_results::error::SpiceError{ kind: short.into(), long: long.into() };
+                            let e = spice_results::SpiceError::new(short, long);
                             crate::c_raw::reset();
                             return Err(e);
                         } else {
