@@ -194,7 +194,9 @@ pub fn cspice_proc(input: TokenStream) -> TokenStream {
     let generics = sig.generics;
 
     let return_output = attrs.iter().any(|attr| tts!(attr.path) == "return_output");
-    let return_result = attrs.iter().any(|attr| tts!(attr.path) == "return_result");
+    let return_result = attrs
+        .iter()
+        .any(|attr| tts!(attr.tokens).contains("feature = \"results\", return_result"));
 
     let semi_call = semi(!return_output);
 
@@ -453,26 +455,6 @@ pub fn cspice_proc(input: TokenStream) -> TokenStream {
         },
     };
 
-    // let tokens = quote! {
-    //     #(#attrs)*
-    //     #vis fn #fname#generics(#inputs) -> std::result::Result<#output, crate::spice_results::error::SpiceError> {
-    //         #(#vars_out_decl)*
-    //         #[allow(unused_unsafe)]
-    //         unsafe {
-    //             crate::c_raw::erract("SET", crate::MAX_LEN_OUT as i32, "RETURN");
-    //             crate::c::#cspice_func(#cspice_inputs)#semi_call
-    //             if crate::c_raw::failed() {
-    //                 let short = crate::c_raw::getmsg("SHORT", crate::MAX_LEN_OUT as i32);
-    //                 let long = crate::c_raw::getmsg("LONG", crate::MAX_LEN_OUT as i32);
-    //                 let e = crate::spice_results::error::SpiceError{ kind: short.into(), long: long.into() };
-    //                 return Err(e);
-    //             } else {
-    //                 return Ok(#function_output);
-    //             }
-    //         }
-    //     }
-    // };
-
     let tokens = match return_result {
         false => {
             quote! {
@@ -486,7 +468,7 @@ pub fn cspice_proc(input: TokenStream) -> TokenStream {
                     }
                 }
             }
-        },
+        }
         true => {
             quote! {
                 #(#attrs)*
@@ -499,7 +481,7 @@ pub fn cspice_proc(input: TokenStream) -> TokenStream {
                         if crate::c_raw::failed() {
                             let short = crate::c_raw::getmsg("SHORT", crate::MAX_LEN_OUT as i32);
                             let long = crate::c_raw::getmsg("LONG", crate::MAX_LEN_OUT as i32);
-                            let e = crate::spice_results::error::SpiceError{ kind: short.into(), long: long.into() };
+                            let e = spice_results::error::SpiceError{ kind: short.into(), long: long.into() };
                             crate::c_raw::reset();
                             return Err(e);
                         } else {
@@ -508,7 +490,7 @@ pub fn cspice_proc(input: TokenStream) -> TokenStream {
                     }
                 }
             }
-        },
+        }
     };
     if [].contains(&fname.to_string().as_str()) {
         println!("{}", tokens);
