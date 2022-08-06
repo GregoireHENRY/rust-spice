@@ -124,9 +124,9 @@ extern crate libc;
 extern crate nalgebra as na;
 extern crate serial_test;
 extern crate spice_derive;
+extern crate tool;
 #[cfg(feature = "results")]
 extern crate spice_results;
-extern crate tool;
 
 /// The string version of **kalast**.
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
