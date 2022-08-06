@@ -1,15 +1,6 @@
 use itertools::multizip;
 
-#[test]
-#[serial]
-#[cfg(results)]
-fn furnsh_err() {
-    let result = spice::furnsh("");
-    match result {
-        Err(e) => assert_eq!(e.kind, spice_results::error::Kind::EmptyString),
-        _ => panic!("Furnishing an empty string should result in an error."),
-    }
-}
+pub mod results;
 
 #[test]
 #[serial]
