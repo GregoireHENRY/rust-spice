@@ -50,6 +50,14 @@ Add the dependency **rust-spice** to your `Cargo.toml`:
 rust-spice = "*" # replace * by the latest version of the crate
 ```
 
+[`cspice-sys`][cspice-sys link] library depends on Clang which might not be
+available to your system. In this case, you can use the feature `noclang`:
+
+```toml
+[dependencies]
+rust-spice = {version = "*", default-features = false, features = ["noclang"] }
+```
+
 ## In action
 
 A nice and idiomatic interface to Spice,

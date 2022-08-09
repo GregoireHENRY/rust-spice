@@ -5,7 +5,12 @@
 )]
 #![cfg_attr(docsrs, feature(doc_cfg))]
 
+#[cfg(feature = "default")]
 extern crate cspice_sys;
+
+#[cfg(feature = "noclang")]
+extern crate cspice_sys_no_clang as cspice_sys;
+
 extern crate itertools;
 extern crate libc;
 extern crate nalgebra as na;
