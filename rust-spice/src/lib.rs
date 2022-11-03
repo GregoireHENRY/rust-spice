@@ -28,4 +28,12 @@ pub mod c {
 }
 pub mod core;
 
+// TODO: We probably want to break the usual API when the lock is enabled to prevent accidental
+// usage, but that breaks integration and doc tests
+// #[cfg(any(test, not(feature = "lock")))]
 pub use crate::core::*;
+
+pub use crate::core::{DLADSC, DSKDSC};
+
+#[cfg(feature = "lock")]
+pub use crate::core::lock::SpiceLock;

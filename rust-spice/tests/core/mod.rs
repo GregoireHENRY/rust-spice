@@ -436,3 +436,64 @@ fn bodfnd() {
 
     spice::kclear();
 }
+
+#[cfg(feature = "lock")]
+pub mod lock_tests {
+    #[test]
+    #[serial]
+    fn acquire_fail() {
+        let _sl = spice::SpiceLock::try_acquire().unwrap();
+        assert!(spice::SpiceLock::try_acquire().is_err());
+    }
+    #[test]
+    #[serial]
+    fn reacquire() {
+        let sl = spice::SpiceLock::try_acquire().unwrap();
+        drop(sl);
+        spice::SpiceLock::try_acquire().unwrap();
+    }
+    #[test]
+    #[serial]
+    fn str2et() {
+        let sl = spice::SpiceLock::try_acquire().unwrap();
+        sl.furnsh("hera/kernels/mk/hera_study_PO_EMA_2024.tm");
+
+        let et = sl.str2et("2027-MAR-23 16:00:00");
+
+        assert_relative_eq!(et, 859089669.1856234, epsilon = f64::EPSILON);
+
+        sl.unload("hera/kernels/mk/hera_study_PO_EMA_2024.tm");
+    }
+    #[test]
+    #[serial]
+    fn multiple_threads() {
+        use std::sync::{Arc, Mutex};
+        use std::thread;
+
+        let sl = spice::SpiceLock::try_acquire().unwrap();
+        sl.furnsh("hera/kernels/mk/hera_study_PO_EMA_2024.tm");
+
+        let sl = Arc::new(Mutex::new(sl));
+
+        let n_children = 5;
+        let mut children = Vec::with_capacity(n_children);
+
+        for _ in 0..n_children {
+            let sl = Arc::clone(&sl);
+            children.push(thread::spawn(move || {
+                for _ in 0..10 {
+                    // If these calls were not guarded by the lock, they could lead to data races and UB
+                    sl.lock().unwrap().str2et("2027-MAR-23 16:00:00");
+                }
+            }));
+        }
+
+        for c in children {
+            c.join().unwrap();
+        }
+
+        sl.lock()
+            .unwrap()
+            .unload("hera/kernels/mk/hera_study_PO_EMA_2024.tm");
+    }
+}

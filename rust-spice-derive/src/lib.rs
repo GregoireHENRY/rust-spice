@@ -23,8 +23,8 @@ use syn::{
     parse_macro_input, parse_quote,
     punctuated::Punctuated,
     token::{Colon, Eq, Let, Semi},
-    Expr, FnArg, GenericArgument, ItemFn, Lit, Local, Pat, PatType, PathArguments, ReturnType,
-    Token, Type, TypeArray, TypePath,
+    Expr, FnArg, GenericArgument, ItemFn, Lit, Local, Pat, PatIdent, PatType, Path, PathArguments,
+    ReturnType, Signature, Token, Type, TypeArray, TypePath,
 };
 
 /**
@@ -447,7 +447,7 @@ pub fn cspice_proc(input: TokenStream) -> TokenStream {
         },
         false => match vars_out.is_empty() {
             true => quote! {},
-            false => quote! { ( #(#vars_out),* )},
+            false => quote! { ( #(#vars_out),* ) },
         },
     };
 
@@ -471,4 +471,45 @@ pub fn cspice_proc(input: TokenStream) -> TokenStream {
 #[proc_macro_attribute]
 pub fn return_output(_attr: TokenStream, item: TokenStream) -> TokenStream {
     item
+}
+
+#[proc_macro_attribute]
+pub fn impl_for(struct_path: TokenStream, function: TokenStream) -> TokenStream {
+    let function = parse_macro_input!(function as ItemFn);
+
+    let Signature {
+        ident: fname,
+        generics,
+        inputs,
+        output,
+        ..
+    } = function.sig.clone();
+
+    let new_fname = Ident::new(&fname.to_string(), Span::call_site());
+
+    // Retreive argument identifiers without types, mutability etc.
+    let arg_idents = inputs
+        .iter()
+        .map(|i| match i {
+            FnArg::Typed(PatType { pat, .. }) => match &**pat {
+                Pat::Ident(PatIdent { ident, .. }) => ident.clone(),
+                _ => panic!("Only bare identifiers are allowed as parameter patterns"),
+            },
+            FnArg::Receiver(_) => panic!("Expected typed arg, found receiver"),
+        })
+        .collect::<Punctuated<Ident, Token![,]>>();
+
+    let struct_path = syn::parse::<Path>(struct_path).expect("Invalid struct path");
+
+    let impl_block = quote! {
+        impl #struct_path {
+            pub fn #new_fname#generics(&self, #inputs)#output {
+                #fname(#arg_idents)
+            }
+        }
+    };
+
+    let mut out = function.to_token_stream();
+    out.extend(impl_block.to_token_stream());
+    out.into()
 }
