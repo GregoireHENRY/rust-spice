@@ -466,6 +466,31 @@ pub mod lock_tests {
     }
     #[test]
     #[serial]
+    fn spkezr() {
+        let sl = spice::SpiceLock::try_acquire().unwrap();
+
+        sl.furnsh("hera/kernels/mk/hera_study_PO_EMA_2024.tm");
+
+        // an arbitrary time
+        let et = sl.str2et("2021-01-06 09:36:09.1825432 TDB");
+
+        // sun in relation to ssb
+        let (sun_ssb_posvec, _sun_ssb_lt) = sl.spkezr("sun", et, "j2000", "none", "ssb");
+        // earth in relation to ssb
+        let (earth_ssb_posvec, _earth_ssb_lt) = sl.spkezr("earth", et, "j2000", "none", "ssb");
+        // earth in relation to sun
+        let (earth_sun_posvec, _earth_sun_ly) = sl.spkezr("earth", et, "j2000", "none", "sun");
+
+        // Quick check that the (Sun relative) earth velocity vectors are the same regardless of whether we
+        // calculate them indirectly from SB or directly compared to  the Sun
+        assert_eq!(earth_ssb_posvec[3] - sun_ssb_posvec[3], earth_sun_posvec[3]);
+        assert_eq!(earth_ssb_posvec[4] - sun_ssb_posvec[4], earth_sun_posvec[4]);
+        assert_eq!(earth_ssb_posvec[5] - sun_ssb_posvec[5], earth_sun_posvec[5]);
+
+        sl.unload("hera/kernels/mk/hera_study_PO_EMA_2024.tm");
+    }
+    #[test]
+    #[serial]
     fn multiple_threads() {
         use std::sync::{Arc, Mutex};
         use std::thread;
@@ -495,5 +520,24 @@ pub mod lock_tests {
         sl.lock()
             .unwrap()
             .unload("hera/kernels/mk/hera_study_PO_EMA_2024.tm");
+    }
+    #[test]
+    #[serial]
+    fn cell() {
+        let sl = spice::SpiceLock::try_acquire().unwrap();
+
+        sl.furnsh("hera/kernels/mk/hera_study_PO_EMA_2024.tm");
+
+        let (file, _, _, _, found) = sl.kdata(1, "dsk");
+        assert!(found);
+
+        let cell = sl.dskobj(&file);
+
+        assert_eq!(cell.card, 1);
+        assert_eq!(cell.get_data_int(0), -658031);
+
+        assert_eq!(sl.bodc2n(cell.get_data_int(0)).0, "DIMORPHOS");
+
+        sl.kclear();
     }
 }
