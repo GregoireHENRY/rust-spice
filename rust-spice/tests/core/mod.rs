@@ -450,7 +450,9 @@ pub mod lock_tests {
     fn reacquire() {
         let sl = spice::SpiceLock::try_acquire().unwrap();
         drop(sl);
-        spice::SpiceLock::try_acquire().unwrap();
+
+        let try_new_sl = spice::SpiceLock::try_acquire();
+        assert!(try_new_sl.is_ok());
     }
     #[test]
     #[serial]
