@@ -157,7 +157,8 @@ CSPICE | **rust-spice** | Description
 [xpose_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/xpose_c.html
 */
 
-#[cfg(feature = "lock")]
+#[cfg(any(feature = "lock", doc))]
+#[cfg_attr(docsrs, doc(cfg(feature = "lock")))]
 pub mod lock;
 
 pub mod neat;
