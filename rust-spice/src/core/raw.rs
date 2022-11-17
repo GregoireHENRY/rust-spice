@@ -6,7 +6,7 @@ use crate::{c, cstr, fcstr, get_scalar, get_varr, init_scalar, malloc, mallocstr
 use spice_derive::{cspice_proc, return_output};
 use std::ops::{Deref, DerefMut};
 
-#[cfg(feature = "lock")]
+#[cfg(any(feature = "lock", doc))]
 use {crate::core::lock::SpiceLock, spice_derive::impl_for};
 
 #[allow(clippy::upper_case_acronyms)]
@@ -80,7 +80,7 @@ cspice_proc! {
     Determine whether values exist for some item for any body in the kernel pool.
     */
     #[return_output]
-    #[cfg_attr(feature = "lock", impl_for(SpiceLock))]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
     pub fn bodfnd(body: i32, item: &str) -> bool {}
 }
 
@@ -88,7 +88,7 @@ cspice_proc! {
     /**
     Translate the name of a body or object to the corresponding SPICE integer ID code.
     */
-    #[cfg_attr(feature = "lock", impl_for(SpiceLock))]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
     pub fn bodn2c(name: &str) -> (i32, bool) {}
 }
 
@@ -96,7 +96,7 @@ cspice_proc! {
     /**
     close a das file.
     */
-    #[cfg_attr(feature = "lock", impl_for(SpiceLock))]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
     pub fn dascls(handle: i32) {}
 }
 
@@ -104,7 +104,7 @@ cspice_proc! {
     /**
     Open a DAS file for reading.
     */
-    #[cfg_attr(feature = "lock", impl_for(SpiceLock))]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
     pub fn dasopr(fname: &str) -> i32 {}
 }
 
@@ -112,7 +112,7 @@ cspice_proc! {
     /**
     Begin a forward segment search in a DLA file.
     */
-    #[cfg_attr(feature = "lock", impl_for(SpiceLock))]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
     pub fn dlabfs(handle: i32) -> (DLADSC, bool) {}
 }
 
@@ -120,7 +120,7 @@ cspice_proc! {
     /**
     Return the DSK descriptor from a DSK segment identified  by a DAS handle and DLA descriptor.
     */
-    #[cfg_attr(feature = "lock", impl_for(SpiceLock))]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
     pub fn dskgd(handle: i32, dladsc: DLADSC) -> DSKDSC {}
 }
 
@@ -128,7 +128,7 @@ cspice_proc! {
     /**
     Compute the unit normal vector for a specified plate from a type 2 DSK segment.
     */
-    #[cfg_attr(feature = "lock", impl_for(SpiceLock))]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
     pub fn dskn02(handle: i32, dladsc: DLADSC, plid: i32) -> [f64; 3] {}
 }
 
@@ -137,7 +137,7 @@ cspice_proc! {
     Find the set of body ID codes of all objects for which topographic data are provided in a
     specified DSK file.
     */
-    #[cfg_attr(feature = "lock", impl_for(SpiceLock))]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
     pub fn dskobj(dsk: &str) -> Cell {}
 }
 
@@ -180,7 +180,7 @@ cspice_proc! {
     Determine the plate ID and body-fixed coordinates of the intersection of a specified ray with
     the surface defined by a type 2 DSK plate model.
     */
-    #[cfg_attr(feature = "lock", impl_for(SpiceLock))]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
     pub fn dskx02(
         handle: i32,
         dladsc: DLADSC,
@@ -194,7 +194,7 @@ cspice_proc! {
     /**
     Return plate model size parameters---plate count and vertex count---for a type 2 DSK segment.
     */
-    #[cfg_attr(feature = "lock", impl_for(SpiceLock))]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
     pub fn dskz02(handle: i32, dladsc: DLADSC) -> (i32, i32) {}
 }
 
@@ -202,7 +202,7 @@ cspice_proc! {
     /**
     Convert geodetic coordinates to rectangular coordinates.
      */
-    #[cfg_attr(feature = "lock", impl_for(SpiceLock))]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
     pub fn georec(lon: f64, lat: f64, alt: f64, re: f64, f: f64) -> [f64; 3] {}
 }
 
@@ -218,7 +218,7 @@ cspice_proc! {
     The illumination source is a specified ephemeris object.
     */
     #[allow(clippy::too_many_arguments)]
-    #[cfg_attr(feature = "lock", impl_for(SpiceLock))]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
     pub fn illumf(
         method: &str,
         target: &str,
@@ -235,7 +235,7 @@ cspice_proc! {
     /**
     Load one or more SPICE kernels into a program.
     */
-    #[cfg_attr(feature = "lock", impl_for(SpiceLock))]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
     pub fn furnsh(name: &str) {}
 }
 
@@ -244,7 +244,7 @@ cspice_proc! {
     Clear the KEEPER subsystem: unload all kernels, clear the kernel pool, and re-initialize the
     subsystem. Existing watches on kernel variables are retained.
     */
-    #[cfg_attr(feature = "lock", impl_for(SpiceLock))]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
     pub fn kclear() {}
 }
 
@@ -294,7 +294,7 @@ cspice_proc! {
     Return the current number of kernels that have been loaded via the KEEPER interface that are of
     a specified type.
     */
-    #[cfg_attr(feature = "lock", impl_for(SpiceLock))]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
     pub fn ktotal(kind: &str) -> i32 {}
 }
 
@@ -302,7 +302,7 @@ cspice_proc! {
     /**
     Convert from latitudinal coordinates to rectangular coordinates.
     */
-    #[cfg_attr(feature = "lock", impl_for(SpiceLock))]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
     pub fn latrec(radius: f64, longitude: f64, latitude: f64) -> [f64; 3] {}
 }
 
@@ -310,7 +310,7 @@ cspice_proc! {
     /**
        Multiply a 3x3 double precision matrix with a 3-dimensional double precision vector.
     */
-    #[cfg_attr(feature = "lock", impl_for(SpiceLock))]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
     pub fn mxv(m1: [[f64; 3]; 3], vin: [f64; 3]) -> [f64; 3] {}
 }
 
@@ -321,7 +321,7 @@ cspice_proc! {
     ellipsoids, or digital shapes (DSK)
     */
     #[allow(clippy::too_many_arguments)]
-    #[cfg_attr(feature = "lock", impl_for(SpiceLock))]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
     pub fn occult(
         targ1: &str,
         shape1: &str,
@@ -340,7 +340,7 @@ cspice_proc! {
     Return the matrix that transforms position vectors from one specified frame to another at a
     specified epoch.
     */
-    #[cfg_attr(feature = "lock", impl_for(SpiceLock))]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
     pub fn pxform(from: &str, to: &str, et: f64) -> [[f64; 3]; 3] {}
 }
 
@@ -349,7 +349,7 @@ cspice_proc! {
     Return the 3x3 matrix that transforms position vectors from one specified frame at a specified
     epoch to another specified frame at another specified epoch.
     */
-    #[cfg_attr(feature = "lock", impl_for(SpiceLock))]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
     pub fn pxfrm2(from: &str, to: &str, etfrom: f64, etto: f64) -> [[f64; 3]; 3] {}
 }
 
@@ -357,7 +357,7 @@ cspice_proc! {
     /**
     Convert range, right ascension, and declination to rectangular coordinates
      */
-    #[cfg_attr(feature = "lock", impl_for(SpiceLock))]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
     pub fn radrec(range: f64, ra: f64, dec: f64) -> [f64; 3] {}
 }
 
@@ -365,7 +365,7 @@ cspice_proc! {
     /**
     Convert rectangular coordinates to range, right ascension, and declination.
     */
-    #[cfg_attr(feature = "lock", impl_for(SpiceLock))]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
     pub fn recrad(rectan: [f64; 3]) -> (f64, f64, f64) {}
 }
 
@@ -373,7 +373,7 @@ cspice_proc! {
     /**
     Close a SPK file opened for read or write.
     */
-    #[cfg_attr(feature = "lock", impl_for(SpiceLock))]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
     pub fn spkcls(handle: i32) {}
 }
 
@@ -381,7 +381,7 @@ cspice_proc! {
     /**
     Create a new SPK file, returning the handle of the opened file
      */
-    #[cfg_attr(feature = "lock", impl_for(SpiceLock))]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
     pub fn spkopn(fname: &str, ifname: &str, ncomch: i32) -> i32 {}
 }
 
@@ -390,7 +390,7 @@ cspice_proc! {
     Write a type 9 segment to an SPK file.
      */
     #[allow(clippy::too_many_arguments)]
-    #[cfg_attr(feature = "lock", impl_for(SpiceLock))]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
     pub fn spkw09(handle: i32, body: i32, center: i32, frame: &str, first: f64, last: f64, segid: &str, degree: i32, n: i32, states: &mut [[f64; 6]], epochs: &mut [f64]) {}
 }
 
@@ -399,7 +399,7 @@ cspice_proc! {
     Return the position of a target body relative to an observing body, optionally corrected for
     light time (planetary aberration) and stellar aberration.
     */
-    #[cfg_attr(feature = "lock", impl_for(SpiceLock))]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
     pub fn spkpos(targ: &str, et: f64, frame: &str, abcorr: &str, obs: &str) -> ([f64; 3], f64) {}
 }
 
@@ -409,7 +409,7 @@ cspice_proc! {
       relative to an observing body, optionally corrected for light
       time (planetary aberration) and stellar aberration.
     */
-    #[cfg_attr(feature = "lock", impl_for(SpiceLock))]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
     pub fn spkezr(targ: &str, et: f64, frame: &str, abcorr: &str, obs: &str) -> ([f64; 6], f64) {}
 }
 
@@ -418,7 +418,7 @@ cspice_proc! {
     Convert a string representing an epoch to a double precision value representing the number of
     TDB seconds past the J2000 epoch corresponding to the input epoch.
     */
-    #[cfg_attr(feature = "lock", impl_for(SpiceLock))]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
     pub fn str2et(targ: &str) -> f64 {}
 }
 
@@ -440,7 +440,7 @@ cspice_proc! {
     /**
     Unload a SPICE kernel.
     */
-    #[cfg_attr(feature = "lock", impl_for(SpiceLock))]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
     pub fn unload(name: &str) {}
 }
 
@@ -450,7 +450,7 @@ cspice_proc! {
     angle is defined as zero if either vector is zero.
     */
     #[return_output]
-    #[cfg_attr(feature = "lock", impl_for(SpiceLock))]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
     pub fn vsep(v1: [f64; 3], v2: [f64; 3]) -> f64 {}
 }
 
@@ -459,7 +459,7 @@ cspice_proc! {
     Compute the dot product of two double precision, 3-dimensional vectors.
      */
     #[return_output]
-    #[cfg_attr(feature = "lock", impl_for(SpiceLock))]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
     pub fn vdot(v1: [f64; 3], v2: [f64; 3]) -> f64 {}
 }
 
@@ -467,7 +467,7 @@ cspice_proc! {
     /**
     Compute the cross product of two 3-dimensional vectors.
      */
-    #[cfg_attr(feature = "lock", impl_for(SpiceLock))]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
     pub fn vcrss(v1: [f64; 3], v2: [f64; 3]) -> [f64; 3] {}
 }
 
@@ -475,6 +475,6 @@ cspice_proc! {
     /**
     Transpose a 3x3 matrix.
      */
-    #[cfg_attr(feature = "lock", impl_for(SpiceLock))]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
     pub fn xpose(m1: [[f64; 3]; 3]) -> [[f64; 3]; 3] {}
 }

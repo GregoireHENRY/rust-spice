@@ -14,6 +14,8 @@ pub struct SpiceLock {
 }
 
 impl SpiceLock {
+    /// Attempt to create a `SpiceLock` instance.
+    /// Will be `Err` if an instance already exists.
     pub fn try_acquire() -> Result<Self, &'static str> {
         // Sets value equal to `true` if it was `false` and
         // returns a result with the previous value (`Ok` if swapped, `Err` if not)

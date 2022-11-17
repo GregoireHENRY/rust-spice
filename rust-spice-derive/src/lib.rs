@@ -485,6 +485,8 @@ pub fn impl_for(struct_path: TokenStream, function: TokenStream) -> TokenStream 
         ..
     } = function.sig.clone();
 
+    let attrs = function.attrs.clone();
+
     let new_fname = Ident::new(&fname.to_string(), Span::call_site());
 
     // Retreive argument identifiers without types, mutability etc.
@@ -503,6 +505,7 @@ pub fn impl_for(struct_path: TokenStream, function: TokenStream) -> TokenStream 
 
     let impl_block = quote! {
         impl #struct_path {
+            #(#attrs)*
             pub fn #new_fname#generics(&self, #inputs)#output {
                 #fname(#arg_idents)
             }
