@@ -78,34 +78,6 @@ spice::unload("hera/kernels/mk/hera_study_PO_EMA_2024.tm");
 
 You can look for some inspirations in the [core tests][core tests link].
 
-## Multi-threaded usage
-
-CSPICE itself contains massive amounts of shared mutable state and is thus not thread-safe - concurrent
-calls to any SPICE functions will almost always lead to crashes. To prevent this, if you need
-to call SPICE functions from multiple threads, this crate provides a thread-safe API with the `lock`
-feature. When enabled, the API is exposed in the form of associated functions on a guard singleton 
-`SpiceLock`, which is `!Sync + Send`. You can then only share this singleton and thus the methods it
-provides between threads using a `Mutex`, preventing concurrent API usage.
-
-The lock exposes the [neat][neat link] versions of functions where available, and the [raw][raw link] versions for the rest.
-For functions which have neither, you will have to use the unsafe (and unguarded) direct C bindings.
-Just make sure you have the lock before calling them.
-
-```rust
-use spice::SpiceLock;
-
-// `try_acquire` will return `Err` if a lock already exists
-let sl = SpiceLock::try_acquire().unwrap();
-
-// SPICE functions are now associated functions of the lock with a `&self` arg
-let mut kernel = sl.furnsh("hera/kernels/mk/hera_study_PO_EMA_2024.tm");
-
-let et = sl.str2et("2027-MAR-23 16:00:00");
-let (position, light_time) = sl.spkpos("DIMORPHOS", et, "J2000", "NONE", "SUN");
-
-sl.unload("hera/kernels/mk/hera_study_PO_EMA_2024.tm");
-```
-
 ## In development
 
 Developing an idiomatic interface for Spice in Rust takes time, and not all
@@ -151,6 +123,34 @@ Much less friendly.. yet it is available. I would love some help in order to
 complete the idiomatic development. You can raise an issue or propose a pull
 request for the implementation of a specific function.
 
+## Multi-threaded usage
+
+CSPICE itself contains massive amounts of shared mutable state and is thus not thread-safe - concurrent
+calls to any SPICE functions will almost always lead to crashes. To prevent this, if you need
+to call SPICE functions from multiple threads, this crate provides a thread-safe API with the `lock`
+feature. When enabled, the API is exposed in the form of associated functions on a guard singleton 
+`SpiceLock`, which is `!Sync + Send`. You can then only share this singleton and thus the methods it
+provides between threads using a `Mutex`, preventing concurrent API usage.
+
+The lock exposes the [neat][neat link] versions of functions where available, and the [raw][raw link] versions for the rest.
+For functions which have neither, you will have to use the unsafe (and unguarded) direct C bindings.
+Just make sure you have the lock before calling them.
+
+```rust
+use spice::SpiceLock;
+
+// `try_acquire` will return `Err` if a lock already exists
+let sl = SpiceLock::try_acquire().unwrap();
+
+// SPICE functions are now associated functions of the lock with a `&self` arg
+let mut kernel = sl.furnsh("hera/kernels/mk/hera_study_PO_EMA_2024.tm");
+
+let et = sl.str2et("2027-MAR-23 16:00:00");
+let (position, light_time) = sl.spkpos("DIMORPHOS", et, "J2000", "NONE", "SUN");
+
+sl.unload("hera/kernels/mk/hera_study_PO_EMA_2024.tm");
+```
+
 ## Roadmap
 
 + provide a packaging of the test assets
@@ -164,6 +164,7 @@ request for the implementation of a specific function.
 Hall of fame:
 
 + [@s-rah][s-rah url]: [#2][PR 2]
++ [@pixldemon][pixldemon url]: [#6][PR 6] [#10][PR 10]
 
 A huge thanks for their contributions!!
 
@@ -195,4 +196,7 @@ Licensed under the [Apache License, Version 2.0][license link].
 [neat link]: https://docs.rs/rust-spice/latest/spice/core/neat/index.html
 
 [s-rah url]: https://github.com/s-rah
+[pixldemon url]: https://github.com/pixldemon
 [PR 2]: https://github.com/GregoireHENRY/rust-spice/pull/2
+[PR 6]: https://github.com/GregoireHENRY/rust-spice/pull/6
+[PR 10]: https://github.com/GregoireHENRY/rust-spice/pull/10
