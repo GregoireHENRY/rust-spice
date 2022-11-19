@@ -1,57 +1,51 @@
 ---
 fail_fast: true
 repos:
-    - repo: https://github.com/pre-commit/pre-commit-hooks
-      rev: master
-      hooks:
-          - id: check-added-large-files
-            args: [--maxkb=500]
-          - id: check-executables-have-shebangs
-          - id: check-merge-conflict
-          - id: check-toml
-          - id: check-yaml
-          - id: end-of-file-fixer
-          - id: trailing-whitespace
-          - id: no-commit-to-branch
-            stages: [commit]
-    - repo: https://github.com/jumanjihouse/pre-commit-hooks
-      rev: master
-      hooks:
-          - id: forbid-binary
-            exclude: |
-                (?x)^(
-                    .*/rsc/.*\.(png|gif|bds)
-                )$
-          - id: markdownlint
-    - repo: https://github.com/jumanjihouse/pre-commit-hook-yamlfmt
-      rev: master
-      hooks:
-          - id: yamlfmt
-    - repo: https://github.com/doublify/pre-commit-rust
-      rev: master
-      hooks:
-          - id: fmt
-          - id: cargo-check
-          - id: clippy
-    - repo: local
-      hooks:
-          - id: execute-tests
-            name: Compile and execute unit and integration tests for all targets
-            stages: [commit]
-            language: system
-            entry: cargo test
-            types: [rust]
-            pass_filenames: false
-          - id: build-documentation
-            name: Build documentation
-            stages: [commit]
-            language: system
-            entry: cargo doc
-            types: [rust]
-            pass_filenames: false
-          - id: publish
-            name: Prepare publishing to crates.io
-            stages: [push]
-            language: system
-            entry: cargo publish -c
-            pass_filenames: false
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v4.3.0
+  hooks:
+  - id: check-added-large-files
+    args: [--maxkb=500]
+  - id: check-executables-have-shebangs
+  - id: check-merge-conflict
+  - id: check-toml
+  - id: check-yaml
+  - id: end-of-file-fixer
+  - id: trailing-whitespace
+- repo: https://github.com/igorshubovych/markdownlint-cli
+  rev: v0.32.1
+  hooks:
+  - id: markdownlint
+- repo: https://github.com/jumanjihouse/pre-commit-hook-yamlfmt
+  rev: 0.2.2
+  hooks:
+  - id: yamlfmt
+    args: [--mapping, '2', --sequence, '2', --offset, '0']
+- repo: https://github.com/doublify/pre-commit-rust
+  rev: v1.0
+  hooks:
+  - id: fmt
+  - id: cargo-check
+  - id: clippy
+- repo: local
+  hooks:
+  - id: execute-tests
+    name: Compile and execute unit and integration tests for all targets
+    stages: [commit]
+    language: system
+    entry: cargo test
+    types: [rust]
+    pass_filenames: false
+  - id: build-documentation
+    name: Build documentation
+    stages: [commit]
+    language: system
+    entry: cargo doc
+    types: [rust]
+    pass_filenames: false
+  - id: publish
+    name: Prepare publishing to crates.io
+    stages: [push]
+    language: system
+    entry: cargo publish -c
+    pass_filenames: false

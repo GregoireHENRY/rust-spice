@@ -1,6 +1,6 @@
 # rust-spice
 
-[![logo image]][crate link]
+[![logo image]][repository link]
 
 [![crate badge]][crate link]
 [![doc badge]][doc link]
@@ -32,36 +32,30 @@ their [website][naif link].
 ## Requirements
 
 1) Install [CSPICE library][cspice install link] for your platform.
-2) In your folder `/path/to/cspice/lib`, rename the static libraries to match standards:
-    1) `cspice.a` -> `libcspice.a`
-    2) `csupport.a` -> `libcsupport.a`
-3) Tell Cargo where to look for the CSPICE library. This is done by adding some
-lines to `$HOME/.cargo/config.toml`. If the file doesn't exist, create it (read
-[Configuration doc][config doc]). You need to write:
+2) Set the environment variable `CSPICE_DIR` to your CSPICE installation folder
+   (where CSPICE subfolders `include` and `lib` are located. You can do that in the
+   [Cargo configuration][config doc]).
+3) In the `cspice/lib` folder you might need for Unix systems to rename the
+   static library to match standards: `cspice.a` -> `libcspice.a`
 
-```toml
-[target.YOUR_PLATFORM.cspice]
-rustc-link-lib = ["cspice"]
-rustc-link-search = ["/path/to/cspice/lib"]
-rustc-cdylib-link-arg = ["-I/path/to/cspice/include"]
-```
-
-replace `YOUR_PLATFORM` by either:
-
-+ for linux: `x86_64-unknown-linux-gnu`
-+ for mac: `x86_64-apple-darwin`
-+ for windows: `x86_64-pc-windows-msvc`
-
-and replace `/path/to/cspice` with the absolute path to your CSPICE installation.
+See other requirements at [`cspice-sys`][cspice-sys link] library which provides
+unsafe bindings to CSPICE.
 
 ## Usage
 
 Add the dependency **rust-spice** to your `Cargo.toml`:
 
 ```toml
-...
 [dependencies]
 rust-spice = "*" # replace * by the latest version of the crate
+```
+
+[`cspice-sys`][cspice-sys link] library depends on Clang which might not be
+available to your system. In this case, you can use the feature `noclang`:
+
+```toml
+[dependencies]
+rust-spice = {version = "*", default-features = false, features = ["noclang"] }
 ```
 
 ## In action
@@ -71,7 +65,7 @@ A nice and idiomatic interface to Spice,
 ```rust
 use spice;
 
-let mut kernel = spice::furnsh("rsc/krn/hera_study_PO_EMA_2024.tm");
+let mut kernel = spice::furnsh("hera/kernels/mk/hera_study_PO_EMA_2024.tm");
 
 let et = spice::str2et("2027-MAR-23 16:00:00");
 let (position, light_time) = spice::spkpos("DIMORPHOS", et, "J2000", "NONE", "SUN");
@@ -79,10 +73,10 @@ let (position, light_time) = spice::spkpos("DIMORPHOS", et, "J2000", "NONE", "SU
 // position -> 18.62640405424448, 21.054373008357004, -7.136291402940499
 // light time -> 0.00009674257074746383
 
-spice::unload("rsc/krn/hera_study_PO_EMA_2024.tm");
+spice::unload("hera/kernels/mk/hera_study_PO_EMA_2024.tm");
 ```
 
-You can look for some inspirations in the [tests][tests link].
+You can look for some inspirations in the [core tests][core tests link].
 
 ## In development
 
@@ -98,22 +92,22 @@ use spice;
 use std::ffi::CString;
 
 unsafe {
-    let kernel = CString::new("/path/to/metakernel.mk").unwrap().into_raw();
+    let kernel = CString::new("hera/kernels/mk/hera_study_PO_EMA_2024.tm").unwrap().into_raw();
     spice::c::furnsh_c(kernel);
 
-    let mut ephemeris_time = 0.0;
+    let mut et = 0.0;
     let date = CString::new("2027-MAR-23 16:00:00").unwrap().into_raw();
-    spice::c::str2et_c(date, &mut ephemeris_time);
+    spice::c::str2et_c(date, &mut et);
 
-    let target_c = CString::new("TARGET_NAME").unwrap().into_raw();
-    let frame_c = CString::new("FRAME_NAME").unwrap().into_raw();
+    let target_c = CString::new("DIMORPHOS").unwrap().into_raw();
+    let frame_c = CString::new("J2000").unwrap().into_raw();
     let abcorr_c = CString::new("NONE").unwrap().into_raw();
     let observer_c = CString::new("SUN").unwrap().into_raw();
     let mut light_time = 0.0;
     let mut position = [0.0, 0.0, 0.0];
     spice::c::spkpos_c(
         target_c,
-        ephemeris_time,
+        et,
         frame_c,
         abcorr_c,
         observer_c,
@@ -129,6 +123,34 @@ Much less friendly.. yet it is available. I would love some help in order to
 complete the idiomatic development. You can raise an issue or propose a pull
 request for the implementation of a specific function.
 
+## Multi-threaded usage
+
+CSPICE itself contains massive amounts of shared mutable state and is thus not thread-safe - concurrent
+calls to any SPICE functions will almost always lead to crashes. To prevent this, if you need
+to call SPICE functions from multiple threads, this crate provides a thread-safe API with the `lock`
+feature. When enabled, the API is exposed in the form of associated functions on a guard singleton 
+`SpiceLock`, which is `!Sync + Send`. You can then only share this singleton and thus the methods it
+provides between threads using a `Mutex`, preventing concurrent API usage.
+
+The lock exposes the [neat][neat link] versions of functions where available, and the [raw][raw link] versions for the rest.
+For functions which have neither, you will have to use the unsafe (and unguarded) direct C bindings.
+Just make sure you have the lock before calling them.
+
+```rust
+use spice::SpiceLock;
+
+// `try_acquire` will return `Err` if a lock already exists
+let sl = SpiceLock::try_acquire().unwrap();
+
+// SPICE functions are now associated functions of the lock with a `&self` arg
+let mut kernel = sl.furnsh("hera/kernels/mk/hera_study_PO_EMA_2024.tm");
+
+let et = sl.str2et("2027-MAR-23 16:00:00");
+let (position, light_time) = sl.spkpos("DIMORPHOS", et, "J2000", "NONE", "SUN");
+
+sl.unload("hera/kernels/mk/hera_study_PO_EMA_2024.tm");
+```
+
 ## Roadmap
 
 + provide a packaging of the test assets
@@ -140,7 +162,9 @@ request for the implementation of a specific function.
 ## Contributors
 
 Hall of fame:
+
 + [@s-rah][s-rah url]: [#2][PR 2]
++ [@pixldemon][pixldemon url]: [#6][PR 6] [#10][PR 10]
 
 A huge thanks for their contributions!!
 
@@ -162,12 +186,17 @@ Licensed under the [Apache License, Version 2.0][license link].
 [coverage doc link]: https://docs.rs/crate/rust-spice
 [coverage test badge]: https://img.shields.io/badge/Tests-90%25-green
 [coverage test link]: https://docs.rs/crate/rust-spice
-[tests link]: https://github.com/GregoireHENRY/rust-spice/tree/main/rust-spice/tests
+[core tests link]: https://github.com/GregoireHENRY/rust-spice/tree/main/rust-spice/tests/core/mod.rs
 [naif link]: https://naif.jpl.nasa.gov/naif
 [cspice api]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/index.html
 [cspice install link]: https://naif.jpl.nasa.gov/naif/toolkit_C.html
-[cspice-sys link]: https://crates.io/crates/cspice-sys/0.0.1
+[cspice-sys link]: https://github.com/jacob-pro/cspice-rs/tree/master/cspice-sys
 [config doc]: https://doc.rust-lang.org/cargo/reference/config.html
+[raw link]: https://docs.rs/rust-spice/latest/spice/core/raw/index.html
+[neat link]: https://docs.rs/rust-spice/latest/spice/core/neat/index.html
 
 [s-rah url]: https://github.com/s-rah
+[pixldemon url]: https://github.com/pixldemon
 [PR 2]: https://github.com/GregoireHENRY/rust-spice/pull/2
+[PR 6]: https://github.com/GregoireHENRY/rust-spice/pull/6
+[PR 10]: https://github.com/GregoireHENRY/rust-spice/pull/10

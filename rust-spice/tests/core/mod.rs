@@ -3,8 +3,8 @@ use itertools::multizip;
 #[test]
 #[serial]
 fn das() {
-    spice::furnsh("rsc/krn/hera_study_PO_EMA_2024.tm");
-    let handle = spice::dasopr("rsc/krn/g_08438mm_lgt_obj_didb_0000n00000_v002.bds");
+    spice::furnsh("hera/kernels/mk/hera_study_PO_EMA_2024.tm");
+    let handle = spice::dasopr("hera/kernels/dsk/g_08438mm_lgt_obj_didb_0000n00000_v002.bds");
 
     let (dladsc, found) = spice::dlabfs(handle);
 
@@ -16,15 +16,15 @@ fn das() {
     assert!(rmax > 0f64);
 
     spice::dascls(handle);
-    spice::unload("rsc/krn/hera_study_PO_EMA_2024.tm");
+    spice::unload("hera/kernels/mk/hera_study_PO_EMA_2024.tm");
 }
 
 #[test]
 #[serial]
 fn dskp02() {
-    spice::furnsh("rsc/krn/hera_study_PO_EMA_2024.tm");
+    spice::furnsh("hera/kernels/mk/hera_study_PO_EMA_2024.tm");
 
-    let handle = spice::dasopr("rsc/krn/g_08438mm_lgt_obj_didb_0000n00000_v002.bds");
+    let handle = spice::dasopr("hera/kernels/dsk/g_08438mm_lgt_obj_didb_0000n00000_v002.bds");
     let (dladsc, _) = spice::dlabfs(handle);
 
     let plates = spice::dskp02(handle, dladsc);
@@ -89,7 +89,7 @@ fn georec() {
 #[test]
 #[serial]
 fn pxform() {
-    spice::furnsh("rsc/krn/hera_study_PO_EMA_2024.tm");
+    spice::furnsh("hera/kernels/mk/hera_study_PO_EMA_2024.tm");
 
     let et = spice::str2et("2027-MAR-23 16:00:00");
     let matrix = spice::pxform("J2000", "ECLIPJ2000", et);
@@ -106,16 +106,16 @@ fn pxform() {
         }
     }
 
-    spice::unload("rsc/krn/hera_study_PO_EMA_2024.tm");
+    spice::unload("hera/kernels/mk/hera_study_PO_EMA_2024.tm");
 }
 
 #[test]
 #[serial]
 fn pxfrm2() {
-    spice::furnsh("rsc/krn/hera_study_PO_EMA_2024.tm");
+    spice::furnsh("hera/kernels/mk/hera_study_PO_EMA_2024.tm");
 
     let etfrom = spice::str2et("2027-MAR-23 16:00:00");
-    let etto = etfrom + 30.0 * tool::MINUTE;
+    let etto = etfrom + 30.0 * 60.0; // 30 minutes.
     let matrix = spice::pxfrm2("J2000", "J2000", etfrom, etto);
 
     let expected_matrix = [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]];
@@ -126,13 +126,13 @@ fn pxfrm2() {
         }
     }
 
-    spice::unload("rsc/krn/hera_study_PO_EMA_2024.tm");
+    spice::unload("hera/kernels/mk/hera_study_PO_EMA_2024.tm");
 }
 
 #[test]
 #[serial]
 fn radrec() {
-    spice::furnsh("rsc/krn/hera_study_PO_EMA_2024.tm");
+    spice::furnsh("hera/kernels/mk/hera_study_PO_EMA_2024.tm");
 
     // Mirfak J2000 RA and DEC
     let ra = 51.080_f64.to_radians();
@@ -158,13 +158,13 @@ fn radrec() {
     assert_relative_eq!(ra.to_degrees(), ra_b1950, epsilon = 0.001);
     assert_relative_eq!(dec.to_degrees(), dec_b1950, epsilon = 0.001);
 
-    spice::unload("rsc/krn/hera_study_PO_EMA_2024.tm");
+    spice::unload("hera/kernels/mk/hera_study_PO_EMA_2024.tm");
 }
 
 #[test]
 #[serial]
 fn spkezr() {
-    spice::furnsh("rsc/krn/hera_study_PO_EMA_2024.tm");
+    spice::furnsh("hera/kernels/mk/hera_study_PO_EMA_2024.tm");
 
     // an arbitrary time
     let et = spice::str2et("2021-01-06 09:36:09.1825432 TDB");
@@ -182,19 +182,140 @@ fn spkezr() {
     assert_eq!(earth_ssb_posvec[4] - sun_ssb_posvec[4], earth_sun_posvec[4]);
     assert_eq!(earth_ssb_posvec[5] - sun_ssb_posvec[5], earth_sun_posvec[5]);
 
-    spice::unload("rsc/krn/hera_study_PO_EMA_2024.tm");
+    spice::unload("hera/kernels/mk/hera_study_PO_EMA_2024.tm");
+}
+
+/// Assembles a filepath to 'fname' in a temporary directory
+/// Useful for testing kernel writer modules
+fn get_temp_filepath(fname: &str) -> String {
+    let mut filepath = std::env::temp_dir()
+        .into_os_string()
+        .into_string()
+        .expect("Failed to get temporary directory path");
+
+    // Push file name to tempdir path
+    filepath.push_str(fname);
+
+    filepath
+}
+
+/// Deletes specified file if it exists
+fn delete_if_exists(file: &std::path::Path) {
+    if file.exists() {
+        std::fs::remove_file(&file).unwrap();
+    }
+}
+
+/// Writes a type 9 SPK segment containing junk data to the SPK kernel with the provided handle
+/// Necessary in some SPK writer related tests as spkcls_c will fail with no segments present
+fn junk_spkw09_c(handle: i32) {
+    const N_STATES: usize = 4;
+    unsafe {
+        spice::c::spkw09_c(
+            handle,
+            399,
+            10,
+            spice::cstr!("J2000"),
+            0.0,
+            (N_STATES - 1) as f64,
+            spice::cstr!("Segment ID"),
+            3,
+            N_STATES as i32,
+            [[0f64; 6]; N_STATES].as_mut_ptr(),
+            (0..N_STATES)
+                .map(|i| i as f64)
+                .collect::<Vec<f64>>()
+                .as_mut_ptr(),
+        );
+    }
+}
+
+/// Opens a new SPK file for writing
+fn open_test_spk(filepath: &str) -> i32 {
+    let mut handle = 0;
+    unsafe {
+        spice::c::spkopn_c(
+            spice::cstr!(filepath),
+            spice::cstr!("SPK Kernel File"),
+            0,
+            &mut handle,
+        )
+    }
+    handle
+}
+
+#[test]
+#[serial]
+fn spkcls() {
+    let filepath = get_temp_filepath("/spkclstestkernel.bsp");
+    let file = std::path::Path::new(&filepath);
+    delete_if_exists(file);
+
+    let handle = open_test_spk(&filepath);
+    // Write one nonsense segment to the file so that spkcls_c doesn't fail
+    junk_spkw09_c(handle);
+    spice::spkcls(handle);
+
+    assert!(file.exists());
+    std::fs::remove_file(file).unwrap();
+}
+
+#[test]
+#[serial]
+fn spkopn() {
+    let filepath = get_temp_filepath("/spkopntestkernel.bsp");
+    let file = std::path::Path::new(&filepath);
+    delete_if_exists(file);
+
+    let handle = spice::spkopn(&filepath, "SPK Kernel File", 60);
+    // Write one nonsense segment to the file so that spkcls_c doesn't fail
+    junk_spkw09_c(handle);
+    unsafe { spice::c::spkcls_c(handle) }
+
+    assert!(file.exists());
+    std::fs::remove_file(file).unwrap();
+}
+
+#[test]
+#[serial]
+fn spkw09() {
+    let filepath = get_temp_filepath("/spkw09testkernel.bsp");
+    let file = std::path::Path::new(&filepath);
+    delete_if_exists(file);
+
+    let handle = open_test_spk(&filepath);
+
+    const N_STATES: usize = 4;
+    spice::spkw09(
+        handle,
+        399,
+        10,
+        "J2000",
+        0.0,
+        (N_STATES - 1) as f64,
+        "Segment ID",
+        3,
+        4,
+        &mut [[0f64; 6]; N_STATES],
+        &mut (0..N_STATES).map(|i| i as f64).collect::<Vec<f64>>(),
+    );
+
+    unsafe { spice::c::spkcls_c(handle) }
+
+    assert!(file.exists());
+    std::fs::remove_file(file).unwrap();
 }
 
 #[test]
 #[serial]
 fn spkpos() {
-    spice::furnsh("rsc/krn/hera_study_PO_EMA_2024.tm");
+    spice::furnsh("hera/kernels/mk/hera_study_PO_EMA_2024.tm");
 
     let et = spice::str2et("2027-MAR-23 16:00:00");
     let (position, light_time) = spice::spkpos("DIMORPHOS", et, "J2000", "NONE", "HERA");
 
-    let expected_position = [18.62640405424448, 21.054373008357004, -7.136291402940499];
-    let expected_light_time = 0.00009674257074746383;
+    let expected_position = [19.880764225600004, 20.637995227402328, -4.208198899932672];
+    let expected_light_time = 9.661162013688976e-5;
 
     for (component, expected_component) in multizip((position.iter(), expected_position.iter())) {
         assert_relative_eq!(component, expected_component, epsilon = f64::EPSILON);
@@ -202,25 +323,25 @@ fn spkpos() {
 
     assert_relative_eq!(light_time, expected_light_time, epsilon = f64::EPSILON);
 
-    spice::unload("rsc/krn/hera_study_PO_EMA_2024.tm");
+    spice::unload("hera/kernels/mk/hera_study_PO_EMA_2024.tm");
 }
 
 #[test]
 #[serial]
 fn str2et() {
-    spice::furnsh("rsc/krn/hera_study_PO_EMA_2024.tm");
+    spice::furnsh("hera/kernels/mk/hera_study_PO_EMA_2024.tm");
 
     let et = spice::str2et("2027-MAR-23 16:00:00");
 
-    assert_relative_eq!(et, 859089667.1856234, epsilon = f64::EPSILON);
+    assert_relative_eq!(et, 859089669.1856234, epsilon = f64::EPSILON);
 
-    spice::unload("rsc/krn/hera_study_PO_EMA_2024.tm");
+    spice::unload("hera/kernels/mk/hera_study_PO_EMA_2024.tm");
 }
 
 #[test]
 #[serial]
 fn timout() {
-    spice::furnsh("rsc/krn/hera_study_PO_EMA_2024.tm");
+    spice::furnsh("hera/kernels/mk/hera_study_PO_EMA_2024.tm");
 
     let et = spice::str2et("2027-MAR-23 16:00:00");
 
@@ -228,7 +349,7 @@ fn timout() {
 
     assert_eq!(date, "2027-MAR-23 16:00:00");
 
-    spice::unload("rsc/krn/hera_study_PO_EMA_2024.tm");
+    spice::unload("hera/kernels/mk/hera_study_PO_EMA_2024.tm");
 }
 
 #[test]
@@ -258,13 +379,13 @@ fn vsep() {
     let ang_2 = spice::vsep([1., 0., 0.], [0., 1., 0.]);
 
     assert_relative_eq!(ang_1, 0.0, epsilon = f64::EPSILON);
-    assert_relative_eq!(ang_2, tool::TAU / 4., epsilon = f64::EPSILON);
+    assert_relative_eq!(ang_2, std::f64::consts::TAU / 4., epsilon = f64::EPSILON);
 }
 
 #[test]
 #[serial]
 fn kdata() {
-    spice::furnsh("rsc/krn/hera_study_PO_EMA_2024.tm");
+    spice::furnsh("hera/kernels/mk/hera_study_PO_EMA_2024.tm");
     let index_dsk = 1;
 
     let count = spice::ktotal("dsk");
@@ -273,10 +394,10 @@ fn kdata() {
     let (file, filtyp, source, handle, found) = spice::kdata(index_dsk, "dsk");
     assert_eq!(
         file,
-        "/home/greg/doc/spice/missions/hera/kernels/dsk/g_08438mm_lgt_obj_didb_0000n00000_v002.bds"
+        "/home/greg/code/rust/spice/rust-spice/hera/kernels/dsk/g_08438mm_lgt_obj_didb_0000n00000_v002.bds"
     );
     assert_eq!(filtyp, "DSK");
-    assert_eq!(source, "rsc/krn/hera_study_PO_EMA_2024.tm");
+    assert_eq!(source, "hera/kernels/mk/hera_study_PO_EMA_2024.tm");
     assert!(handle.is_positive());
     assert_eq!(found, true);
 
@@ -286,7 +407,7 @@ fn kdata() {
 #[test]
 #[serial]
 fn cell() {
-    spice::furnsh("rsc/krn/hera_study_PO_EMA_2024.tm");
+    spice::furnsh("hera/kernels/mk/hera_study_PO_EMA_2024.tm");
 
     let (file, _, _, _, found) = spice::kdata(1, "dsk");
     assert!(found);
@@ -304,7 +425,7 @@ fn cell() {
 #[test]
 #[serial]
 fn bodfnd() {
-    spice::furnsh("rsc/krn/hera_study_PO_EMA_2024.tm");
+    spice::furnsh("hera/kernels/mk/hera_study_PO_EMA_2024.tm");
 
     let (target, found) = spice::bodn2c("DIMORPHOS");
     assert!(found);

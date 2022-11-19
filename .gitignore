@@ -13,3 +13,6 @@ Cargo.lock
 !*/rsc/img/logo_bg_squared.png
 !*/rsc/img/logo_squared.png
 !*/rsc/data/hera_PO_EMA_2024.tm
+
+# SPICE kernels
+rust-spice/hera/
