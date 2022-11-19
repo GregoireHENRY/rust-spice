@@ -15,6 +15,7 @@ name = "spice"
 [features]
 default = ["dep:cspice-sys"]
 noclang = ["dep:cspice-sys-no-clang"]
+lock = []
 
 [dependencies]
 itertools = "0.10"
