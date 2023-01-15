@@ -15,9 +15,10 @@
 
 [Intro](#intro) |
 [Requirements](#requirements) |
+[Usage](#usage) |
 [In action](#in-action) |
 [In development](#in-development) |
-[Usage](#usage) |
+[Multi-threaded usage](#multi-threaded-usage) |
 [Roadmap](#roadmap) |
 [Contributors](#contributors) |
 [License](#license)
@@ -58,6 +59,13 @@ available to your system. In this case, you can use the feature `noclang`:
 rust-spice = {version = "*", default-features = false, features = ["noclang"] }
 ```
 
+To enable the `lock` feature (see [## Multi-threaded usage](#multi-threaded-usage)).
+
+```toml
+[dependencies]
+rust-spice = {version = "*", features = ["lock"] }
+```
+
 ## In action
 
 A nice and idiomatic interface to Spice,
@@ -65,7 +73,7 @@ A nice and idiomatic interface to Spice,
 ```rust
 use spice;
 
-let mut kernel = spice::furnsh("hera/kernels/mk/hera_study_PO_EMA_2024.tm");
+let mut kernel = spice::furnsh("/Users/gregoireh/data/spice-kernels/hera/kernels/mk/hera_study_PO_EMA_2024.tm");
 
 let et = spice::str2et("2027-MAR-23 16:00:00");
 let (position, light_time) = spice::spkpos("DIMORPHOS", et, "J2000", "NONE", "SUN");
@@ -73,10 +81,13 @@ let (position, light_time) = spice::spkpos("DIMORPHOS", et, "J2000", "NONE", "SU
 // position -> 18.62640405424448, 21.054373008357004, -7.136291402940499
 // light time -> 0.00009674257074746383
 
-spice::unload("hera/kernels/mk/hera_study_PO_EMA_2024.tm");
+spice::kclear();
 ```
 
 You can look for some inspirations in the [core tests][core tests link].
+
+This dataset used as an example can be downloaded from
+[here](https://s2e2.cosmos.esa.int/bitbucket/projects/SPICE_KERNELS/repos/hera/browse).
 
 ## In development
 
@@ -92,7 +103,7 @@ use spice;
 use std::ffi::CString;
 
 unsafe {
-    let kernel = CString::new("hera/kernels/mk/hera_study_PO_EMA_2024.tm").unwrap().into_raw();
+    let kernel = CString::new("/Users/gregoireh/data/spice-kernels/hera/kernels/mk/hera_study_PO_EMA_2024.tm").unwrap().into_raw();
     spice::c::furnsh_c(kernel);
 
     let mut et = 0.0;
@@ -115,7 +126,7 @@ unsafe {
         &mut light_time,
     );
 
-    spice::c::unload_c(kernel);
+    spice::c::kclear_c();
 }
 ```
 
@@ -137,18 +148,21 @@ For functions which have neither, you will have to use the unsafe (and unguarded
 Just make sure you have the lock before calling them.
 
 ```rust
+# #[cfg(feature = "lock")]
+# {
 use spice::SpiceLock;
 
 // `try_acquire` will return `Err` if a lock already exists
 let sl = SpiceLock::try_acquire().unwrap();
 
 // SPICE functions are now associated functions of the lock with a `&self` arg
-let mut kernel = sl.furnsh("hera/kernels/mk/hera_study_PO_EMA_2024.tm");
+let mut kernel = sl.furnsh("/Users/gregoireh/data/spice-kernels/hera/kernels/mk/hera_study_PO_EMA_2024.tm");
 
 let et = sl.str2et("2027-MAR-23 16:00:00");
 let (position, light_time) = sl.spkpos("DIMORPHOS", et, "J2000", "NONE", "SUN");
 
-sl.unload("hera/kernels/mk/hera_study_PO_EMA_2024.tm");
+sl.kclear();
+# }
 ```
 
 ## Roadmap

@@ -14,7 +14,7 @@ use std::ffi::CString;
 #[serial]
 fn test_c() {
     unsafe {
-        let kernel = CString::new("hera/kernels/mk/hera_study_PO_EMA_2024.tm")
+        let kernel = CString::new("/Users/gregoireh/data/spice-kernels/hera/kernels/mk/hera_study_PO_EMA_2024.tm")
             .unwrap()
             .into_raw();
         spice::c::furnsh_c(kernel);
@@ -43,20 +43,20 @@ pub mod lock_tests {
     #[serial]
     fn str2et() {
         let sl = spice::SpiceLock::try_acquire().unwrap();
-        sl.furnsh("hera/kernels/mk/hera_study_PO_EMA_2024.tm");
+        sl.furnsh("/Users/gregoireh/data/spice-kernels/hera/kernels/mk/hera_study_PO_EMA_2024.tm");
 
         let et = sl.str2et("2027-MAR-23 16:00:00");
 
         assert_relative_eq!(et, 859089669.1856234, epsilon = f64::EPSILON);
 
-        sl.unload("hera/kernels/mk/hera_study_PO_EMA_2024.tm");
+        sl.unload("/Users/gregoireh/data/spice-kernels/hera/kernels/mk/hera_study_PO_EMA_2024.tm");
     }
     #[test]
     #[serial]
     fn spkezr() {
         let sl = spice::SpiceLock::try_acquire().unwrap();
 
-        sl.furnsh("hera/kernels/mk/hera_study_PO_EMA_2024.tm");
+        sl.furnsh("/Users/gregoireh/data/spice-kernels/hera/kernels/mk/hera_study_PO_EMA_2024.tm");
 
         // an arbitrary time
         let et = sl.str2et("2021-01-06 09:36:09.1825432 TDB");
@@ -74,14 +74,14 @@ pub mod lock_tests {
         assert_eq!(earth_ssb_posvec[4] - sun_ssb_posvec[4], earth_sun_posvec[4]);
         assert_eq!(earth_ssb_posvec[5] - sun_ssb_posvec[5], earth_sun_posvec[5]);
 
-        sl.unload("hera/kernels/mk/hera_study_PO_EMA_2024.tm");
+        sl.unload("/Users/gregoireh/data/spice-kernels/hera/kernels/mk/hera_study_PO_EMA_2024.tm");
     }
     #[test]
     #[serial]
     fn cell() {
         let sl = spice::SpiceLock::try_acquire().unwrap();
 
-        sl.furnsh("hera/kernels/mk/hera_study_PO_EMA_2024.tm");
+        sl.furnsh("/Users/gregoireh/data/spice-kernels/hera/kernels/mk/hera_study_PO_EMA_2024.tm");
 
         let (file, _, _, _, found) = sl.kdata(1, "dsk");
         assert!(found);
@@ -102,7 +102,7 @@ pub mod lock_tests {
         use std::thread;
 
         let sl = spice::SpiceLock::try_acquire().unwrap();
-        sl.furnsh("hera/kernels/mk/hera_study_PO_EMA_2024.tm");
+        sl.furnsh("/Users/gregoireh/data/spice-kernels/hera/kernels/mk/hera_study_PO_EMA_2024.tm");
 
         let sl = Arc::new(Mutex::new(sl));
 
@@ -125,6 +125,6 @@ pub mod lock_tests {
 
         sl.lock()
             .unwrap()
-            .unload("hera/kernels/mk/hera_study_PO_EMA_2024.tm");
+            .unload("/Users/gregoireh/data/spice-kernels/hera/kernels/mk/hera_study_PO_EMA_2024.tm");
     }
 }

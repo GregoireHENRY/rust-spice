@@ -3,8 +3,8 @@ use itertools::multizip;
 #[test]
 #[serial]
 fn das() {
-    spice::furnsh("hera/kernels/mk/hera_study_PO_EMA_2024.tm");
-    let handle = spice::dasopr("hera/kernels/dsk/g_08438mm_lgt_obj_didb_0000n00000_v002.bds");
+    spice::furnsh("/Users/gregoireh/data/spice-kernels/hera/kernels/mk/hera_study_PO_EMA_2024.tm");
+    let handle = spice::dasopr("/Users/gregoireh/data/spice-kernels/hera/kernels/dsk/g_08438mm_lgt_obj_didb_0000n00000_v002.bds");
 
     let (dladsc, found) = spice::dlabfs(handle);
 
@@ -16,15 +16,15 @@ fn das() {
     assert!(rmax > 0f64);
 
     spice::dascls(handle);
-    spice::unload("hera/kernels/mk/hera_study_PO_EMA_2024.tm");
+    spice::unload("/Users/gregoireh/data/spice-kernels/hera/kernels/mk/hera_study_PO_EMA_2024.tm");
 }
 
 #[test]
 #[serial]
 fn dskp02() {
-    spice::furnsh("hera/kernels/mk/hera_study_PO_EMA_2024.tm");
+    spice::furnsh("/Users/gregoireh/data/spice-kernels/hera/kernels/mk/hera_study_PO_EMA_2024.tm");
 
-    let handle = spice::dasopr("hera/kernels/dsk/g_08438mm_lgt_obj_didb_0000n00000_v002.bds");
+    let handle = spice::dasopr("/Users/gregoireh/data/spice-kernels/hera/kernels/dsk/g_08438mm_lgt_obj_didb_0000n00000_v002.bds");
     let (dladsc, _) = spice::dlabfs(handle);
 
     let plates = spice::dskp02(handle, dladsc);
@@ -89,7 +89,7 @@ fn georec() {
 #[test]
 #[serial]
 fn pxform() {
-    spice::furnsh("hera/kernels/mk/hera_study_PO_EMA_2024.tm");
+    spice::furnsh("/Users/gregoireh/data/spice-kernels/hera/kernels/mk/hera_study_PO_EMA_2024.tm");
 
     let et = spice::str2et("2027-MAR-23 16:00:00");
     let matrix = spice::pxform("J2000", "ECLIPJ2000", et);
@@ -106,13 +106,13 @@ fn pxform() {
         }
     }
 
-    spice::unload("hera/kernels/mk/hera_study_PO_EMA_2024.tm");
+    spice::unload("/Users/gregoireh/data/spice-kernels/hera/kernels/mk/hera_study_PO_EMA_2024.tm");
 }
 
 #[test]
 #[serial]
 fn pxfrm2() {
-    spice::furnsh("hera/kernels/mk/hera_study_PO_EMA_2024.tm");
+    spice::furnsh("/Users/gregoireh/data/spice-kernels/hera/kernels/mk/hera_study_PO_EMA_2024.tm");
 
     let etfrom = spice::str2et("2027-MAR-23 16:00:00");
     let etto = etfrom + 30.0 * 60.0; // 30 minutes.
@@ -126,13 +126,13 @@ fn pxfrm2() {
         }
     }
 
-    spice::unload("hera/kernels/mk/hera_study_PO_EMA_2024.tm");
+    spice::unload("/Users/gregoireh/data/spice-kernels/hera/kernels/mk/hera_study_PO_EMA_2024.tm");
 }
 
 #[test]
 #[serial]
 fn radrec() {
-    spice::furnsh("hera/kernels/mk/hera_study_PO_EMA_2024.tm");
+    spice::furnsh("/Users/gregoireh/data/spice-kernels/hera/kernels/mk/hera_study_PO_EMA_2024.tm");
 
     // Mirfak J2000 RA and DEC
     let ra = 51.080_f64.to_radians();
@@ -158,13 +158,13 @@ fn radrec() {
     assert_relative_eq!(ra.to_degrees(), ra_b1950, epsilon = 0.001);
     assert_relative_eq!(dec.to_degrees(), dec_b1950, epsilon = 0.001);
 
-    spice::unload("hera/kernels/mk/hera_study_PO_EMA_2024.tm");
+    spice::unload("/Users/gregoireh/data/spice-kernels/hera/kernels/mk/hera_study_PO_EMA_2024.tm");
 }
 
 #[test]
 #[serial]
 fn spkezr() {
-    spice::furnsh("hera/kernels/mk/hera_study_PO_EMA_2024.tm");
+    spice::furnsh("/Users/gregoireh/data/spice-kernels/hera/kernels/mk/hera_study_PO_EMA_2024.tm");
 
     // an arbitrary time
     let et = spice::str2et("2021-01-06 09:36:09.1825432 TDB");
@@ -182,7 +182,7 @@ fn spkezr() {
     assert_eq!(earth_ssb_posvec[4] - sun_ssb_posvec[4], earth_sun_posvec[4]);
     assert_eq!(earth_ssb_posvec[5] - sun_ssb_posvec[5], earth_sun_posvec[5]);
 
-    spice::unload("hera/kernels/mk/hera_study_PO_EMA_2024.tm");
+    spice::unload("/Users/gregoireh/data/spice-kernels/hera/kernels/mk/hera_study_PO_EMA_2024.tm");
 }
 
 /// Assembles a filepath to 'fname' in a temporary directory
@@ -309,7 +309,7 @@ fn spkw09() {
 #[test]
 #[serial]
 fn spkpos() {
-    spice::furnsh("hera/kernels/mk/hera_study_PO_EMA_2024.tm");
+    spice::furnsh("/Users/gregoireh/data/spice-kernels/hera/kernels/mk/hera_study_PO_EMA_2024.tm");
 
     let et = spice::str2et("2027-MAR-23 16:00:00");
     let (position, light_time) = spice::spkpos("DIMORPHOS", et, "J2000", "NONE", "HERA");
@@ -323,25 +323,25 @@ fn spkpos() {
 
     assert_relative_eq!(light_time, expected_light_time, epsilon = f64::EPSILON);
 
-    spice::unload("hera/kernels/mk/hera_study_PO_EMA_2024.tm");
+    spice::unload("/Users/gregoireh/data/spice-kernels/hera/kernels/mk/hera_study_PO_EMA_2024.tm");
 }
 
 #[test]
 #[serial]
 fn str2et() {
-    spice::furnsh("hera/kernels/mk/hera_study_PO_EMA_2024.tm");
+    spice::furnsh("/Users/gregoireh/data/spice-kernels/hera/kernels/mk/hera_study_PO_EMA_2024.tm");
 
     let et = spice::str2et("2027-MAR-23 16:00:00");
 
     assert_relative_eq!(et, 859089669.1856234, epsilon = f64::EPSILON);
 
-    spice::unload("hera/kernels/mk/hera_study_PO_EMA_2024.tm");
+    spice::unload("/Users/gregoireh/data/spice-kernels/hera/kernels/mk/hera_study_PO_EMA_2024.tm");
 }
 
 #[test]
 #[serial]
 fn timout() {
-    spice::furnsh("hera/kernels/mk/hera_study_PO_EMA_2024.tm");
+    spice::furnsh("/Users/gregoireh/data/spice-kernels/hera/kernels/mk/hera_study_PO_EMA_2024.tm");
 
     let et = spice::str2et("2027-MAR-23 16:00:00");
 
@@ -349,7 +349,7 @@ fn timout() {
 
     assert_eq!(date, "2027-MAR-23 16:00:00");
 
-    spice::unload("hera/kernels/mk/hera_study_PO_EMA_2024.tm");
+    spice::unload("/Users/gregoireh/data/spice-kernels/hera/kernels/mk/hera_study_PO_EMA_2024.tm");
 }
 
 #[test]
@@ -385,7 +385,7 @@ fn vsep() {
 #[test]
 #[serial]
 fn kdata() {
-    spice::furnsh("hera/kernels/mk/hera_study_PO_EMA_2024.tm");
+    spice::furnsh("/Users/gregoireh/data/spice-kernels/hera/kernels/mk/hera_study_PO_EMA_2024.tm");
     let index_dsk = 1;
 
     let count = spice::ktotal("dsk");
@@ -394,10 +394,10 @@ fn kdata() {
     let (file, filtyp, source, handle, found) = spice::kdata(index_dsk, "dsk");
     assert_eq!(
         file,
-        "/home/greg/code/rust/spice/rust-spice/hera/kernels/dsk/g_08438mm_lgt_obj_didb_0000n00000_v002.bds"
+        "/Users/gregoireh/data/spice-kernels/hera/kernels/dsk/g_08438mm_lgt_obj_didb_0000n00000_v002.bds"
     );
     assert_eq!(filtyp, "DSK");
-    assert_eq!(source, "hera/kernels/mk/hera_study_PO_EMA_2024.tm");
+    assert_eq!(source, "/Users/gregoireh/data/spice-kernels/hera/kernels/mk/hera_study_PO_EMA_2024.tm");
     assert!(handle.is_positive());
     assert_eq!(found, true);
 
@@ -407,7 +407,7 @@ fn kdata() {
 #[test]
 #[serial]
 fn cell() {
-    spice::furnsh("hera/kernels/mk/hera_study_PO_EMA_2024.tm");
+    spice::furnsh("/Users/gregoireh/data/spice-kernels/hera/kernels/mk/hera_study_PO_EMA_2024.tm");
 
     let (file, _, _, _, found) = spice::kdata(1, "dsk");
     assert!(found);
@@ -425,7 +425,7 @@ fn cell() {
 #[test]
 #[serial]
 fn bodfnd() {
-    spice::furnsh("hera/kernels/mk/hera_study_PO_EMA_2024.tm");
+    spice::furnsh("/Users/gregoireh/data/spice-kernels/hera/kernels/mk/hera_study_PO_EMA_2024.tm");
 
     let (target, found) = spice::bodn2c("DIMORPHOS");
     assert!(found);

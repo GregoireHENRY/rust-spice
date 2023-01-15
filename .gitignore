@@ -1,4 +1,5 @@
 # default
+.DS_Store
 target/
 Cargo.lock
 
