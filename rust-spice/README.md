@@ -139,7 +139,7 @@ request for the implementation of a specific function.
 CSPICE itself contains massive amounts of shared mutable state and is thus not thread-safe - concurrent
 calls to any SPICE functions will almost always lead to crashes. To prevent this, if you need
 to call SPICE functions from multiple threads, this crate provides a thread-safe API with the `lock`
-feature. When enabled, the API is exposed in the form of associated functions on a guard singleton 
+feature. When enabled, the API is exposed in the form of associated functions on a guard singleton
 `SpiceLock`, which is `!Sync + Send`. You can then only share this singleton and thus the methods it
 provides between threads using a `Mutex`, preventing concurrent API usage.
 
