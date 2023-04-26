@@ -1,44 +1,56 @@
-use std::cell::Cell;
-use std::marker::PhantomData;
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::{Mutex, MutexGuard, OnceLock, TryLockError};
 
-// Atomic bool to keep track of whether an instance exists
-static mut IS_LOCKED: AtomicBool = AtomicBool::new(false);
+// global lock to keep track of things.
+static LOCK: OnceLock<Mutex<()>> = OnceLock::new();
 
 /// A wrapper singleton struct around the API to prevent concurrent calls to SPICE functions from multiple threads.
 /// Exposes all functions as methods with identical signatures besides the added `&self` argument.
 /// Only available with the `lock` feature enabled.
 pub struct SpiceLock {
-    // Private dummy field. Prevents direct instantiation and makes type `!Sync` (because `Cell` is `!Sync`)
-    _x: PhantomData<Cell<()>>,
+    // the guard is a RAII filed, and since drop gets called automatically, it neatly handles unlocking for us.
+    _guard: MutexGuard<'static, ()>,
 }
 
 impl SpiceLock {
     /// Attempt to create a `SpiceLock` instance.
-    /// Will be `Err` if an instance already exists.
+    /// Will be `Err` if an instance already exists or the underlying mutex has been poisoned.
     pub fn try_acquire() -> Result<Self, &'static str> {
-        // Sets value equal to `true` if it was `false` and
-        // returns a result with the previous value (`Ok` if swapped, `Err` if not)
-        let was_unlocked = unsafe {
-            IS_LOCKED
-                .compare_exchange(false, true, Ordering::Acquire, Ordering::Relaxed)
-                .is_ok()
-        };
-        // If the value was changed, it was atomically set to true and no instance exists
-        if was_unlocked {
-            // Safely return the only instance
-            Ok(Self { _x: PhantomData })
-        } else {
-            // A lock already exists somewhere
-            Err("Cannot acquire SPICE lock: Already locked.")
+        // we try to lock the mutex
+        match LOCK.get_or_init(|| Mutex::new(())).try_lock() {
+            // The guard can be moved, so it now lives inside the newly created spice lock.
+            Ok(guard) => {
+                Ok(Self {
+                    _guard: guard
+                })
+            }
+            // we might already be locked though.
+            Err(TryLockError::WouldBlock) => {
+                Err("Cannot acquire SPICE lock: Already locked.")
+            }
+            // Or some thread panicked in the past.
+            // Technically this is recoverable, but for for time being its not.
+            Err(TryLockError::Poisoned(_)) => {
+                Err("Cannot acquire SPICE lock: Mutex poisoned (a thread panicked while holding the lock)")
+            }
         }
     }
-}
 
-impl Drop for SpiceLock {
-    fn drop(&mut self) {
-        unsafe {
-            IS_LOCKED.store(false, Ordering::Release);
+    /// Attempt to create a `SpiceLock` instance.
+    /// Will **block** if an instance already exists.
+    /// Will be `Err` if the underlying mutex has been poisoned.
+    pub fn acquire() -> Result<Self, &'static str> {
+        // try to lock the mutex
+        match LOCK.get_or_init(|| Mutex::new(())).lock() {
+            // all is well
+            Ok(guard) => {
+                Ok(Self {
+                    _guard: guard
+                })
+            }
+            // Poisoned
+            Err(_) => {
+                Err("Cannot acquire SPICE lock: Mutex poisoned (a thread panicked while holding the lock)")
+            }
         }
     }
 }
