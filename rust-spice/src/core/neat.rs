@@ -46,8 +46,8 @@ See [`raw::dskp02`] for the raw interface.
 */
 #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
 pub fn dskp02(handle: i32, dladsc: raw::DLADSC) -> Vec<[i32; 3]> {
-    let (_, np) = raw::dskz02(handle, dladsc);
-    raw::dskp02(handle, dladsc, 1, np).1
+    let (_nv, np) = raw::dskz02(handle, dladsc);
+    raw::dskp02(handle, dladsc, 1, np as _)
 }
 
 /**
@@ -57,8 +57,8 @@ See [`raw::dskv02`] for the raw interface.
 */
 #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
 pub fn dskv02(handle: i32, dladsc: raw::DLADSC) -> Vec<[f64; 3]> {
-    let (nv, _) = raw::dskz02(handle, dladsc);
-    raw::dskv02(handle, dladsc, 1, nv).1
+    let (nv, _np) = raw::dskz02(handle, dladsc);
+    raw::dskv02(handle, dladsc, 1, nv as _)
 }
 
 /**

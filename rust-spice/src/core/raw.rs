@@ -2,7 +2,7 @@
 A Rust idiomatic CSPICE wrapper built with [procedural macros][`spice_derive`].
 */
 
-use crate::{c, cstr, fcstr, get_scalar, get_varr, init_scalar, malloc, mallocstr};
+use crate::{c, cstr, fcstr, malloc, mallocstr};
 use spice_derive::{cspice_proc, return_output};
 use std::ops::{Deref, DerefMut};
 
@@ -171,23 +171,23 @@ Fetch triangular plates from a type 2 DSK segment.
 
 This function has a [neat version][crate::neat::dskp02].
 */
-pub fn dskp02(handle: i32, mut dladsc: DLADSC, start: i32, room: i32) -> (i32, Vec<[i32; 3]>) {
-    let mut varout_0 = init_scalar!();
-    let varout_1 = malloc!([i32; 3], room);
+pub fn dskp02(handle: i32, mut dladsc: DLADSC, start: usize, room: usize) -> Vec<[i32; 3]> {
+    let mut n = 0;
+    let mut plates = vec![[0; 3]; room];
+
     unsafe {
         crate::c::dskp02_c(
             handle,
             &mut dladsc,
-            start,
-            room,
-            varout_0.as_mut_ptr(),
-            varout_1,
+            start as _,
+            room as _,
+            &mut n,
+            plates.as_mut_ptr(),
         );
-        (
-            get_scalar!(varout_0),
-            get_varr!(varout_1, get_scalar!(varout_0)),
-        )
     }
+
+    plates.truncate(n as _);
+    plates
 }
 
 /**
@@ -195,23 +195,23 @@ Fetch vertices from a type 2 DSK segment.
 
 This function has a [neat version][crate::neat::dskv02].
 */
-pub fn dskv02(handle: i32, mut dladsc: DLADSC, start: i32, room: i32) -> (i32, Vec<[f64; 3]>) {
-    let mut varout_0 = init_scalar!();
-    let varout_1 = malloc!([f64; 3], room);
+pub fn dskv02(handle: i32, mut dladsc: DLADSC, start: usize, room: usize) -> Vec<[f64; 3]> {
+    let mut n = 0;
+    let mut vrtces = vec![[0.0; 3]; room];
+
     unsafe {
         crate::c::dskv02_c(
             handle,
             &mut dladsc,
-            start,
-            room,
-            varout_0.as_mut_ptr(),
-            varout_1,
+            start as _,
+            room as _,
+            &mut n,
+            vrtces.as_mut_ptr(),
         );
-        (
-            get_scalar!(varout_0),
-            get_varr!(varout_1, get_scalar!(varout_0)),
-        )
     }
+
+    vrtces.truncate(n as _);
+    vrtces
 }
 
 cspice_proc! {
@@ -231,7 +231,13 @@ cspice_proc! {
 
 cspice_proc! {
     /**
-    Return plate model size parameters---plate count and vertex count---for a type 2 DSK segment.
+    Return plate model size parameters---plate count and
+    vertex count---for a type 2 DSK segment.
+
+    Plate first, vertices second.
+
+
+    See [`neat::dskp02`] for the raw interface.
     */
     #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
     pub fn dskz02(handle: i32, dladsc: DLADSC) -> (i32, i32) {}
