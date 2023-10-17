@@ -2,7 +2,7 @@
 A Rust idiomatic CSPICE wrapper built with [procedural macros][`spice_derive`].
 */
 
-use crate::{c, cstr, fcstr, get_scalar, get_varr, init_scalar, malloc, mallocstr, mptr};
+use crate::{c, cstr, fcstr, get_scalar, get_varr, init_scalar, malloc, mallocstr};
 use spice_derive::{cspice_proc, return_output};
 use std::ops::{Deref, DerefMut};
 
@@ -175,7 +175,14 @@ pub fn dskp02(handle: i32, mut dladsc: DLADSC, start: i32, room: i32) -> (i32, V
     let mut varout_0 = init_scalar!();
     let varout_1 = malloc!([i32; 3], room);
     unsafe {
-        crate::c::dskp02_c(handle, &mut dladsc, start, room, mptr!(varout_0), varout_1);
+        crate::c::dskp02_c(
+            handle,
+            &mut dladsc,
+            start,
+            room,
+            varout_0.as_mut_ptr(),
+            varout_1,
+        );
         (
             get_scalar!(varout_0),
             get_varr!(varout_1, get_scalar!(varout_0)),
@@ -192,7 +199,14 @@ pub fn dskv02(handle: i32, mut dladsc: DLADSC, start: i32, room: i32) -> (i32, V
     let mut varout_0 = init_scalar!();
     let varout_1 = malloc!([f64; 3], room);
     unsafe {
-        crate::c::dskv02_c(handle, &mut dladsc, start, room, mptr!(varout_0), varout_1);
+        crate::c::dskv02_c(
+            handle,
+            &mut dladsc,
+            start,
+            room,
+            varout_0.as_mut_ptr(),
+            varout_1,
+        );
         (
             get_scalar!(varout_0),
             get_varr!(varout_1, get_scalar!(varout_0)),
@@ -253,6 +267,41 @@ cspice_proc! {
      */
     #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
     pub fn georec(lon: f64, lat: f64, alt: f64, re: f64, f: f64) -> [f64; 3] {}
+}
+
+/**
+Return the field-of-view (FOV) parameters for a specified
+instrument. The instrument is specified by its NAIF ID code.
+*/
+pub fn getfov(
+    instid: isize,
+    room: usize,
+    shapelen: usize,
+    framelen: usize,
+) -> (String, String, [f64; 3], Vec<[f64; 3]>) {
+    let shape = mallocstr!(shapelen);
+    let frame = mallocstr!(framelen);
+
+    let mut bsight = [0.0; 3];
+    let mut n = 0;
+    let mut bounds = vec![[0.0; 3]; room];
+
+    unsafe {
+        crate::c::getfov_c(
+            instid as _,
+            room as _,
+            shapelen as _,
+            framelen as _,
+            shape,
+            frame,
+            bsight.as_mut_ptr(),
+            &mut n,
+            bounds.as_mut_ptr(),
+        )
+    };
+
+    bounds.truncate(n as _);
+    (fcstr!(shape), fcstr!(frame), bsight, bounds)
 }
 
 cspice_proc! {
@@ -433,6 +482,30 @@ cspice_proc! {
 
 cspice_proc! {
     /**
+    Compute, for a given observer and a ray emanating from the
+    observer, the surface intercept of the ray on a target body at
+    a specified epoch, optionally corrected for light time and
+    stellar aberration.
+
+    The surface of the target body may be represented by a triaxial
+    ellipsoid or by topographic data provided by DSK files.
+
+    This routine supersedes srfxpt.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn sincpt(
+        method:&str,
+        target: &str,
+        et: f64,
+        fixred: &str,
+        abcorr: &str,
+        obsrvr: &str,
+        dref: &str,
+        dvec: [f64; 3]) -> ([f64; 3], f64, [f64; 3], bool) {}
+}
+
+cspice_proc! {
+    /**
     Close a SPK file opened for read or write.
     */
     #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
@@ -450,7 +523,7 @@ cspice_proc! {
 cspice_proc! {
     /**
     Write a type 9 segment to an SPK file.
-     */
+    */
     #[allow(clippy::too_many_arguments)]
     #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
     pub fn spkw09(handle: i32, body: i32, center: i32, frame: &str, first: f64, last: f64, segid: &str, degree: i32, n: i32, states: &mut [[f64; 6]], epochs: &mut [f64]) {}
@@ -467,9 +540,9 @@ cspice_proc! {
 
 cspice_proc! {
     /**
-      Return the state (position and velocity) of a target body
-      relative to an observing body, optionally corrected for light
-      time (planetary aberration) and stellar aberration.
+    Return the state (position and velocity) of a target body
+    relative to an observing body, optionally corrected for light
+    time (planetary aberration) and stellar aberration.
     */
     #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
     pub fn spkezr(targ: &str, et: f64, frame: &str, abcorr: &str, obs: &str) -> ([f64; 6], f64) {}
@@ -522,6 +595,14 @@ pub fn subpnt(
         )
     };
     (sp, et_sp, vec_sp)
+}
+
+cspice_proc! {
+    /**
+    Determine the intersection of a line-of-sight vector with the surface of an ellipsoid.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn surfpt(positn: [f64; 3], u: [f64; 3], a: f64, b: f64, c: f64) -> ([f64; 3], bool) {}
 }
 
 /**

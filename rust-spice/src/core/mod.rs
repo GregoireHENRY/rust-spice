@@ -41,7 +41,7 @@ CSPICE | **rust-spice** | Description
 [gcpool_c][gcpool_c link] | *TODO*
 [gdpool_c][gdpool_c link] | [`raw::gdpool`] | Get d.p. values from the kernel pool
 [georec_c][georec_c link] | [`raw::georec`] | Geodetic to rectangular coordinates
-[getfov_c][getfov_c link] | *TODO*
+[getfov_c][getfov_c link] | [`raw::getfov`] | Get instrument FOV parameters
 [gipool_c][gipool_c link] | *TODO*
 [illumf_c][illumf_c link] | [`raw::illumf`] | Illumination angles, general source, return flags
 [kclear_c][kclear_c link] | [`raw::kclear`] | Keeper clear
@@ -60,6 +60,7 @@ CSPICE | **rust-spice** | Description
 [scdecd_c][scdecd_c link] | *TODO*
 [scs2e_c][scs2e_c link] | *TODO*
 [sct2e_c][sct2e_c link] | *TODO*
+[sincpt_c][sincpt_c link] | [`raw::sincpt`] | Surface intercept
 [spkcls_c][spkcov_c link] | [`raw::spkcls`] | SPK, Close file
 [spkcov_c][spkcov_c link] | *TODO*
 [spkcpo_c][spkcpo_c link] | *TODO*
@@ -78,6 +79,7 @@ CSPICE | **rust-spice** | Description
 [srfscc_c][srfscc_c link] | *TODO*
 [str2et_c][str2et_c link] | [`raw::str2et`] | String to ET
 [sunpnt_c][sxform_c link] | [`raw::subpnt`] | Sub-observer point
+[surfpt_c][surfpt_c link] | [`raw::surfpt`] | Surface point on an ellipsoid
 [sxform_c][sxform_c link] | *TODO*
 [radrec_c][radrec_c link] | [`raw::radrec`] |  RA and DEC to rectangular coordinates
 [recrad_c][recrad_c link] | [`raw::recrad`] | Rectangular coordinates to RA and DEC
@@ -134,6 +136,7 @@ CSPICE | **rust-spice** | Description
 [scencd_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/scencd_c.html
 [scs2e_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/scs2e_c.html
 [sct2e_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/sct2e_c.html
+[sincpt_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/sincpt_c.html
 [spkcls_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/spkcls_c.html
 [spkcpo_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/spkcpo_c.html
 [spkcov_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/spkcov_c.html
@@ -152,6 +155,7 @@ CSPICE | **rust-spice** | Description
 [srfscc_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/srfscc_c.html
 [str2et_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/str2et_c.html
 [subpnt_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/subpnt_c.html
+[surfpt_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/surfpt_c.html
 [sxform_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/sxform_c.html
 [radrec_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/radrec_c.html
 [recrad_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/recrad_c.html
@@ -175,9 +179,9 @@ pub mod raw;
 pub use self::neat::{bodc2n, dskp02, dskv02, kdata, timout};
 pub use self::raw::{
     bodfnd, bodn2c, bodvrd, dascls, dasopr, deltet, dlabfs, dskgd, dskn02, dskobj, dskx02, dskz02,
-    furnsh, gdpool, georec, illumf, kclear, ktotal, latrec, mxv, occult, pxform, pxfrm2, radrec,
-    recpgr, recrad, spkcls, spkezr, spkopn, spkpos, spkw09, str2et, subpnt, unitim, unload, vcrss,
-    vdot, vsep, xpose, DLADSC, DSKDSC,
+    furnsh, gdpool, georec, getfov, illumf, kclear, ktotal, latrec, mxv, occult, pxform, pxfrm2,
+    radrec, recpgr, recrad, sincpt, spkcls, spkezr, spkopn, spkpos, spkw09, str2et, subpnt, surfpt,
+    unitim, unload, vcrss, vdot, vsep, xpose, DLADSC, DSKDSC,
 };
 
 /**
