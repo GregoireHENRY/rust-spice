@@ -20,13 +20,14 @@ CSPICE | **rust-spice** | Description
 [bodc2n_c][bodc2n_c link] | [`neat::bodc2n`] | Body ID code to name translation
 [bodfnd_c][bodfnd_c link] | [`raw::bodfnd`] | Find values from the kernel pool
 [bodn2c_c][bodn2c_c link] | [`raw::bodn2c`] | Body name to ID code translation
-[bodvrd_c][bodvrd_c link] | *TODO*
+[bodvrd_c][bodvrd_c link] | [`raw::bodvrd`] | Return d.p. values from the kernel pool
 [ckcov_c][ckcov_c link] | *TODO*
 [ckgp_c][ckgp_c link] | *TODO*
 [ckgpav_c][ckgpav_c link] | *TODO*
 [ckobj_c][ckobj_c link] | *TODO*
 [dascls_c][dascls_c link] | [`raw::dascls`] | DAS, close file
 [dasopr_c][dasopr_c link] | [`raw::dasopr`] | DAS, open for read
+[deltet_c][deltet_c link] | [`raw::udeltet`] | Delta ET, ET - UTC
 [dlabfs_c][dlabfs_c link] | [`raw::dlabfs`] | DLA, begin forward search
 [dskgd_c][dskgd_c link] | [`raw::dskgd`] | DSK, return DSK segment descriptor
 [dskn02_c][dskn02_c link] | [`raw::dskn02`] | DSK, type 2, compute normal vector for plate
@@ -38,8 +39,8 @@ CSPICE | **rust-spice** | Description
 [dskz02_c][dskz02_c link] | [`raw::dskz02`] | DSK, fetch type 2 model size parameters
 [furnsh_c][furnsh_c link] | [`raw::furnsh`] | Furnish a program with SPICE kernels
 [gcpool_c][gcpool_c link] | *TODO*
-[gdpool_c][gdpool_c link] | *TODO*
-[georec_c][georec_c link] | [`raw::georec`] |  Geodetic to rectangular coordinates
+[gdpool_c][gdpool_c link] | [`raw::gdpool`] | Get d.p. values from the kernel pool
+[georec_c][georec_c link] | [`raw::georec`] | Geodetic to rectangular coordinates
 [getfov_c][getfov_c link] | *TODO*
 [gipool_c][gipool_c link] | *TODO*
 [illumf_c][illumf_c link] | [`raw::illumf`] | Illumination angles, general source, return flags
@@ -76,10 +77,13 @@ CSPICE | **rust-spice** | Description
 [srfs2c_c][srfs2c_c link] | *TODO*
 [srfscc_c][srfscc_c link] | *TODO*
 [str2et_c][str2et_c link] | [`raw::str2et`] | String to ET
+[sunpnt_c][sxform_c link] | [`raw::subpnt`] | Sub-observer point
 [sxform_c][sxform_c link] | *TODO*
 [radrec_c][radrec_c link] | [`raw::radrec`] |  RA and DEC to rectangular coordinates
 [recrad_c][recrad_c link] | [`raw::recrad`] | Rectangular coordinates to RA and DEC
+[recpgr_c][recpgr_c link] | [`raw::recpgr`] | Rectangular to planetographic
 [timout_c][timout_c link] | [`neat::timout`] | Time Output
+[unitim_c][unitim_c link] | [`raw::unitime`] | Uniform time scale transformation
 [unload_c][unload_c link] | [`raw::unload`] | Unload a kernel
 [vcrss_c][vcrss_c link] | [`raw::vcrss`] | Vector cross product, 3 dimensions
 [vdot_c][vdot_c link] | [`raw::vdot`] |  Vector dot product, 3 dimensions
@@ -96,6 +100,7 @@ CSPICE | **rust-spice** | Description
 [ckobj_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/ckobj_c.html
 [dascls_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/dascls_c.html
 [dasopr_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/dasopr_c.html
+[deltet_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/deltet_c.html
 [dlabfs_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/dasopr_c.html
 [dskgd_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/dskgd_c.html
 [dskn02_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/dskn02_c.html
@@ -146,10 +151,13 @@ CSPICE | **rust-spice** | Description
 [srfs2c_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/srfs2c_c.html
 [srfscc_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/srfscc_c.html
 [str2et_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/str2et_c.html
+[subpnt_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/subpnt_c.html
 [sxform_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/sxform_c.html
 [radrec_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/radrec_c.html
 [recrad_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/recrad_c.html
+[recpgr_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/recpgr_c.html
 [timout_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/timout_c.html
+[unitim_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/unitim_c.html
 [unload_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/unload_c.html
 [vcrss_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/vcrss_c.html
 [vdot_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/vdot_c.html
@@ -166,9 +174,10 @@ pub mod raw;
 
 pub use self::neat::{bodc2n, dskp02, dskv02, kdata, timout};
 pub use self::raw::{
-    bodfnd, bodn2c, dascls, dasopr, dlabfs, dskgd, dskn02, dskobj, dskx02, dskz02, furnsh, georec,
-    illumf, kclear, ktotal, latrec, mxv, pxform, pxfrm2, radrec, recrad, spkcls, spkezr, spkopn,
-    spkpos, spkw09, str2et, unload, vcrss, vdot, vsep, xpose, DLADSC, DSKDSC,
+    bodfnd, bodn2c, bodvrd, dascls, dasopr, deltet, dlabfs, dskgd, dskn02, dskobj, dskx02, dskz02,
+    furnsh, gdpool, georec, illumf, kclear, ktotal, latrec, mxv, occult, pxform, pxfrm2, radrec,
+    recpgr, recrad, spkcls, spkezr, spkopn, spkpos, spkw09, str2et, subpnt, unitim, unload, vcrss,
+    vdot, vsep, xpose, DLADSC, DSKDSC,
 };
 
 /**

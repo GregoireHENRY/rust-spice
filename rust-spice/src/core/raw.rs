@@ -92,6 +92,19 @@ cspice_proc! {
     pub fn bodn2c(name: &str) -> (i32, bool) {}
 }
 
+/**
+Fetch from the kernel pool the double precision values of an item associated with a body.
+*/
+pub fn bodvrd(bodynm: &str, item: &str, maxn: usize) -> Vec<f64> {
+    let bodynm = cstr!(bodynm);
+    let item = cstr!(item);
+    let mut dim = 0;
+    let mut values = vec![0.0; maxn];
+    unsafe { crate::c::bodvrd_c(bodynm, item, maxn as _, &mut dim, values.as_mut_ptr()) };
+    values.truncate(dim as _);
+    values
+}
+
 cspice_proc! {
     /**
     close a das file.
@@ -106,6 +119,18 @@ cspice_proc! {
     */
     #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
     pub fn dasopr(fname: &str) -> i32 {}
+}
+
+/**
+Return the value of Delta ET (ET-UTC) for an input epoch.
+*/
+pub fn deltet(epoch: f64, eptype: &str) -> f64 {
+    let eptype = cstr!(eptype);
+    let mut delta = 0.0;
+    unsafe {
+        crate::c::deltet_c(epoch, eptype, &mut delta);
+    }
+    delta
 }
 
 cspice_proc! {
@@ -196,6 +221,30 @@ cspice_proc! {
     */
     #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
     pub fn dskz02(handle: i32, dladsc: DLADSC) -> (i32, i32) {}
+}
+
+/**
+Return the d.p. value of a kernel variable from the kernel pool.
+*/
+pub fn gdpool(name: &str, start: usize, room: usize) -> Vec<f64> {
+    let name = cstr!(name);
+    let start = start as _;
+    let mut n = 0;
+    let mut values = vec![0.0; room];
+    let mut found = 0;
+    unsafe {
+        crate::c::gdpool_c(
+            name,
+            start,
+            room as _,
+            &mut n,
+            values.as_mut_ptr(),
+            &mut found,
+        )
+    }
+    // let found = found != 0;
+    values.truncate(n as _);
+    values
 }
 
 cspice_proc! {
@@ -361,6 +410,19 @@ cspice_proc! {
     pub fn radrec(range: f64, ra: f64, dec: f64) -> [f64; 3] {}
 }
 
+/**
+Convert rectangular coordinates to planetographic coordinates.
+*/
+pub fn recpgr(body: &str, rectan: [f64; 3], re: f64, f: f64) -> [f64; 3] {
+    let body = cstr!(body);
+    let mut rectan: [f64; 3] = rectan;
+    let mut lon = 0.0;
+    let mut lat = 0.0;
+    let mut alt = 0.0;
+    unsafe { crate::c::recpgr_c(body, &mut rectan as _, re, f, &mut lon, &mut lat, &mut alt) };
+    [lon, lat, alt]
+}
+
 cspice_proc! {
     /**
     Convert rectangular coordinates to range, right ascension, and declination.
@@ -423,8 +485,48 @@ cspice_proc! {
 }
 
 /**
-This routine converts an input epoch represented in TDB seconds past the TDB epoch of J2000 to a
-character string formatted to the specifications of a user's format picture.
+Compute the rectangular coordinates of the sub-observer point on
+a target body at a specified epoch, optionally corrected for
+light time and stellar aberration.
+
+The surface of the target body may be represented by a triaxial
+ellipsoid or by topographic data provided by DSK files.
+*/
+pub fn subpnt(
+    method: &str,
+    target: &str,
+    et: f64,
+    fixref: &str,
+    abcorr: &str,
+    obsrvr: &str,
+) -> ([f64; 3], f64, [f64; 3]) {
+    let method = cstr!(method);
+    let target = cstr!(target);
+    let fixref = cstr!(fixref);
+    let abcorr = cstr!(abcorr);
+    let obsrvr = cstr!(obsrvr);
+    let mut sp = [0.0; 3];
+    let mut et_sp = 0.0;
+    let mut vec_sp = [0.0; 3];
+    unsafe {
+        crate::c::subpnt_c(
+            method,
+            target,
+            et,
+            fixref,
+            abcorr,
+            obsrvr,
+            &mut sp as _,
+            &mut et_sp,
+            &mut vec_sp as _,
+        )
+    };
+    (sp, et_sp, vec_sp)
+}
+
+/**
+Convert an input epoch represented in TDB seconds past the TDB epoch of J2000 to a character string formatted to the
+specifications of a user's format picture.
 
 This function has a [neat version][crate::neat::timout].
 */
@@ -434,6 +536,16 @@ pub fn timout(et: f64, pictur: &str, lenout: usize) -> String {
         crate::c::timout_c(et, cstr!(pictur), lenout as i32, varout_0);
     }
     fcstr!(varout_0)
+}
+
+/**
+Transform time from one uniform scale to another. The uniform time scales are
+TAI, GPS, TT, TDT, TDB, ET, JED, JDTDB, JDTDT.
+*/
+pub fn unitim(epoch: f64, insys: &str, outsys: &str) -> f64 {
+    let insys = cstr!(insys);
+    let outsys = cstr!(outsys);
+    unsafe { crate::c::unitim_c(epoch, insys, outsys) }
 }
 
 cspice_proc! {
