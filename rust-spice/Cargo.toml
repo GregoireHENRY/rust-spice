@@ -1,6 +1,6 @@
 [package]
 name = "rust-spice"
-version = "0.7.7"
+version = "0.7.8"
 authors = ["Grégoire Henry <greg.henry@mail.com>"]
 edition = "2018"
 description = "WOW! The complete NASA/NAIF Spice toolkit is actually usable on Rust."
@@ -14,8 +14,7 @@ name = "spice"
 
 [features]
 default = ["dep:cspice-sys"]
-git = ["dep:cspice-sys-git", "cspice-sys-git/downloadcspice"]
-download = ["git"]
+download = ["dep:cspice-sys", "cspice-sys/downloadcspice"]
 noclang = ["dep:cspice-sys-no-clang"]
 
 lock = []
@@ -33,6 +32,5 @@ log = "0.4"
 thiserror = "1.0"
 libc = "0.2"
 cspice-sys = { package="cspice-sys", version = "1", optional = true }
-cspice-sys-git = { package="cspice-sys", git = "https://github.com/jacob-pro/cspice-rs.git", optional = true }
 cspice-sys-no-clang = { package="cspice-sys", version = "<=0.0.1", optional = true }
 rust-spice-derive = { version = "0.7", path = "../rust-spice-derive" }
