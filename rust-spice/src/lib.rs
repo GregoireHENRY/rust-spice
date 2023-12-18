@@ -9,9 +9,6 @@
 #[cfg(feature = "default")]
 extern crate cspice_sys;
 
-#[cfg(feature = "git")]
-extern crate cspice_sys_git as cspice_sys;
-
 #[cfg(feature = "noclang")]
 extern crate cspice_sys_no_clang as cspice_sys;
 
