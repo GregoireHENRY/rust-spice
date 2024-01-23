@@ -181,7 +181,7 @@ pub use self::raw::{
     bodfnd, bodn2c, bodvrd, dascls, dasopr, deltet, dlabfs, dskgd, dskn02, dskobj, dskx02, dskz02,
     furnsh, gdpool, georec, getfov, illumf, kclear, ktotal, latrec, mxv, occult, pxform, pxfrm2,
     radrec, recpgr, recrad, sincpt, spkcls, spkezr, spkopn, spkpos, spkw09, str2et, subpnt, surfpt,
-    unitim, unload, vcrss, vdot, vsep, xpose, DLADSC, DSKDSC,
+    unitim, unload, vcrss, vdot, vsep, xpose, Cell, DLADSC, DSKDSC,
 };
 
 /**
