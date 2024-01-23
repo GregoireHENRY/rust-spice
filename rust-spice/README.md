@@ -215,7 +215,7 @@ Licensed under the [Apache License, Version 2.0][license link].
 
 [s-rah url]: https://github.com/s-rah
 [mclrc url]: https://github.com/mclrc
-[jodavaho url]: hps://github.com/jodavaho
+[jodavaho url]: https://github.com/jodavaho
 [PR 2]: https://github.com/GregoireHENRY/rust-spice/pull/2
 [PR 6]: https://github.com/GregoireHENRY/rust-spice/pull/6
 [PR 10]: https://github.com/GregoireHENRY/rust-spice/pull/10
