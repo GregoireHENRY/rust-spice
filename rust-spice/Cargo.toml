@@ -16,9 +16,7 @@ name = "spice"
 default = ["dep:cspice-sys"]
 download = ["dep:cspice-sys", "cspice-sys/downloadcspice"]
 noclang = ["dep:cspice-sys-no-clang"]
-
 lock = []
-
 
 [dependencies]
 itertools = "0.12"
@@ -27,7 +25,7 @@ approx = "0.5"
 serde = "1.0"
 serde_json = "1.0"
 serde_repr = "0.1"
-serial_test = "2.0"
+serial_test = "3.0"
 log = "0.4"
 thiserror = "1.0"
 libc = "0.2"
