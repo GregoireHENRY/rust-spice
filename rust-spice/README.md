@@ -181,7 +181,7 @@ sl.kclear();
 Hall of fame:
 
 + [@s-rah][s-rah url]: [#2][PR 2]
-+ [@pixldemon][pixldemon url]: [#6][PR 6] [#10][PR 10]
++ [@mclrc][mclrc url]: [#6][PR 6] [#10][PR 10]
 + [@jodavaho][jodavaho url]: None yet!
 
 A huge thanks for their contributions!!
@@ -214,8 +214,8 @@ Licensed under the [Apache License, Version 2.0][license link].
 [neat link]: https://docs.rs/rust-spice/latest/spice/core/neat/index.html
 
 [s-rah url]: https://github.com/s-rah
-[pixldemon url]: https://github.com/pixldemon
+[mclrc url]: https://github.com/mclrc
+[jodavaho url]: hps://github.com/jodavaho
 [PR 2]: https://github.com/GregoireHENRY/rust-spice/pull/2
 [PR 6]: https://github.com/GregoireHENRY/rust-spice/pull/6
 [PR 10]: https://github.com/GregoireHENRY/rust-spice/pull/10
-[jodavaho url]: https://github.com/jodavaho
