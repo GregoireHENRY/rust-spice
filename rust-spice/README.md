@@ -136,15 +136,18 @@ request for the implementation of a specific function.
 
 ## Multi-threaded usage
 
-CSPICE itself contains massive amounts of shared mutable state and is thus not thread-safe - concurrent
-calls to any SPICE functions will almost always lead to crashes. To prevent this, if you need
-to call SPICE functions from multiple threads, this crate provides a thread-safe API with the `lock`
-feature. When enabled, the API is exposed in the form of associated functions on a guard singleton
-`SpiceLock`, which is `!Sync + Send`. You can then only share this singleton and thus the methods it
-provides between threads using a `Mutex`, preventing concurrent API usage.
+CSPICE itself contains massive amounts of shared mutable state and is thus not
+thread-safe - concurrent calls to any SPICE functions will almost always lead
+to crashes. To prevent this, if you need to call SPICE functions from multiple
+threads, this crate provides a thread-safe API with the `lock` feature. When
+enabled, the API is exposed in the form of associated functions on a guard
+singleton `SpiceLock`, which is `!Sync + Send`. You can then only share this
+singleton and thus the methods it provides between threads using a `Mutex`,
+preventing concurrent API usage.
 
-The lock exposes the [neat][neat link] versions of functions where available, and the [raw][raw link] versions for the rest.
-For functions which have neither, you will have to use the unsafe (and unguarded) direct C bindings.
+The lock exposes the [neat][neat link] versions of functions where available,
+and the [raw][raw link] versions for the rest. For functions which have
+neither, you will have to use the unsafe (and unguarded) direct C bindings.
 Just make sure you have the lock before calling them.
 
 ```rust
@@ -178,7 +181,8 @@ sl.kclear();
 Hall of fame:
 
 + [@s-rah][s-rah url]: [#2][PR 2]
-+ [@pixldemon][pixldemon url]: [#6][PR 6] [#10][PR 10]
++ [@mclrc][mclrc url]: [#6][PR 6] [#10][PR 10]
++ [@jodavaho][jodavaho url]: None yet!
 
 A huge thanks for their contributions!!
 
@@ -210,7 +214,8 @@ Licensed under the [Apache License, Version 2.0][license link].
 [neat link]: https://docs.rs/rust-spice/latest/spice/core/neat/index.html
 
 [s-rah url]: https://github.com/s-rah
-[pixldemon url]: https://github.com/pixldemon
+[mclrc url]: https://github.com/mclrc
+[jodavaho url]: https://github.com/jodavaho
 [PR 2]: https://github.com/GregoireHENRY/rust-spice/pull/2
 [PR 6]: https://github.com/GregoireHENRY/rust-spice/pull/6
 [PR 10]: https://github.com/GregoireHENRY/rust-spice/pull/10
