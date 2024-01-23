@@ -2,7 +2,12 @@
 A Rust idiomatic CSPICE wrapper built with [procedural macros][`spice_derive`].
 */
 
-use crate::{c, cstr, fcstr, malloc, mallocstr};
+use crate::c::{
+    SpiceBoolean, SpiceCell, SpiceChar, SpiceDLADescr, SpiceDSKDescr, SpiceDouble, SpiceInt,
+    _SpiceDataType_SPICE_BOOL, _SpiceDataType_SPICE_CHR, _SpiceDataType_SPICE_DP,
+    _SpiceDataType_SPICE_INT, _SpiceDataType_SPICE_TIME, SPICE_CELL_CTRLSZ,
+};
+use crate::{cstr, fcstr, malloc, mallocstr};
 use spice_derive::{cspice_proc, return_output};
 use std::ops::{Deref, DerefMut};
 
@@ -10,11 +15,11 @@ use std::ops::{Deref, DerefMut};
 use {crate::core::lock::SpiceLock, spice_derive::impl_for};
 
 #[allow(clippy::upper_case_acronyms)]
-pub type DLADSC = c::SpiceDLADescr;
+pub type DLADSC = SpiceDLADescr;
 #[allow(clippy::upper_case_acronyms)]
-pub type DSKDSC = c::SpiceDSKDescr;
+pub type DSKDSC = SpiceDSKDescr;
 #[allow(clippy::upper_case_acronyms)]
-pub type CELL = c::SpiceCell;
+pub type CELL = SpiceCell;
 pub const CELL_MAXID: usize = 10_000;
 
 /**
@@ -23,37 +28,119 @@ A cell is a data structure intended to provide safe array access within the appl
 See the [C documentation](https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/req/cells.html).
 */
 #[derive(Debug)]
-pub struct Cell(c::SpiceCell);
+pub struct Cell(SpiceCell);
 
 impl Cell {
-    /**
-    Declare a cell from integer.
-    */
-    pub fn new_int() -> Self {
-        let base = malloc!(i32, CELL_MAXID + c::SPICE_CELL_CTRLSZ as usize);
+    /// Declare a cell from character.
+    pub fn new_character(size: i32, length: i32) -> Self {
+        let base = malloc!(SpiceChar, (size + SPICE_CELL_CTRLSZ as i32) * length);
         Self(CELL {
-            dtype: c::_SpiceDataType_SPICE_INT,
-            length: 0i32,
-            size: CELL_MAXID as i32,
+            dtype: _SpiceDataType_SPICE_CHR,
+            length: length,
+            size,
             card: 0i32,
             isSet: 1i32,
             adjust: 0i32,
             init: 0i32,
             base: base as *mut libc::c_void,
-            data: base.wrapping_add(c::SPICE_CELL_CTRLSZ as usize) as *mut libc::c_void,
+            data: base.wrapping_add(SPICE_CELL_CTRLSZ as usize) as *mut libc::c_void,
         })
     }
 
-    /**
-    Declare data from a cell at index.
-    */
+    /// Declare a cell from integer.
+    pub fn new_int(size: i32) -> Self {
+        let base = malloc!(SpiceInt, size + SPICE_CELL_CTRLSZ as i32);
+        Self(CELL {
+            dtype: _SpiceDataType_SPICE_INT,
+            length: 0i32,
+            // size: CELL_MAXID as i32,
+            size,
+            card: 0i32,
+            isSet: 1i32,
+            adjust: 0i32,
+            init: 0i32,
+            base: base as *mut libc::c_void,
+            data: base.wrapping_add(SPICE_CELL_CTRLSZ as usize) as *mut libc::c_void,
+        })
+    }
+
+    /// Declare a cell from double.
+    pub fn new_double(size: i32) -> Self {
+        let base = malloc!(SpiceDouble, size + SPICE_CELL_CTRLSZ as i32);
+        Self(CELL {
+            dtype: _SpiceDataType_SPICE_DP,
+            length: 0i32,
+            size,
+            card: 0i32,
+            isSet: 1i32,
+            adjust: 0i32,
+            init: 0i32,
+            base: base as *mut libc::c_void,
+            data: base.wrapping_add(SPICE_CELL_CTRLSZ as usize) as *mut libc::c_void,
+        })
+    }
+
+    /// Declare a cell from bool.
+    pub fn new_bool(size: i32) -> Self {
+        let base = malloc!(SpiceBoolean, size + SPICE_CELL_CTRLSZ as i32);
+        Self(CELL {
+            dtype: _SpiceDataType_SPICE_BOOL,
+            length: 0i32,
+            size,
+            card: 0i32,
+            isSet: 1i32,
+            adjust: 0i32,
+            init: 0i32,
+            base: base as *mut libc::c_void,
+            data: base.wrapping_add(SPICE_CELL_CTRLSZ as usize) as *mut libc::c_void,
+        })
+    }
+
+    /// Declare a cell from bool.
+    pub fn new_time(size: i32) -> Self {
+        let base = malloc!(SpiceInt, size + SPICE_CELL_CTRLSZ as i32);
+        Self(CELL {
+            dtype: _SpiceDataType_SPICE_TIME,
+            length: 0i32,
+            size,
+            card: 0i32,
+            isSet: 1i32,
+            adjust: 0i32,
+            init: 0i32,
+            base: base as *mut libc::c_void,
+            data: base.wrapping_add(SPICE_CELL_CTRLSZ as usize) as *mut libc::c_void,
+        })
+    }
+
+    /// Get data from a character cell at index.
+    pub fn get_data_character(&self, index: usize) -> String {
+        let tab_char = unsafe { *(self.data as *mut SpiceChar).wrapping_add(index) };
+        fcstr!(&tab_char)
+    }
+
+    /// Get data from an int cell at index.
     pub fn get_data_int(&self, index: usize) -> i32 {
-        unsafe { *(self.data as *mut i32).wrapping_add(index) }
+        unsafe { *(self.0.data as *mut i32).wrapping_add(index) }
+    }
+
+    /// Get data from a double cell at index.
+    pub fn get_data_double(&self, index: usize) -> f64 {
+        unsafe { *(self.data as *mut SpiceDouble).wrapping_add(index) }
+    }
+
+    /// Get data from a bool cell at index.
+    pub fn get_data_bool(&self, index: usize) -> i32 {
+        self.get_data_int(index)
+    }
+
+    /// Get data from a time cell at index.
+    pub fn get_data_time(&self, index: usize) -> i32 {
+        self.get_data_int(index)
     }
 }
 
 impl Deref for Cell {
-    type Target = c::SpiceCell;
+    type Target = SpiceCell;
 
     fn deref(&self) -> &Self::Target {
         &self.0
@@ -95,6 +182,7 @@ cspice_proc! {
 /**
 Fetch from the kernel pool the double precision values of an item associated with a body.
 */
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
 pub fn bodvrd(bodynm: &str, item: &str, maxn: usize) -> Vec<f64> {
     let bodynm = cstr!(bodynm);
     let item = cstr!(item);
@@ -157,13 +245,20 @@ cspice_proc! {
     pub fn dskn02(handle: i32, dladsc: DLADSC, plid: i32) -> [f64; 3] {}
 }
 
-cspice_proc! {
-    /**
-    Find the set of body ID codes of all objects for which topographic data are provided in a
-    specified DSK file.
-    */
-    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
-    pub fn dskobj(dsk: &str) -> Cell {}
+/**
+Find the set of body ID codes of all objects for which topographic data are provided in a
+specified DSK file.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn dskobj(dskfnm: &str) -> Cell {
+    let c_dskfnm = cstr!(dskfnm);
+    let mut bodids = Cell::new_int(CELL_MAXID as i32);
+
+    unsafe {
+        crate::c::dskobj_c(c_dskfnm, &mut bodids.0);
+    }
+
+    bodids
 }
 
 /**
@@ -171,6 +266,7 @@ Fetch triangular plates from a type 2 DSK segment.
 
 This function has a [neat version][crate::neat::dskp02].
 */
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
 pub fn dskp02(handle: i32, mut dladsc: DLADSC, start: usize, room: usize) -> Vec<[i32; 3]> {
     let mut n = 0;
     let mut plates = vec![[0; 3]; room];
@@ -195,6 +291,7 @@ Fetch vertices from a type 2 DSK segment.
 
 This function has a [neat version][crate::neat::dskv02].
 */
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
 pub fn dskv02(handle: i32, mut dladsc: DLADSC, start: usize, room: usize) -> Vec<[f64; 3]> {
     let mut n = 0;
     let mut vrtces = vec![[0.0; 3]; room];
@@ -246,6 +343,7 @@ cspice_proc! {
 /**
 Return the d.p. value of a kernel variable from the kernel pool.
 */
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
 pub fn gdpool(name: &str, start: usize, room: usize) -> Vec<f64> {
     let name = cstr!(name);
     let start = start as _;
@@ -279,6 +377,7 @@ cspice_proc! {
 Return the field-of-view (FOV) parameters for a specified
 instrument. The instrument is specified by its NAIF ID code.
 */
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
 pub fn getfov(
     instid: isize,
     room: usize,
@@ -357,6 +456,7 @@ Fetch vertices from a type 2 DSK segment.
 
 This function has a [neat version][crate::neat::kdata].
 */
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
 pub fn kdata(
     which: i32,
     kind: &str,
@@ -468,6 +568,7 @@ cspice_proc! {
 /**
 Convert rectangular coordinates to planetographic coordinates.
 */
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
 pub fn recpgr(body: &str, rectan: [f64; 3], re: f64, f: f64) -> [f64; 3] {
     let body = cstr!(body);
     let mut rectan: [f64; 3] = rectan;
@@ -571,6 +672,7 @@ light time and stellar aberration.
 The surface of the target body may be represented by a triaxial
 ellipsoid or by topographic data provided by DSK files.
 */
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
 pub fn subpnt(
     method: &str,
     target: &str,
@@ -617,6 +719,7 @@ specifications of a user's format picture.
 
 This function has a [neat version][crate::neat::timout].
 */
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
 pub fn timout(et: f64, pictur: &str, lenout: usize) -> String {
     let varout_0 = mallocstr!(lenout);
     unsafe {
@@ -629,6 +732,7 @@ pub fn timout(et: f64, pictur: &str, lenout: usize) -> String {
 Transform time from one uniform scale to another. The uniform time scales are
 TAI, GPS, TT, TDT, TDB, ET, JED, JDTDB, JDTDT.
 */
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
 pub fn unitim(epoch: f64, insys: &str, outsys: &str) -> f64 {
     let insys = cstr!(insys);
     let outsys = cstr!(outsys);
