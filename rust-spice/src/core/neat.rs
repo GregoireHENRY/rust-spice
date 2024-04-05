@@ -29,6 +29,29 @@ pub fn bodc2n(code: i32) -> (String, bool) {
 }
 
 /**
+Compute the local solar time for a given ephemeris epoch `et'
+for an object on the surface of a body at a specified longitude.
+
+See [`raw::et2lst`] for the raw interface.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn et2lst(
+    et: f64,
+    body_code: i32,
+    lon: f64,
+    lon_type: &str,
+) -> (i32, i32, i32, String, String) {
+    raw::et2lst(
+        et,
+        body_code,
+        lon,
+        lon_type,
+        MAX_LEN_OUT as i32,
+        MAX_LEN_OUT as i32,
+    )
+}
+
+/**
 This routine converts an input epoch represented in TDB seconds past the TDB epoch of J2000 to a
 character string formatted to the specifications of a user's format picture.
 

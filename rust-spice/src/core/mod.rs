@@ -37,6 +37,7 @@ CSPICE | **rust-spice** | Description
 [dskv02_c][dskv02_c link] | [`neat::dskv02`] | DSK, fetch type 2 vertex data
 [dskx02_c][dskx02_c link] | [`raw::dskx02`] | DSK, ray-surface intercept, type 2
 [dskz02_c][dskz02_c link] | [`raw::dskz02`] | DSK, fetch type 2 model size parameters
+[et2lst_c][et2lst_c link] | [`raw::et2lst`] | ET to local solar time given longitude
 [furnsh_c][furnsh_c link] | [`raw::furnsh`] | Furnish a program with SPICE kernels
 [gcpool_c][gcpool_c link] | *TODO*
 [gdpool_c][gdpool_c link] | [`raw::gdpool`] | Get d.p. values from the kernel pool
@@ -112,6 +113,7 @@ CSPICE | **rust-spice** | Description
 [dskv02_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/dskv02_c.html
 [dskx02_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/dskx02_c.html
 [dskz02_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/dskz02_c.html
+[et2lst_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/et2lst_c.html
 [furnsh_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/furnsh_c.html
 [gcpool_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/gcpool_c.html
 [gdpool_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/gdpool_c.html

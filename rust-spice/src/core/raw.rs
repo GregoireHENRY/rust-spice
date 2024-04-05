@@ -179,6 +179,15 @@ cspice_proc! {
     pub fn bodn2c(name: &str) -> (i32, bool) {}
 }
 
+cspice_proc! {
+    /**
+     Compute the local solar time for a given ephemeris epoch `et'
+     for an object on the surface of a body at a specified longitude.
+     */
+    #[allow(clippy::too_many_arguments)]
+    pub fn et2lst(et: f64, body: i32, lon: f64, lon_type: &str, timlen: i32, ampmlen: i32) -> (i32, i32, i32, String, String) {}
+}
+
 /**
 Fetch from the kernel pool the double precision values of an item associated with a body.
 */
@@ -600,6 +609,7 @@ cspice_proc! {
     This routine supersedes srfxpt.
     */
     #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    #[allow(clippy::too_many_arguments)]
     pub fn sincpt(
         method:&str,
         target: &str,

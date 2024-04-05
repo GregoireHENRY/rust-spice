@@ -14,9 +14,11 @@ use std::ffi::CString;
 #[serial]
 fn test_c() {
     unsafe {
-        let kernel = CString::new("/Users/gregoireh/data/spice-kernels/hera/kernels/mk/hera_study_PO_EMA_2024.tm")
-            .unwrap()
-            .into_raw();
+        let kernel = CString::new(
+            "/Users/gregoireh/data/spice-kernels/hera/kernels/mk/hera_study_PO_EMA_2024.tm",
+        )
+        .unwrap()
+        .into_raw();
         spice::c::furnsh_c(kernel);
         spice::c::unload_c(kernel);
     }
@@ -123,8 +125,8 @@ pub mod lock_tests {
             c.join().unwrap();
         }
 
-        sl.lock()
-            .unwrap()
-            .unload("/Users/gregoireh/data/spice-kernels/hera/kernels/mk/hera_study_PO_EMA_2024.tm");
+        sl.lock().unwrap().unload(
+            "/Users/gregoireh/data/spice-kernels/hera/kernels/mk/hera_study_PO_EMA_2024.tm",
+        );
     }
 }

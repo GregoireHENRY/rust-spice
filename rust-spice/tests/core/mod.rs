@@ -397,7 +397,10 @@ fn kdata() {
         "/Users/gregoireh/data/spice-kernels/hera/kernels/dsk/g_08438mm_lgt_obj_didb_0000n00000_v002.bds"
     );
     assert_eq!(filtyp, "DSK");
-    assert_eq!(source, "/Users/gregoireh/data/spice-kernels/hera/kernels/mk/hera_study_PO_EMA_2024.tm");
+    assert_eq!(
+        source,
+        "/Users/gregoireh/data/spice-kernels/hera/kernels/mk/hera_study_PO_EMA_2024.tm"
+    );
     assert!(handle.is_positive());
     assert_eq!(found, true);
 
