@@ -9,6 +9,78 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-09-11
+
+### Added
+
++ `errors` module: `check` turns the CSPICE error state into a Rust `Result`, and `quiet` stops the
+  toolkit printing to the screen and aborting the process on failure. Also wraps `failed`, `reset`,
+  `getmsg`, `qcktrc`, `erract`, `errdev` and `errprt`.
++ `ffi` module: the `SpiceArg`/`SpiceRet`/`SpiceReturn` traits describing how each Rust type is
+  handed to, and read back from, a C routine.
++ 116 more wrapped functions, bringing the total to 167, including the whole of the previous *TODO*
+  list: `ckcov`, `ckgp`, `ckgpav`, `ckobj`, `ckopn`, `ckcls`, `ckw03`, `dsksrf`, `dskopn`, `dskcls`,
+  `dskmi2`, `dskw02`, `dskgtl`, `dskstl`, `gcpool`, `gipool`, `latsrf`, `pckcov`, `pckfrm`, `sce2c`,
+  `sce2s`, `scencd`, `scdecd`, `scs2e`, `sct2e`, `spkcov`, `spkcpo`, `spkcpt`, `spkcvo`, `spkcvt`,
+  `spkobj`, `srfc2s`, `srfcss`, `srfnrm`, `srfs2c`, `srfscc` and `sxform`, plus the coordinate,
+  vector, matrix, two-body, kernel pool, surface geometry and toolkit constant families.
++ `Cell<T>` is generic over its element type, owns its backing storage, and gained `len`,
+  `capacity`, `get`, `iter`, `to_vec`, `push`, `clear` and a deep `Clone`.
++ A self contained test suite: the SPK, CK, DSK, PCK and text kernels it needs are generated in a
+  temporary directory when it starts, so `cargo test` works on any machine that can build the
+  crate. Every wrapped function is covered, and the marshalling of each argument shape is checked
+  against a direct call to the C routine.
++ GitHub Actions CI: formatting, clippy, the test suite with and without `lock`, and the
+  documentation, on Linux and macOS. `.github/install-cspice.sh` installs the toolkit, and is
+  useful outside CI too.
+
+### Fixed
+
++ The `lock` feature did not compile: `dskp02`, `dskv02`, `kdata` and `timout` each generated two
+  methods of the same name on `SpiceLock`. The guard now exposes the neat version where there is
+  one, as the documentation always claimed.
++ Wrappers no longer leak. Every string and buffer handed to CSPICE was `malloc`ed or leaked through
+  `CString::into_raw` and never freed, once per call.
++ String outputs were read out of uninitialised memory when a routine failed without writing them.
++ `raw::bodc2n` and the other wrappers taking a `lenout` allocated `MAX_LEN_OUT` bytes whatever the
+  length they promised CSPICE, so a larger `lenout` overran the buffer.
++ `neat::timout` sized its output buffer from the length of the format picture, truncating any
+  output at least as long as its picture.
++ `Cell` leaked its buffer, computed the address of the data area of a character cell in elements
+  rather than bytes, and `get_data_character` returned a single character.
++ `Cell::new_time` allocated a buffer of integers for a cell CSPICE reads as doubles.
++ `gdpool` reported the values of a variable absent from the pool rather than an empty vector.
++ `raw::dskz02` documented its two outputs in the wrong order; it returns the vertex count first.
++ `SpiceLock` kept its flag in a `static mut`, which is unsound and rejected from the 2024 edition.
++ Several wrong links in the bindings table.
+
+### Changed
+
++ The procedural macro no longer builds Rust code by formatting and re-parsing strings, and no
+  longer knows about the SPICE types: the conversions live in `ffi`, where the compiler checks them.
+  It also reports a proper compile error instead of panicking with `->1`.
++ Strings crossing the FFI boundary are copied into a stack buffer while they fit, so a wrapper no
+  longer allocates once per string argument: marshalling one argument went from 22 ns to 3.8 ns, and
+  a `spkpos` call from 1597 ns to 1548 ns (Apple M-series, CSPICE N0067).
++ `spkw09`, `ckw03` and `dskw02` panic rather than letting CSPICE read past the end of a slice.
++ `spkw09` takes `&[...]` instead of `&mut [...]`.
++ `raw::dskobj` takes the cell to fill, like CSPICE; `neat::dskobj` keeps returning an owned one.
++ `recpgr` returns the longitude, latitude and altitude as a tuple rather than as a `[f64; 3]`, and
+  `getfov` takes the instrument ID as an `i32`. `getfov` also gained a neat version, which is what
+  `spice::getfov` now refers to.
++ `cstr!`, `fcstr!`, `malloc!` and `mallocstr!` are kept for use with the unsafe C API. `malloc!`
+  and `mallocstr!` now zero what they allocate, and `fcstr!` no longer panics on invalid UTF-8.
++ Edition 2021, `syn` 2 to 3, and the unused `nalgebra`, `serde`, `serde_json`, `serde_repr` and
+  `log` dependencies dropped. `approx`, `itertools` and `serial_test` moved to dev-dependencies.
+
+### Removed
+
++ The declaration of the `rust-spice/hera` submodule, which was never registered and which the test
+  suite no longer needs.
++ `Cell<bool>`: no CSPICE C routine operates on a boolean cell. `Cell::new_bool` still hands back an
+  integer cell tagged as boolean.
+
+
 ## [0.7.1] - 2021-10-24
 
 ### Added

@@ -2,6 +2,7 @@
 
 [![logo image]][repository link]
 
+[![ci badge]][ci link]
 [![crate badge]][crate link]
 [![doc badge]][doc link]
 [![license badge]][license link]
@@ -39,6 +40,13 @@ their [website][naif link].
 3) In the `cspice/lib` folder you might need for Unix systems to rename the
    static library to match standards: `cspice.a` -> `libcspice.a`
 
+On Linux and macOS, [`.github/install-cspice.sh`][install script link] does all three for you:
+
+```bash
+./.github/install-cspice.sh ~/cspice
+export CSPICE_DIR=~/cspice
+```
+
 See other requirements at [`cspice-sys`][cspice-sys link] library which provides
 unsafe bindings to CSPICE.
 
@@ -70,10 +78,10 @@ rust-spice = {version = "*", features = ["lock"] }
 
 A nice and idiomatic interface to Spice,
 
-```rust
+```rust,no_run
 use spice;
 
-let mut kernel = spice::furnsh("/Users/gregoireh/data/spice-kernels/hera/kernels/mk/hera_study_PO_EMA_2024.tm");
+spice::furnsh("/path/to/metakernel.tm");
 
 let et = spice::str2et("2027-MAR-23 16:00:00");
 let (position, light_time) = spice::spkpos("DIMORPHOS", et, "J2000", "NONE", "SUN");
@@ -84,10 +92,50 @@ let (position, light_time) = spice::spkpos("DIMORPHOS", et, "J2000", "NONE", "SU
 spice::kclear();
 ```
 
-You can look for some inspirations in the [core tests][core tests link].
+You can look for some inspirations in the [tests][core tests link]. They are self contained: the
+kernels they need are generated in a temporary directory when the suite starts, so `cargo test`
+works on any machine with CSPICE installed.
 
-This dataset used as an example can be downloaded from
-[here](https://s2e2.cosmos.esa.int/bitbucket/projects/SPICE_KERNELS/repos/hera/browse).
+### Errors
+
+CSPICE keeps its own error state, and out of the box a failing routine prints a report to the
+screen and then **terminates the process**. Ask it to return instead, and turn what it reports into
+a Rust `Result`:
+
+```rust,no_run
+use spice;
+
+spice::errors::quiet();
+
+spice::furnsh("/path/to/metakernel.tm");
+if let Err(error) = spice::errors::check() {
+    eprintln!("could not load the kernels: {error}");
+}
+```
+
+### Cells
+
+A few routines report their results by filling a SPICE *cell*, a fixed capacity array the toolkit
+manages itself. `spice::Cell` owns its storage, so it is created and dropped like any other Rust
+value:
+
+```rust,no_run
+use spice;
+
+spice::furnsh("/path/to/metakernel.tm");
+
+// The convenience form allocates the cell for you.
+let bodies = spice::dskobj("/path/to/shape.bds");
+for id in bodies.iter() {
+    println!("{}", spice::bodc2n(id).0);
+}
+
+// The raw form takes the cell you sized, exactly as CSPICE does.
+let mut ids = spice::Cell::<i32>::new(64);
+spice::raw::spkobj("/path/to/ephemeris.bsp", &mut ids);
+
+spice::kclear();
+```
 
 ## In development
 
@@ -98,12 +146,12 @@ always use the unsafe API which contains all [cspice functions][cspice api].
 
 For instance, with the unsafe API, the example above would be,
 
-```rust
+```rust,no_run
 use spice;
 use std::ffi::CString;
 
 unsafe {
-    let kernel = CString::new("/Users/gregoireh/data/spice-kernels/hera/kernels/mk/hera_study_PO_EMA_2024.tm").unwrap().into_raw();
+    let kernel = CString::new("/path/to/metakernel.tm").unwrap().into_raw();
     spice::c::furnsh_c(kernel);
 
     let mut et = 0.0;
@@ -150,7 +198,7 @@ and the [raw][raw link] versions for the rest. For functions which have
 neither, you will have to use the unsafe (and unguarded) direct C bindings.
 Just make sure you have the lock before calling them.
 
-```rust
+```rust,no_run
 # #[cfg(feature = "lock")]
 # {
 use spice::SpiceLock;
@@ -159,7 +207,7 @@ use spice::SpiceLock;
 let sl = SpiceLock::try_acquire().unwrap();
 
 // SPICE functions are now associated functions of the lock with a `&self` arg
-let mut kernel = sl.furnsh("/Users/gregoireh/data/spice-kernels/hera/kernels/mk/hera_study_PO_EMA_2024.tm");
+sl.furnsh("/path/to/metakernel.tm");
 
 let et = sl.str2et("2027-MAR-23 16:00:00");
 let (position, light_time) = sl.spkpos("DIMORPHOS", et, "J2000", "NONE", "SUN");
@@ -190,6 +238,8 @@ A huge thanks for their contributions!!
 
 Licensed under the [Apache License, Version 2.0][license link].
 
+[ci link]: https://github.com/GregoireHENRY/rust-spice/actions/workflows/ci.yml
+[ci badge]: https://github.com/GregoireHENRY/rust-spice/actions/workflows/ci.yml/badge.svg
 [repository link]: https://github.com/GregoireHENRY/rust-spice
 [logo image]: https://raw.githubusercontent.com/GregoireHENRY/rust-spice/main/rust-spice/rsc/img/logo_bg.png
 [crate link]: https://crates.io/crates/rust-spice
@@ -210,6 +260,7 @@ Licensed under the [Apache License, Version 2.0][license link].
 [cspice install link]: https://naif.jpl.nasa.gov/naif/toolkit_C.html
 [cspice-sys link]: https://github.com/jacob-pro/cspice-rs/tree/master/cspice-sys
 [config doc]: https://doc.rust-lang.org/cargo/reference/config.html
+[install script link]: https://github.com/GregoireHENRY/rust-spice/blob/main/.github/install-cspice.sh
 [raw link]: https://docs.rs/rust-spice/latest/spice/core/raw/index.html
 [neat link]: https://docs.rs/rust-spice/latest/spice/core/neat/index.html
 

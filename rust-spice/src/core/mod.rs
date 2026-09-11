@@ -3,133 +3,321 @@ An idiomatic interface in Rust to CSPICE.
 
 ## Description
 
-Below you will find the index of the CSPICE functions that are wrapped with an idiomatic Rust interface.
+Below you will find the index of the CSPICE functions that are wrapped with an idiomatic Rust
+interface.
 
 It takes a long time to correctly wrap all functions of the API. Raise an issue to ask a specific
 function to be implemented and we will do it immediately. Pull requests are warmly welcomed to help
 speed up this process (do not forget to include a proper documentation and a test).
 
 In the meantime, if you are in a rush and need quickly to use a function not implemented with the
-Rust interface, use the unsafe C functions [here][crate::c#functions]. You can find some inspiration in
-the source of this lib to deal with the FFI types and unsafe code.
+Rust interface, use the unsafe C functions [here][crate::c#functions]. You can find some inspiration
+in the source of this lib to deal with the FFI types and unsafe code.
+
+Functions come in two flavours. [`raw`] mirrors CSPICE argument for argument; [`neat`] wraps the
+ones whose C signature asks for a buffer size, or for a caller allocated [cell],
+so that Rust can size them for you. The index points at the flavour you most likely want, and each
+page links to the other.
+
+CSPICE reports failures through its own error state, and by default it prints to the screen then
+**terminates the process**. [`errors`] wraps the routines that control it, and adds three helpers of
+its own, which is why they are absent from the index below: [`errors::quiet`] and [`errors::loud`]
+switch between returning and aborting, and [`errors::check`] turns the error state into a Rust
+[`Result`].
 
 ## Bindings
 
 CSPICE | **rust-spice** | Description
 -------|--------------|------------
+[b1900_c][b1900_c link] | [`raw::b1900`] | Toolkit constant
+[b1950_c][b1950_c link] | [`raw::b1950`] | Toolkit constant
 [bodc2n_c][bodc2n_c link] | [`neat::bodc2n`] | Body ID code to name translation
+[bodc2s_c][bodc2s_c link] | [`neat::bodc2s`] | Body ID code to string translation
 [bodfnd_c][bodfnd_c link] | [`raw::bodfnd`] | Find values from the kernel pool
 [bodn2c_c][bodn2c_c link] | [`raw::bodn2c`] | Body name to ID code translation
+[bods2c_c][bods2c_c link] | [`raw::bods2c`] | Body string to ID code translation
+[bodvcd_c][bodvcd_c link] | [`raw::bodvcd`] | Return d.p. values from the kernel pool, by ID code
 [bodvrd_c][bodvrd_c link] | [`raw::bodvrd`] | Return d.p. values from the kernel pool
-[ckcov_c][ckcov_c link] | *TODO*
-[ckgp_c][ckgp_c link] | *TODO*
-[ckgpav_c][ckgpav_c link] | *TODO*
-[ckobj_c][ckobj_c link] | *TODO*
+[ckcls_c][ckcls_c link] | [`raw::ckcls`] | CK, close file
+[ckcov_c][ckcov_c link] | [`neat::ckcov`] | CK, coverage
+[ckgp_c][ckgp_c link] | [`raw::ckgp`] | CK, get pointing
+[ckgpav_c][ckgpav_c link] | [`raw::ckgpav`] | CK, get pointing and angular velocity
+[ckobj_c][ckobj_c link] | [`neat::ckobj`] | CK, objects
+[ckopn_c][ckopn_c link] | [`raw::ckopn`] | CK, open new file
+[ckw03_c][ckw03_c link] | [`raw::ckw03`] | CK, write segment, type 3
+[clight_c][clight_c link] | [`raw::clight`] | Toolkit constant
+[clpool_c][clpool_c link] | [`raw::clpool`] | Clear the kernel pool
+[conics_c][conics_c link] | [`raw::conics`] | Determine state from conic elements
+[cylrec_c][cylrec_c link] | [`raw::cylrec`] | Cylindrical to rectangular coordinates
 [dascls_c][dascls_c link] | [`raw::dascls`] | DAS, close file
 [dasopr_c][dasopr_c link] | [`raw::dasopr`] | DAS, open for read
-[deltet_c][deltet_c link] | [`raw::udeltet`] | Delta ET, ET - UTC
+[deltet_c][deltet_c link] | [`raw::deltet`] | Delta ET, ET - UTC
+[det_c][det_c link] | [`raw::det`] | Determinant of a double precision 3x3 matrix
+[dlabbs_c][dlabbs_c link] | [`raw::dlabbs`] | DLA, begin backward search
 [dlabfs_c][dlabfs_c link] | [`raw::dlabfs`] | DLA, begin forward search
+[dlafns_c][dlafns_c link] | [`raw::dlafns`] | DLA, find next segment
+[dpr_c][dpr_c link] | [`raw::dpr`] | Degrees per radian
+[dskcls_c][dskcls_c link] | [`raw::dskcls`] | DSK, close file
 [dskgd_c][dskgd_c link] | [`raw::dskgd`] | DSK, return DSK segment descriptor
+[dskgtl_c][dskgtl_c link] | [`raw::dskgtl`] | DSK, get tolerance
+[dskmi2_c][dskmi2_c link] | [`raw::dskmi2`] | DSK, make spatial index for type 2 segment
 [dskn02_c][dskn02_c link] | [`raw::dskn02`] | DSK, type 2, compute normal vector for plate
-[dskobj_c][dskobj_c link] | [`raw::dskobj`] | DSK, get object IDs
+[dskobj_c][dskobj_c link] | [`neat::dskobj`] | DSK, get object IDs
+[dskopn_c][dskopn_c link] | [`raw::dskopn`] | DSK, open new file
 [dskp02_c][dskp02_c link] | [`neat::dskp02`] | DSK, fetch type 2 plate data
-[dsksrf_c][dsksrf_c link] | *TODO*
+[dsksrf_c][dsksrf_c link] | [`neat::dsksrf`] | DSK, get surface IDs for body
+[dskstl_c][dskstl_c link] | [`raw::dskstl`] | DSK, set tolerance
 [dskv02_c][dskv02_c link] | [`neat::dskv02`] | DSK, fetch type 2 vertex data
+[dskw02_c][dskw02_c link] | [`raw::dskw02`] | DSK, write type 2 segment
 [dskx02_c][dskx02_c link] | [`raw::dskx02`] | DSK, ray-surface intercept, type 2
+[dskxsi_c][dskxsi_c link] | *TODO*
+[dskxv_c][dskxv_c link] | *TODO*
 [dskz02_c][dskz02_c link] | [`raw::dskz02`] | DSK, fetch type 2 model size parameters
+[dtpool_c][dtpool_c link] | [`raw::dtpool`] | Data for a kernel pool variable
+[edterm_c][edterm_c link] | [`raw::edterm`] | Ellipsoid terminator
+[erract_c][erract_c link] | [`errors::erract`] | Get/Set default error action
+[errdev_c][errdev_c link] | [`errors::errdev`] | Get/Set error output device name
+[errprt_c][errprt_c link] | [`errors::errprt`] | Get/Set error output items
+[et2utc_c][et2utc_c link] | [`neat::et2utc`] | Ephemeris time to UTC
+[evsgp4_c][evsgp4_c link] | *TODO*
+[expool_c][expool_c link] | [`raw::expool`] | Confirm the existence of a pool kernel variable
+[failed_c][failed_c link] | [`errors::failed`] | Error status indicator
+[frmnam_c][frmnam_c link] | [`neat::frmnam`] | Frame to name translation
 [furnsh_c][furnsh_c link] | [`raw::furnsh`] | Furnish a program with SPICE kernels
-[gcpool_c][gcpool_c link] | *TODO*
+[gcpool_c][gcpool_c link] | [`neat::gcpool`] | Get character values from the kernel pool
 [gdpool_c][gdpool_c link] | [`raw::gdpool`] | Get d.p. values from the kernel pool
 [georec_c][georec_c link] | [`raw::georec`] | Geodetic to rectangular coordinates
-[getfov_c][getfov_c link] | [`raw::getfov`] | Get instrument FOV parameters
-[gipool_c][gipool_c link] | *TODO*
+[getelm_c][getelm_c link] | *TODO*
+[getfov_c][getfov_c link] | [`neat::getfov`] | Get instrument FOV parameters
+[getmsg_c][getmsg_c link] | [`errors::getmsg`] | Get error message
+[gfoclt_c][gfoclt_c link] | *TODO*
+[gipool_c][gipool_c link] | [`raw::gipool`] | Get integers from the kernel pool
+[halfpi_c][halfpi_c link] | [`raw::halfpi`] | Toolkit constant
 [illumf_c][illumf_c link] | [`raw::illumf`] | Illumination angles, general source, return flags
+[ilumin_c][ilumin_c link] | [`raw::ilumin`] | Illumination angles
+[invert_c][invert_c link] | [`raw::invert`] | Invert a 3x3 matrix
+[j1900_c][j1900_c link] | [`raw::j1900`] | Toolkit constant
+[j1950_c][j1950_c link] | [`raw::j1950`] | Toolkit constant
+[j2000_c][j2000_c link] | [`raw::j2000`] | Toolkit constant
+[j2100_c][j2100_c link] | [`raw::j2100`] | Toolkit constant
+[jyear_c][jyear_c link] | [`raw::jyear`] | Toolkit constant
 [kclear_c][kclear_c link] | [`raw::kclear`] | Keeper clear
-[kdata_c][kdata_c link] | [`neat::kdata`] | Kernel Data
-[ktotal_c][ktotal_c link] | [`raw::ktotal`] | Kernel Totals
+[kdata_c][kdata_c link] | [`neat::kdata`] | Kernel data
+[kinfo_c][kinfo_c link] | [`neat::kinfo`] | Kernel information
+[ktotal_c][ktotal_c link] | [`raw::ktotal`] | Kernel totals
 [latrec_c][latrec_c link] | [`raw::latrec`] | Latitudinal to rectangular coordinates
-[latsrf_c][latsrf_c link] | *TODO*
-[mxv_c][mxv_c link] | [`raw::mxv`] |  Matrix times vector, 3x3
+[latsrf_c][latsrf_c link] | [`raw::latsrf`] | Latitudinal grid to surface points
+[ldpool_c][ldpool_c link] | [`raw::ldpool`] | Load variables from a kernel file into the pool
+[limbpt_c][limbpt_c link] | *TODO*
+[lspcn_c][lspcn_c link] | [`raw::lspcn`] | Longitude of the sun, planetocentric
+[mtxm_c][mtxm_c link] | [`raw::mtxm`] | Matrix transpose times matrix, 3x3
+[mtxv_c][mtxv_c link] | [`raw::mtxv`] | Matrix transpose times vector, 3x3
+[mxm_c][mxm_c link] | [`raw::mxm`] | Matrix times matrix, 3x3
+[mxmt_c][mxmt_c link] | [`raw::mxmt`] | Matrix times matrix transpose, 3x3
+[mxv_c][mxv_c link] | [`raw::mxv`] | Matrix times vector, 3x3
+[namfrm_c][namfrm_c link] | [`raw::namfrm`] | Name to frame translation
+[nearpt_c][nearpt_c link] | [`raw::nearpt`] | Nearest point on an ellipsoid
 [occult_c][occult_c link] | [`raw::occult`] | Find occultation type at time
-[pckcov_c][pckcov_c link] | *TODO*
-[pxform_c][pxform_c link] | [`raw::pxform`] | Position Transformation Matrix
-[pxfrm2_c][pxfrm2_c link] | [`raw::pxfrm2`] | Position Transform Matrix, Different Epochs
-[sce2c_c][sce2c_c link] | *TODO*
-[sce2s_c][sce2s_c link] | *TODO*
-[scencd_c][scencd_c link] | *TODO*
-[scdecd_c][scdecd_c link] | *TODO*
-[scs2e_c][scs2e_c link] | *TODO*
-[sct2e_c][sct2e_c link] | *TODO*
-[sincpt_c][sincpt_c link] | [`raw::sincpt`] | Surface intercept
-[spkcls_c][spkcov_c link] | [`raw::spkcls`] | SPK, Close file
-[spkcov_c][spkcov_c link] | *TODO*
-[spkcpo_c][spkcpo_c link] | *TODO*
-[spkcpt_c][spkcpt_c link] | *TODO*
-[spkcvo_c][spkcvo_c link] | *TODO*
-[spkcvt_c][spkcvt_c link] | *TODO*
-[spkezr_c][spkezr_c link] | [`raw::spkezr`] | S/P Kernel, easier reader
-[spkobj_c][spkobj_c link] | *TODO*
-[spkopn_c][spkopn_c link] | [`raw::spkopn`] | SPK, open new file.
-[spkpos_c][spkpos_c link] | [`raw::spkpos`] | S/P Kernel, position
-[spkw09_c][spkopn_c link] | [`raw::spkw09`] | Write SPK segment, type 9
-[srfc2s_c][srfc2s_c link] | *TODO*
-[srfcss_c][srfcss_c link] | *TODO*
-[srfnrm_c][srfnrm_c link] | *TODO*
-[srfs2c_c][srfs2c_c link] | *TODO*
-[srfscc_c][srfscc_c link] | *TODO*
-[str2et_c][str2et_c link] | [`raw::str2et`] | String to ET
-[sunpnt_c][sxform_c link] | [`raw::subpnt`] | Sub-observer point
-[surfpt_c][surfpt_c link] | [`raw::surfpt`] | Surface point on an ellipsoid
-[sxform_c][sxform_c link] | *TODO*
-[radrec_c][radrec_c link] | [`raw::radrec`] |  RA and DEC to rectangular coordinates
-[recrad_c][recrad_c link] | [`raw::recrad`] | Rectangular coordinates to RA and DEC
+[oscelt_c][oscelt_c link] | [`raw::oscelt`] | Determine conic elements from state
+[oscltx_c][oscltx_c link] | [`raw::oscltx`] | Extended osculating elements from state
+[pckcov_c][pckcov_c link] | [`neat::pckcov`] | PCK, coverage
+[pckfrm_c][pckfrm_c link] | [`neat::pckfrm`] | PCK, reference frame class ID set
+[pcpool_c][pcpool_c link] | [`raw::pcpool`] | Put character strings into the kernel pool
+[pdpool_c][pdpool_c link] | [`raw::pdpool`] | Put d.p.s into the kernel pool
+[pgrrec_c][pgrrec_c link] | [`raw::pgrrec`] | Planetographic to rectangular
+[phaseq_c][phaseq_c link] | [`raw::phaseq`] | Phase angle quantity between bodies
+[pi_c][pi_c link] | [`raw::pi`] | Toolkit constant
+[pipool_c][pipool_c link] | [`raw::pipool`] | Put integers into the kernel pool
+[prop2b_c][prop2b_c link] | [`raw::prop2b`] | Propagate a two-body solution
+[pxform_c][pxform_c link] | [`raw::pxform`] | Position transformation matrix
+[pxfrm2_c][pxfrm2_c link] | [`raw::pxfrm2`] | Position transform matrix, different epochs
+[qcktrc_c][qcktrc_c link] | [`errors::qcktrc`] | Get quick traceback
+[radrec_c][radrec_c link] | [`raw::radrec`] | RA and DEC to rectangular coordinates
+[reccyl_c][reccyl_c link] | [`raw::reccyl`] | Rectangular to cylindrical coordinates
+[recgeo_c][recgeo_c link] | [`raw::recgeo`] | Rectangular to geodetic coordinates
+[reclat_c][reclat_c link] | [`raw::reclat`] | Rectangular to latitudinal coordinates
 [recpgr_c][recpgr_c link] | [`raw::recpgr`] | Rectangular to planetographic
-[timout_c][timout_c link] | [`neat::timout`] | Time Output
-[unitim_c][unitim_c link] | [`raw::unitime`] | Uniform time scale transformation
+[recrad_c][recrad_c link] | [`raw::recrad`] | Rectangular coordinates to RA and DEC
+[recsph_c][recsph_c link] | [`raw::recsph`] | Rectangular to spherical coordinates
+[reset_c][reset_c link] | [`errors::reset`] | Reset error status
+[rotate_c][rotate_c link] | [`raw::rotate`] | Generate a rotation matrix
+[rotmat_c][rotmat_c link] | [`raw::rotmat`] | Rotate a matrix
+[rpd_c][rpd_c link] | [`raw::rpd`] | Radians per degree
+[scdecd_c][scdecd_c link] | [`neat::scdecd`] | Decode spacecraft clock
+[sce2c_c][sce2c_c link] | [`raw::sce2c`] | ET to continuous SCLK ticks
+[sce2s_c][sce2s_c link] | [`neat::sce2s`] | ET to SCLK string
+[scencd_c][scencd_c link] | [`raw::scencd`] | Encode spacecraft clock
+[scs2e_c][scs2e_c link] | [`raw::scs2e`] | SCLK string to ET
+[sct2e_c][sct2e_c link] | [`raw::sct2e`] | SCLK ticks to ET
+[sincpt_c][sincpt_c link] | [`raw::sincpt`] | Surface intercept
+[spd_c][spd_c link] | [`raw::spd`] | Seconds per day
+[sphrec_c][sphrec_c link] | [`raw::sphrec`] | Spherical to rectangular coordinates
+[spkcls_c][spkcls_c link] | [`raw::spkcls`] | SPK, close file
+[spkcov_c][spkcov_c link] | [`neat::spkcov`] | SPK, coverage
+[spkcpo_c][spkcpo_c link] | [`raw::spkcpo`] | SPK, constant position observer state
+[spkcpt_c][spkcpt_c link] | [`raw::spkcpt`] | SPK, constant position target state
+[spkcvo_c][spkcvo_c link] | [`raw::spkcvo`] | SPK, constant velocity observer state
+[spkcvt_c][spkcvt_c link] | [`raw::spkcvt`] | SPK, constant velocity target state
+[spkez_c][spkez_c link] | [`raw::spkez`] | S/P Kernel, easy reader
+[spkezp_c][spkezp_c link] | [`raw::spkezp`] | S/P Kernel, easy position
+[spkezr_c][spkezr_c link] | [`raw::spkezr`] | S/P Kernel, easier reader
+[spkgeo_c][spkgeo_c link] | [`raw::spkgeo`] | S/P Kernel, geometric state
+[spkobj_c][spkobj_c link] | [`neat::spkobj`] | SPK, objects
+[spkopa_c][spkopa_c link] | [`raw::spkopa`] | SPK, open for addition
+[spkopn_c][spkopn_c link] | [`raw::spkopn`] | SPK, open new file
+[spkpos_c][spkpos_c link] | [`raw::spkpos`] | S/P Kernel, position
+[spkw09_c][spkw09_c link] | [`raw::spkw09`] | Write SPK segment, type 9
+[srfc2s_c][srfc2s_c link] | [`neat::srfc2s`] | Surface and body ID codes to surface string
+[srfcss_c][srfcss_c link] | [`neat::srfcss`] | Surface ID and body string to surface string
+[srfnrm_c][srfnrm_c link] | [`raw::srfnrm`] | Map surface points to outward normal vectors
+[srfrec_c][srfrec_c link] | [`raw::srfrec`] | Surface to rectangular coordinates
+[srfs2c_c][srfs2c_c link] | [`raw::srfs2c`] | Surface and body strings to surface ID code
+[srfscc_c][srfscc_c link] | [`raw::srfscc`] | Surface string and body ID code to surface ID code
+[str2et_c][str2et_c link] | [`raw::str2et`] | String to ET
+[subpnt_c][subpnt_c link] | [`raw::subpnt`] | Sub-observer point
+[subslr_c][subslr_c link] | [`raw::subslr`] | Sub-solar point
+[surfpt_c][surfpt_c link] | [`raw::surfpt`] | Surface point on an ellipsoid
+[sxform_c][sxform_c link] | [`raw::sxform`] | State transformation matrix
+[termpt_c][termpt_c link] | *TODO*
+[timout_c][timout_c link] | [`neat::timout`] | Time output
+[tkvrsn_c][tkvrsn_c link] | [`raw::tkvrsn`] | Toolkit version strings
+[tparse_c][tparse_c link] | [`neat::tparse`] | Parse a UTC time string
+[trace_c][trace_c link] | [`raw::trace`] | Trace of a 3x3 matrix
+[twopi_c][twopi_c link] | [`raw::twopi`] | Toolkit constant
+[twovec_c][twovec_c link] | [`raw::twovec`] | Two vectors defining an orthonormal frame
+[tyear_c][tyear_c link] | [`raw::tyear`] | Toolkit constant
+[unitim_c][unitim_c link] | [`raw::unitim`] | Uniform time scale transformation
 [unload_c][unload_c link] | [`raw::unload`] | Unload a kernel
+[unorm_c][unorm_c link] | [`raw::unorm`] | Unit vector and norm, 3 dimensions
+[utc2et_c][utc2et_c link] | [`raw::utc2et`] | UTC to ephemeris time
+[vadd_c][vadd_c link] | [`raw::vadd`] | Vector addition, 3 dimensions
 [vcrss_c][vcrss_c link] | [`raw::vcrss`] | Vector cross product, 3 dimensions
-[vdot_c][vdot_c link] | [`raw::vdot`] |  Vector dot product, 3 dimensions
+[vdist_c][vdist_c link] | [`raw::vdist`] | Vector distance
+[vdot_c][vdot_c link] | [`raw::vdot`] | Vector dot product, 3 dimensions
+[vequ_c][vequ_c link] | [`raw::vequ`] | Vector equality, 3 dimensions
+[vhat_c][vhat_c link] | [`raw::vhat`] | Unit vector along a vector, 3 dimensions
+[vminus_c][vminus_c link] | [`raw::vminus`] | Negate a vector, 3 dimensions
+[vnorm_c][vnorm_c link] | [`raw::vnorm`] | Vector norm, 3 dimensions
+[vrel_c][vrel_c link] | [`raw::vrel`] | Vector relative difference, 3 dimensions
+[vscl_c][vscl_c link] | [`raw::vscl`] | Vector scaling, 3 dimensions
 [vsep_c][vsep_c link] | [`raw::vsep`] | Angular separation of vectors, 3 dimensions
+[vsub_c][vsub_c link] | [`raw::vsub`] | Vector subtraction, 3 dimensions
 [xpose_c][xpose_c link] | [`raw::xpose`] | Transpose a matrix, 3x3
 
+[b1900_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/b1900_c.html
+[b1950_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/b1950_c.html
 [bodc2n_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/bodc2n_c.html
+[bodc2s_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/bodc2s_c.html
 [bodfnd_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/bodfnd_c.html
 [bodn2c_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/bodn2c_c.html
+[bods2c_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/bods2c_c.html
+[bodvcd_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/bodvcd_c.html
 [bodvrd_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/bodvrd_c.html
+[ckcls_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/ckcls_c.html
 [ckcov_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/ckcov_c.html
 [ckgp_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/ckgp_c.html
 [ckgpav_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/ckgpav_c.html
 [ckobj_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/ckobj_c.html
+[ckopn_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/ckopn_c.html
+[ckw03_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/ckw03_c.html
+[clight_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/clight_c.html
+[clpool_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/clpool_c.html
+[conics_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/conics_c.html
+[cylrec_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/cylrec_c.html
 [dascls_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/dascls_c.html
 [dasopr_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/dasopr_c.html
 [deltet_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/deltet_c.html
-[dlabfs_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/dasopr_c.html
+[det_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/det_c.html
+[dlabbs_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/dlabbs_c.html
+[dlabfs_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/dlabfs_c.html
+[dlafns_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/dlafns_c.html
+[dpr_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/dpr_c.html
+[dskcls_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/dskcls_c.html
 [dskgd_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/dskgd_c.html
+[dskgtl_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/dskgtl_c.html
+[dskmi2_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/dskmi2_c.html
 [dskn02_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/dskn02_c.html
 [dskobj_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/dskobj_c.html
+[dskopn_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/dskopn_c.html
 [dskp02_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/dskp02_c.html
 [dsksrf_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/dsksrf_c.html
+[dskstl_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/dskstl_c.html
 [dskv02_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/dskv02_c.html
+[dskw02_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/dskw02_c.html
 [dskx02_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/dskx02_c.html
+[dskxsi_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/dskxsi_c.html
+[dskxv_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/dskxv_c.html
 [dskz02_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/dskz02_c.html
+[dtpool_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/dtpool_c.html
+[edterm_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/edterm_c.html
+[erract_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/erract_c.html
+[errdev_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/errdev_c.html
+[errprt_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/errprt_c.html
+[et2utc_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/et2utc_c.html
+[evsgp4_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/evsgp4_c.html
+[expool_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/expool_c.html
+[failed_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/failed_c.html
+[frmnam_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/frmnam_c.html
 [furnsh_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/furnsh_c.html
 [gcpool_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/gcpool_c.html
 [gdpool_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/gdpool_c.html
-[getfov_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/getfov_c.html
 [georec_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/georec_c.html
+[getelm_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/getelm_c.html
+[getfov_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/getfov_c.html
+[getmsg_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/getmsg_c.html
+[gfoclt_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/gfoclt_c.html
 [gipool_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/gipool_c.html
+[halfpi_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/halfpi_c.html
 [illumf_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/illumf_c.html
+[ilumin_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/ilumin_c.html
+[invert_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/invert_c.html
+[j1900_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/j1900_c.html
+[j1950_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/j1950_c.html
+[j2000_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/j2000_c.html
+[j2100_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/j2100_c.html
+[jyear_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/jyear_c.html
 [kclear_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/kclear_c.html
 [kdata_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/kdata_c.html
+[kinfo_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/kinfo_c.html
 [ktotal_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/ktotal_c.html
 [latrec_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/latrec_c.html
 [latsrf_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/latsrf_c.html
+[ldpool_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/ldpool_c.html
+[limbpt_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/limbpt_c.html
+[lspcn_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/lspcn_c.html
+[mtxm_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/mtxm_c.html
+[mtxv_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/mtxv_c.html
+[mxm_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/mxm_c.html
+[mxmt_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/mxmt_c.html
 [mxv_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/mxv_c.html
+[namfrm_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/namfrm_c.html
+[nearpt_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/nearpt_c.html
 [occult_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/occult_c.html
-[pxform_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/pxform_c.html
+[oscelt_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/oscelt_c.html
+[oscltx_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/oscltx_c.html
 [pckcov_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/pckcov_c.html
 [pckfrm_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/pckfrm_c.html
+[pcpool_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/pcpool_c.html
+[pdpool_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/pdpool_c.html
+[pgrrec_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/pgrrec_c.html
+[phaseq_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/phaseq_c.html
+[pi_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/pi_c.html
+[pipool_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/pipool_c.html
+[prop2b_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/prop2b_c.html
+[pxform_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/pxform_c.html
 [pxfrm2_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/pxfrm2_c.html
+[qcktrc_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/qcktrc_c.html
+[radrec_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/radrec_c.html
+[reccyl_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/reccyl_c.html
+[recgeo_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/recgeo_c.html
+[reclat_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/reclat_c.html
+[recpgr_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/recpgr_c.html
+[recrad_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/recrad_c.html
+[recsph_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/recsph_c.html
+[reset_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/reset_c.html
+[rotate_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/rotate_c.html
+[rotmat_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/rotmat_c.html
+[rpd_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/rpd_c.html
 [scdecd_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/scdecd_c.html
 [sce2c_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/sce2c_c.html
 [sce2s_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/sce2s_c.html
@@ -137,51 +325,92 @@ CSPICE | **rust-spice** | Description
 [scs2e_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/scs2e_c.html
 [sct2e_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/sct2e_c.html
 [sincpt_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/sincpt_c.html
+[spd_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/spd_c.html
+[sphrec_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/sphrec_c.html
 [spkcls_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/spkcls_c.html
-[spkcpo_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/spkcpo_c.html
 [spkcov_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/spkcov_c.html
+[spkcpo_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/spkcpo_c.html
 [spkcpt_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/spkcpt_c.html
 [spkcvo_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/spkcvo_c.html
 [spkcvt_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/spkcvt_c.html
+[spkez_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/spkez_c.html
+[spkezp_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/spkezp_c.html
 [spkezr_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/spkezr_c.html
+[spkgeo_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/spkgeo_c.html
 [spkobj_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/spkobj_c.html
+[spkopa_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/spkopa_c.html
 [spkopn_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/spkopn_c.html
 [spkpos_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/spkpos_c.html
 [spkw09_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/spkw09_c.html
 [srfc2s_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/srfc2s_c.html
 [srfcss_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/srfcss_c.html
 [srfnrm_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/srfnrm_c.html
+[srfrec_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/srfrec_c.html
 [srfs2c_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/srfs2c_c.html
 [srfscc_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/srfscc_c.html
 [str2et_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/str2et_c.html
 [subpnt_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/subpnt_c.html
+[subslr_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/subslr_c.html
 [surfpt_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/surfpt_c.html
 [sxform_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/sxform_c.html
-[radrec_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/radrec_c.html
-[recrad_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/recrad_c.html
-[recpgr_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/recpgr_c.html
+[termpt_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/termpt_c.html
 [timout_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/timout_c.html
+[tkvrsn_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/tkvrsn_c.html
+[tparse_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/tparse_c.html
+[trace_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/trace_c.html
+[twopi_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/twopi_c.html
+[twovec_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/twovec_c.html
+[tyear_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/tyear_c.html
 [unitim_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/unitim_c.html
 [unload_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/unload_c.html
+[unorm_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/unorm_c.html
+[utc2et_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/utc2et_c.html
+[vadd_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/vadd_c.html
 [vcrss_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/vcrss_c.html
+[vdist_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/vdist_c.html
 [vdot_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/vdot_c.html
+[vequ_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/vequ_c.html
+[vhat_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/vhat_c.html
+[vminus_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/vminus_c.html
+[vnorm_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/vnorm_c.html
+[vrel_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/vrel_c.html
+[vscl_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/vscl_c.html
 [vsep_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/vsep_c.html
+[vsub_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/vsub_c.html
 [xpose_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/xpose_c.html
 */
+
+pub mod cell;
+pub mod errors;
+pub mod ffi;
+pub mod neat;
+pub mod raw;
 
 #[cfg(any(feature = "lock", doc))]
 #[cfg_attr(docsrs, doc(cfg(feature = "lock")))]
 pub mod lock;
 
-pub mod neat;
-pub mod raw;
-
-pub use self::neat::{bodc2n, dskp02, dskv02, kdata, timout};
+#[allow(unused_imports)]
+pub use self::cell::{Cell, CellItem};
+#[allow(unused_imports)]
+pub use self::neat::{
+    bodc2n, bodc2s, ckcov, ckobj, dskobj, dskp02, dsksrf, dskv02, et2utc, frmnam, gcpool, getfov,
+    kdata, kinfo, pckcov, pckfrm, scdecd, sce2s, spkcov, spkobj, srfc2s, srfcss, timout, tparse,
+};
+#[allow(unused_imports)]
 pub use self::raw::{
-    bodfnd, bodn2c, bodvrd, dascls, dasopr, deltet, dlabfs, dskgd, dskn02, dskobj, dskx02, dskz02,
-    furnsh, gdpool, georec, getfov, illumf, kclear, ktotal, latrec, mxv, occult, pxform, pxfrm2,
-    radrec, recpgr, recrad, sincpt, spkcls, spkezr, spkopn, spkpos, spkw09, str2et, subpnt, surfpt,
-    unitim, unload, vcrss, vdot, vsep, xpose, Cell, DLADSC, DSKDSC,
+    b1900, b1950, bodfnd, bodn2c, bods2c, bodvcd, bodvrd, ckcls, ckgp, ckgpav, ckopn, ckw03,
+    clight, clpool, conics, cylrec, dascls, dasopr, deltet, det, dlabbs, dlabfs, dlafns, dpr,
+    dskcls, dskgd, dskgtl, dskmi2, dskn02, dskopn, dskstl, dskw02, dskx02, dskz02, dtpool, edterm,
+    expool, furnsh, gdpool, georec, gipool, halfpi, illumf, ilumin, invert, j1900, j1950, j2000,
+    j2100, jyear, kclear, ktotal, latrec, latsrf, ldpool, lspcn, mtxm, mtxv, mxm, mxmt, mxv,
+    namfrm, nearpt, occult, oscelt, oscltx, pcpool, pdpool, pgrrec, phaseq, pi, pipool, prop2b,
+    pxform, pxfrm2, radrec, reccyl, recgeo, reclat, recpgr, recrad, recsph, rotate, rotmat, rpd,
+    sce2c, scencd, scs2e, sct2e, sincpt, spd, sphrec, spkcls, spkcpo, spkcpt, spkcvo, spkcvt,
+    spkez, spkezp, spkezr, spkgeo, spkopa, spkopn, spkpos, spkw09, srfnrm, srfrec, srfs2c, srfscc,
+    str2et, subpnt, subslr, surfpt, sxform, tkvrsn, trace, twopi, twovec, tyear, unitim, unload,
+    unorm, utc2et, vadd, vcrss, vdist, vdot, vequ, vhat, vminus, vnorm, vrel, vscl, vsep, vsub,
+    xpose, DLADSC, DSKDSC,
 };
 
 /**
@@ -200,27 +429,41 @@ Maximum size of string outputs.
 pub const MAX_LEN_OUT: usize = 256;
 
 /**
-Allocate for a given type and number of elements.
+Allocate zeroed memory for a given type and number of elements.
+
+Kept for use with the [unsafe C API][crate::c]; the safe wrappers no longer need it. The memory is
+never freed, so prefer a [`Vec`] when you can.
 */
 #[macro_export]
 macro_rules! malloc {
-    ($a:ty, $n:expr) => {
-        unsafe { libc::malloc(std::mem::size_of::<$a>() * $n as usize) as *mut $a }
-    };
+    ($a:ty, $n:expr) => {{
+        let count = $n as usize;
+        unsafe { libc::calloc(count, std::mem::size_of::<$a>()) as *mut $a }
+    }};
 }
 
 /**
-Allocate [`*mut i8`][`std::os::raw::c_char`] to be sent as a pointer to a string.
+Allocate a zeroed [`*mut i8`][`std::os::raw::c_char`] to be sent as a pointer to a string.
+
+Kept for use with the [unsafe C API][crate::c]; the memory is never freed.
 */
 #[macro_export]
 macro_rules! mallocstr {
     ($s:expr) => {
-        $crate::malloc!(i8, $s + 1)
+        $crate::malloc!(i8, $s as usize + 1)
     };
 }
 
 /**
 Convert [`String`] to [`*mut i8`][`std::os::raw::c_char`].
+
+Kept for use with the [unsafe C API][crate::c]. The string is leaked: it has to outlive the C call,
+and there is no way for the macro to know when that is. Prefer
+[`ffi::to_cstring`][crate::core::ffi::to_cstring], which hands back an owned [`std::ffi::CString`].
+
+# Panics
+
+Panics if the string contains an interior null byte.
 */
 #[macro_export]
 macro_rules! cstr {
@@ -234,11 +477,20 @@ macro_rules! cstr {
 
 /**
 Get [`String`] from [`*mut i8`][`std::os::raw::c_char`].
+
+# Safety
+
+The pointer must be non-null and point to a null terminated string.
 */
 #[macro_export]
 macro_rules! fcstr {
     ($s:expr) => {{
-        unsafe { std::ffi::CStr::from_ptr($s).to_str().unwrap().to_string() }
+        let pointer = $s;
+        unsafe {
+            std::ffi::CStr::from_ptr(pointer)
+                .to_string_lossy()
+                .into_owned()
+        }
     }};
 }
 
@@ -264,6 +516,10 @@ macro_rules! init_scalar {
 
 /**
 Retrieve a value from a pointer to a scalar created using [`init_scalar`].
+
+# Safety
+
+The scalar must have been initialised, typically by the C call it was handed to.
 */
 #[macro_export]
 macro_rules! get_scalar {
@@ -274,6 +530,10 @@ macro_rules! get_scalar {
 
 /**
 Get a vector of array from the pointer to the array.
+
+# Safety
+
+The pointer must be valid for `$n` reads.
 */
 #[macro_export]
 macro_rules! get_varr {
