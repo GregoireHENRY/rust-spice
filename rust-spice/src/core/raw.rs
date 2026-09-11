@@ -111,6 +111,29 @@ pub fn bodvrd(bodynm: &str, item: &str, maxn: usize) -> Vec<f64> {
 }
 
 /**
+Fetch from the kernel pool the double precision values of an item associated with a body.
+
+Deprecated by CSPICE in favour of [`bodvcd`] and [`bodvrd`]: it takes no bound on how much it may
+write, so the caller has to know how many values to make room for.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn bodvar(body: i32, item: &str, maxn: usize) -> Vec<f64> {
+    let item = to_cstring(item);
+    let mut dim = 0;
+    let mut values = vec![0.0; maxn];
+    unsafe {
+        crate::c::bodvar_c(
+            body,
+            item.as_ptr() as *mut SpiceChar,
+            &mut dim,
+            values.as_mut_ptr(),
+        )
+    };
+    values.truncate(dim.max(0) as usize);
+    values
+}
+
+/**
 Fetch from the kernel pool the double precision values of an item associated with a body, using the
 body's integer ID code.
 */
@@ -924,6 +947,55 @@ pub fn gcpool(name: &str, start: usize, room: usize, lenout: usize) -> Vec<Strin
     (0..count)
         .map(|index| from_cbuf(&values[index * lenout..(index + 1) * lenout]))
         .collect()
+}
+
+/**
+Set a watch on a set of kernel pool variables for a named agent.
+
+[`cvpool`] then reports whether any of them have been updated since the agent last asked.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn swpool<S: AsRef<str>>(agent: &str, names: &[S]) {
+    let agent = to_cstring(agent);
+    let (buffer, lenvals) = to_strided(names);
+    unsafe {
+        crate::c::swpool_c(
+            agent.as_ptr() as *mut SpiceChar,
+            names.len() as SpiceInt,
+            lenvals as SpiceInt,
+            buffer.as_ptr().cast(),
+        )
+    }
+}
+
+/**
+Return the names of the kernel pool variables matching a template.
+
+The vector is empty when nothing matches.
+
+This function has a [neat version][crate::neat::gnpool].
+*/
+pub fn gnpool(name: &str, start: usize, room: usize, lenout: usize) -> Vec<String> {
+    let name = to_cstring(name);
+    let lenout = lenout.max(1);
+    let mut buffer = vec![0 as SpiceChar; room.max(1) * lenout];
+    let mut n = 0;
+    let mut found = 0;
+
+    unsafe {
+        crate::c::gnpool_c(
+            name.as_ptr() as *mut SpiceChar,
+            start as SpiceInt,
+            room as SpiceInt,
+            lenout as SpiceInt,
+            &mut n,
+            buffer.as_mut_ptr().cast(),
+            &mut found,
+        )
+    };
+
+    let count = if found != 0 { n.max(0) as usize } else { 0 };
+    from_strided(&buffer, lenout, count)
 }
 
 /**
@@ -4110,6 +4182,151 @@ pub fn lparsm(list: &str, delims: &str, nmax: usize, lenout: usize) -> Vec<Strin
     };
 
     from_strided(&buffer, lenout, n.max(0) as usize)
+}
+
+/* ---------------------------------------------------------------------------------------------- */
+/* Units, numbers and text                                                                        */
+/* ---------------------------------------------------------------------------------------------- */
+
+cspice_proc! {
+    /**
+    Take a measurement X, the units associated with X, and units to which X should be converted; return Y --- the value of the measurement in the output units.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn convrt(x: f64, input: &str, output: &str) -> f64 {}
+}
+
+cspice_proc! {
+    /**
+    Return the value of the largest (positive) number representable in a double precision variable.
+    */
+    #[return_output]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn dpmax() -> f64 {}
+}
+
+cspice_proc! {
+    /**
+    Return the value of the smallest (negative) number representable in a double precision variable.
+    */
+    #[return_output]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn dpmin() -> f64 {}
+}
+
+cspice_proc! {
+    /**
+    Convert a double precision number to an equivalent character string using a base 16 "scientific notation."
+    */
+    pub fn dp2hx(number: f64, #[lenout] lenout: i32) -> (String, i32) {}
+}
+
+cspice_proc! {
+    /**
+    Convert a string representing a double precision number in a base 16 "scientific notation" into its equivalent double precision number.
+    */
+    pub fn hx2dp(string: &str, #[lenout] lenout: i32) -> (f64, bool, String) {}
+}
+
+cspice_proc! {
+    /**
+    Find the first occurrence in a string of a character belonging to a collection of characters, starting at a specified location, searching forward.
+    */
+    #[return_output]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn cpos(string: &str, chars: &str, start: i32) -> i32 {}
+}
+
+cspice_proc! {
+    /**
+    Find the first occurrence in a string of a character belonging to a collection of characters, starting at a specified location, searching in reverse.
+    */
+    #[return_output]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn cposr(string: &str, chars: &str, start: i32) -> i32 {}
+}
+
+cspice_proc! {
+    /**
+    Find the first occurrence in a string of a substring, starting at a specified location, searching forward.
+    */
+    #[return_output]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn pos(string: &str, substr: &str, start: i32) -> i32 {}
+}
+
+cspice_proc! {
+    /**
+    Find the first occurrence in a string of a substring, starting at a specified location, searching backward.
+    */
+    #[return_output]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn posr(string: &str, substr: &str, start: i32) -> i32 {}
+}
+
+cspice_proc! {
+    /**
+    Convert from an ephemeris epoch measured in seconds past the epoch of J2000 to a calendar string format using a formal calendar free of leapseconds.
+    */
+    pub fn etcal(et: f64, #[lenout] lenout: i32) -> String {}
+}
+
+cspice_proc! {
+    /**
+    Restrict the set of strings that are recognized by SPICE time parsing routines to those that have standard values for all time components.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn tparch(kind: &str) {}
+}
+
+cspice_proc! {
+    /**
+    Determine if a kernel pool variable is present and if so that it has the correct size and type.
+    */
+    #[return_output]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn badkpv(caller: &str, name: &str, comp: &str, size: i32, divby: i32, kind: char) -> bool {}
+}
+
+/* ---------------------------------------------------------------------------------------------- */
+/* Bodies, frames and the kernel pool                                                             */
+/* ---------------------------------------------------------------------------------------------- */
+
+cspice_proc! {
+    /**
+    Return the frame name, frame ID, and center associated with a given frame class and class ID.
+    */
+    pub fn ccifrm(frclss: i32, clssid: i32, #[lenout] lenout: i32) -> (i32, String, i32, bool) {}
+}
+
+cspice_proc! {
+    /**
+    Retrieve frame ID code and name to associate with a frame center.
+    */
+    pub fn cidfrm(cent: i32, #[lenout] lenout: i32) -> (i32, String, bool) {}
+}
+
+cspice_proc! {
+    /**
+    Retrieve frame ID code and name to associate with an object.
+    */
+    pub fn cnmfrm(cname: &str, #[lenout] lenout: i32) -> (i32, String, bool) {}
+}
+
+cspice_proc! {
+    /**
+    Return a SPICE set containing the frame IDs of all built-in frames of a specified class.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn bltfrm(frmcls: i32, idset: &mut Cell<i32>) {}
+}
+
+cspice_proc! {
+    /**
+    Indicate whether or not any watched kernel variables that have a specified agent on their notification list have been updated.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn cvpool(agent: &str) -> bool {}
 }
 
 /* -------------------------------------------------------------------------------------------- */

@@ -36,6 +36,7 @@ mod spk;
 mod strings;
 mod time;
 mod tle;
+mod units;
 mod vectors;
 
 /// Assert that two slices of floats agree to within `epsilon`.

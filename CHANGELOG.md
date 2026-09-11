@@ -55,6 +55,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   routines (`bsrch*`, `bsch*`, `esrchc`, `lstle*`, `lstlt*`, `order*`, `reord*`, `shell*`, `sumad`,
   `sumai`, `isordv`, `brcktd`, `brckti`) and the string utilities (`lcase`, `ucase`, `cmprss`,
   `eqstr`, `matchi`, `matchw`, `nextwd`, `lparse`, `lparsm` and the `repm*` family).
++ 20 more, taking the total to 365: unit conversion, the numeric limits, the portable hexadecimal
+  form, the string position searches, `etcal`, `tparch`, `badkpv`, `bodvar`, the frame lookups
+  (`ccifrm`, `cidfrm`, `cnmfrm`, `bltfrm`) and the kernel pool watches (`swpool`, `cvpool`,
+  `gnpool`).
 + `Cell<T>` is generic over its element type, owns its backing storage, and gained `len`,
   `capacity`, `get`, `iter`, `to_vec`, `push`, `clear` and a deep `Clone`.
 + A self contained test suite: the SPK, CK, DSK, PCK and text kernels it needs are generated in a

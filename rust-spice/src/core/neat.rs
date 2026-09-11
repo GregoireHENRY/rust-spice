@@ -170,6 +170,16 @@ pub fn gcpool(name: &str, start: usize, room: usize) -> Vec<String> {
 }
 
 /**
+Return the names of the kernel pool variables matching a template.
+
+See [`raw::gnpool`] for the raw interface.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn gnpool(name: &str, start: usize, room: usize) -> Vec<String> {
+    raw::gnpool(name, start, room, MAX_LEN_OUT)
+}
+
+/**
 Return the field-of-view parameters of an instrument, given its NAIF ID code.
 
 See [`raw::getfov`] for the raw interface.
