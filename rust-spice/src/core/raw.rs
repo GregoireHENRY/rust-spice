@@ -11,7 +11,7 @@ declares them. Wrappers that need an explicit buffer size, or a caller allocated
 
 use crate::c::{SpiceChar, SpiceDouble, SpiceInt};
 use crate::core::cell::{Cell, CellItem};
-use crate::core::ffi::{from_cbuf, to_cstring};
+use crate::core::ffi::{from_cbuf, from_strided, to_cstring, to_strided};
 use spice_derive::cspice_proc;
 
 #[cfg(any(feature = "lock", doc))]
@@ -962,20 +962,7 @@ Insert character values into the kernel pool.
 #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
 pub fn pcpool<S: AsRef<str>>(name: &str, values: &[S]) {
     let name = to_cstring(name);
-    let lenvals = values
-        .iter()
-        .map(|value| value.as_ref().len() + 1)
-        .max()
-        .unwrap_or(1);
-
-    // CSPICE reads the values out of one contiguous, fixed stride, char array.
-    let mut buffer = vec![0 as SpiceChar; values.len().max(1) * lenvals];
-    for (index, value) in values.iter().enumerate() {
-        let slot = &mut buffer[index * lenvals..(index + 1) * lenvals];
-        for (target, byte) in slot.iter_mut().zip(value.as_ref().as_bytes()) {
-            *target = *byte as SpiceChar;
-        }
-    }
+    let (buffer, lenvals) = to_strided(values);
 
     unsafe {
         crate::c::pcpool_c(
@@ -3652,6 +3639,477 @@ cspice_proc! {
     */
     #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
     pub fn evsgp4(et: f64, geophs: [f64; 8], elems: [f64; 10]) -> [f64; 6] {}
+}
+
+/* -------------------------------------------------------------------------------------------- */
+/* Searching, sorting and ordering                                                                */
+/* -------------------------------------------------------------------------------------------- */
+
+/// Generate the wrappers that search a slice for a value.
+macro_rules! search {
+    ($($name:ident($ty:ty) => $cname:ident, $doc:expr);* $(;)?) => {$(
+        #[doc = $doc]
+        ///
+        /// Returns the index found, or `-1`.
+        #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+        pub fn $name(value: $ty, array: &[$ty]) -> i32 {
+            unsafe { crate::c::$cname(value, array.len() as SpiceInt, array.as_ptr() as *mut _) }
+        }
+    )*};
+}
+
+search! {
+    bsrchd(f64) => bsrchd_c, "Binary search a sorted array of doubles.";
+    bsrchi(i32) => bsrchi_c, "Binary search a sorted array of integers.";
+    lstled(f64) => lstled_c, "Last index of the doubles less than or equal to a value.";
+    lstlei(i32) => lstlei_c, "Last index of the integers less than or equal to a value.";
+    lstltd(f64) => lstltd_c, "Last index of the doubles strictly less than a value.";
+    lstlti(i32) => lstlti_c, "Last index of the integers strictly less than a value.";
+}
+
+/// Generate the wrappers that sort a slice in place.
+macro_rules! sort_in_place {
+    ($($name:ident($ty:ty) => $cname:ident, $doc:expr);* $(;)?) => {$(
+        #[doc = $doc]
+        #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+        pub fn $name(array: &mut [$ty]) {
+            unsafe { crate::c::$cname(array.len() as SpiceInt, array.as_mut_ptr()) }
+        }
+    )*};
+}
+
+sort_in_place! {
+    shelld(f64) => shelld_c, "Sort an array of doubles in place.";
+    shelli(i32) => shelli_c, "Sort an array of integers in place.";
+}
+
+/// Generate the wrappers that report the order of a slice without moving it.
+macro_rules! order_of {
+    ($($name:ident($ty:ty) => $cname:ident, $doc:expr);* $(;)?) => {$(
+        #[doc = $doc]
+        #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+        pub fn $name(array: &[$ty]) -> Vec<i32> {
+            let mut iorder = vec![0; array.len()];
+            unsafe {
+                crate::c::$cname(
+                    array.as_ptr() as *mut _,
+                    array.len() as SpiceInt,
+                    iorder.as_mut_ptr(),
+                )
+            };
+            iorder
+        }
+    )*};
+}
+
+order_of! {
+    orderd(f64) => orderd_c, "The order vector that sorts an array of doubles.";
+    orderi(i32) => orderi_c, "The order vector that sorts an array of integers.";
+}
+
+/// Generate the wrappers that apply an order vector to a slice in place.
+macro_rules! reorder {
+    ($($name:ident($ty:ty) => $cname:ident, $doc:expr);* $(;)?) => {$(
+        #[doc = $doc]
+        ///
+        /// # Panics
+        ///
+        /// Panics if the order vector is not as long as the array.
+        #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+        pub fn $name(iorder: &[i32], array: &mut [$ty]) {
+            assert!(
+                iorder.len() == array.len(),
+                "the order vector has {} entries for an array of {}",
+                iorder.len(),
+                array.len()
+            );
+            unsafe {
+                crate::c::$cname(
+                    iorder.as_ptr() as *mut SpiceInt,
+                    array.len() as SpiceInt,
+                    array.as_mut_ptr(),
+                )
+            };
+        }
+    )*};
+}
+
+reorder! {
+    reordd(f64) => reordd_c, "Reorder an array of doubles in place.";
+    reordi(i32) => reordi_c, "Reorder an array of integers in place.";
+    reordl(crate::c::SpiceBoolean) => reordl_c, "Reorder an array of logical flags in place.";
+}
+
+cspice_proc! {
+    /**
+    Bracket a double precision number between two endpoints.
+    */
+    #[return_output]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn brcktd(number: f64, end1: f64, end2: f64) -> f64 {}
+}
+
+cspice_proc! {
+    /**
+    Bracket an integer between two endpoints.
+    */
+    #[return_output]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn brckti(number: i32, end1: i32, end2: i32) -> i32 {}
+}
+
+/**
+The sum of an array of doubles.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn sumad(array: &[f64]) -> f64 {
+    unsafe { crate::c::sumad_c(array.as_ptr() as *mut SpiceDouble, array.len() as SpiceInt) }
+}
+
+/**
+The sum of an array of integers.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn sumai(array: &[i32]) -> i32 {
+    unsafe { crate::c::sumai_c(array.as_ptr() as *mut SpiceInt, array.len() as SpiceInt) }
+}
+
+/**
+Whether an array is an order vector: a permutation of `0 .. n`.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn isordv(array: &[i32]) -> bool {
+    unsafe { crate::c::isordv_c(array.as_ptr() as *mut SpiceInt, array.len() as SpiceInt) != 0 }
+}
+
+/// Generate the wrappers that search a strided array of strings.
+macro_rules! search_strings {
+    ($($name:ident => $cname:ident, $doc:expr);* $(;)?) => {$(
+        #[doc = $doc]
+        ///
+        /// Returns the index found, or `-1`.
+        #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+        pub fn $name<S: AsRef<str>>(value: &str, array: &[S]) -> i32 {
+            let value = to_cstring(value);
+            let (buffer, stride) = to_strided(array);
+            unsafe {
+                crate::c::$cname(
+                    value.as_ptr() as *mut SpiceChar,
+                    array.len() as SpiceInt,
+                    stride as SpiceInt,
+                    buffer.as_ptr().cast(),
+                )
+            }
+        }
+    )*};
+}
+
+search_strings! {
+    bsrchc => bsrchc_c, "Binary search a sorted array of strings.";
+    esrchc => esrchc_c, "Search an array of strings, ignoring case and trailing blanks.";
+    lstlec => lstlec_c, "Last index of the strings less than or equal to a value.";
+    lstltc => lstltc_c, "Last index of the strings strictly less than a value.";
+}
+
+/**
+Binary search an array of integers ordered by an order vector.
+
+Returns the index found, or `-1`.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn bschoi(value: i32, array: &[i32], order: &[i32]) -> i32 {
+    unsafe {
+        crate::c::bschoi_c(
+            value,
+            array.len() as SpiceInt,
+            array.as_ptr() as *mut SpiceInt,
+            order.as_ptr() as *mut SpiceInt,
+        )
+    }
+}
+
+/**
+Binary search an array of strings ordered by an order vector.
+
+Returns the index found, or `-1`.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn bschoc<S: AsRef<str>>(value: &str, array: &[S], order: &[i32]) -> i32 {
+    let value = to_cstring(value);
+    let (buffer, stride) = to_strided(array);
+    unsafe {
+        crate::c::bschoc_c(
+            value.as_ptr() as *mut SpiceChar,
+            array.len() as SpiceInt,
+            stride as SpiceInt,
+            buffer.as_ptr().cast(),
+            order.as_ptr() as *mut SpiceInt,
+        )
+    }
+}
+
+/**
+The order vector that sorts an array of strings.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn orderc<S: AsRef<str>>(array: &[S]) -> Vec<i32> {
+    let (buffer, stride) = to_strided(array);
+    let mut iorder = vec![0; array.len()];
+    unsafe {
+        crate::c::orderc_c(
+            stride as SpiceInt,
+            buffer.as_ptr().cast(),
+            array.len() as SpiceInt,
+            iorder.as_mut_ptr(),
+        )
+    };
+    iorder
+}
+
+/**
+Apply an order vector to an array of strings.
+
+# Panics
+
+Panics if the order vector is not as long as the array.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn reordc<S: AsRef<str>>(iorder: &[i32], array: &[S]) -> Vec<String> {
+    assert!(
+        iorder.len() == array.len(),
+        "the order vector has {} entries for an array of {}",
+        iorder.len(),
+        array.len()
+    );
+    let (mut buffer, stride) = to_strided(array);
+    unsafe {
+        crate::c::reordc_c(
+            iorder.as_ptr() as *mut SpiceInt,
+            array.len() as SpiceInt,
+            stride as SpiceInt,
+            buffer.as_mut_ptr().cast(),
+        )
+    };
+    from_strided(&buffer, stride, array.len())
+}
+
+/**
+Sort an array of strings.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn shellc<S: AsRef<str>>(array: &[S]) -> Vec<String> {
+    let (mut buffer, stride) = to_strided(array);
+    unsafe {
+        crate::c::shellc_c(
+            array.len() as SpiceInt,
+            stride as SpiceInt,
+            buffer.as_mut_ptr().cast(),
+        )
+    };
+    from_strided(&buffer, stride, array.len())
+}
+
+/* -------------------------------------------------------------------------------------------- */
+/* Strings                                                                                        */
+/* -------------------------------------------------------------------------------------------- */
+
+cspice_proc! {
+    /**
+    Convert a string to lower case.
+    */
+    pub fn lcase(input: &str, #[lenout] lenout: i32) -> String {}
+}
+
+cspice_proc! {
+    /**
+    Convert a string to upper case.
+    */
+    pub fn ucase(input: &str, #[lenout] lenout: i32) -> String {}
+}
+
+cspice_proc! {
+    /**
+    Compress runs of a delimiter down to `n` of them.
+    */
+    pub fn cmprss(delim: char, n: i32, input: &str, #[lenout] lenout: i32) -> String {}
+}
+
+cspice_proc! {
+    /**
+    Whether two strings are equivalent, ignoring case and leading and trailing blanks.
+    */
+    #[return_output]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn eqstr(a: &str, b: &str) -> bool {}
+}
+
+cspice_proc! {
+    /**
+    Match a string against a template, ignoring case; `wstr` matches any run of characters and
+    `wchr` any single one.
+    */
+    #[return_output]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn matchi(string: &str, templ: &str, wstr: char, wchr: char) -> bool {}
+}
+
+cspice_proc! {
+    /**
+    Match a string against a template, respecting case.
+    */
+    #[return_output]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn matchw(string: &str, templ: &str, wstr: char, wchr: char) -> bool {}
+}
+
+cspice_proc! {
+    /**
+    Replace a marker in a string with a string.
+    */
+    pub fn repmc(input: &str, marker: &str, value: &str, #[lenout] lenout: i32) -> String {}
+}
+
+cspice_proc! {
+    /**
+    Replace a marker in a string with a double precision number.
+    */
+    pub fn repmd(
+        input: &str,
+        marker: &str,
+        value: f64,
+        sigdig: i32,
+        #[lenout] lenout: i32
+    ) -> String {
+    }
+}
+
+cspice_proc! {
+    /**
+    Replace a marker in a string with a formatted double precision number; `format` is `'E'` or
+    `'F'`.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    #[allow(clippy::too_many_arguments)]
+    pub fn repmf(
+        input: &str,
+        marker: &str,
+        value: f64,
+        sigdig: i32,
+        format: char,
+        #[lenout] lenout: i32
+    ) -> String {
+    }
+}
+
+cspice_proc! {
+    /**
+    Replace a marker in a string with an integer.
+    */
+    pub fn repmi(input: &str, marker: &str, value: i32, #[lenout] lenout: i32) -> String {}
+}
+
+cspice_proc! {
+    /**
+    Replace a marker in a string with the text of a boolean; `rtcase` picks the capitalisation.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn repml(
+        input: &str,
+        marker: &str,
+        value: bool,
+        rtcase: char,
+        #[lenout] outlen: i32
+    ) -> String {
+    }
+}
+
+cspice_proc! {
+    /**
+    Replace a marker in a string with an ordinal number; `strcase` picks the capitalisation.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    #[cname(repmot_c)]
+    pub fn repmot(
+        input: &str,
+        marker: &str,
+        value: i32,
+        strcase: char,
+        #[lenout] lenout: i32
+    ) -> String {
+    }
+}
+
+/**
+Split a string at the first run of blanks, into the first word and the rest.
+*/
+pub fn nextwd(string: &str, nexlen: usize, reslen: usize) -> (String, String) {
+    let string = to_cstring(string);
+    let mut next = vec![0 as SpiceChar; nexlen.max(1)];
+    let mut rest = vec![0 as SpiceChar; reslen.max(1)];
+
+    unsafe {
+        crate::c::nextwd_c(
+            string.as_ptr() as *mut SpiceChar,
+            nexlen as SpiceInt,
+            reslen as SpiceInt,
+            next.as_mut_ptr(),
+            rest.as_mut_ptr(),
+        )
+    };
+
+    (from_cbuf(&next), from_cbuf(&rest))
+}
+
+/**
+Split a list on a single delimiter.
+
+This function has a [neat version][crate::neat::lparse].
+*/
+pub fn lparse(list: &str, delim: &str, nmax: usize, lenout: usize) -> Vec<String> {
+    let list = to_cstring(list);
+    let delim = to_cstring(delim);
+    let lenout = lenout.max(1);
+    let mut buffer = vec![0 as SpiceChar; nmax.max(1) * lenout];
+    let mut n = 0;
+
+    unsafe {
+        crate::c::lparse_c(
+            list.as_ptr() as *mut SpiceChar,
+            delim.as_ptr() as *mut SpiceChar,
+            nmax as SpiceInt,
+            lenout as SpiceInt,
+            &mut n,
+            buffer.as_mut_ptr().cast(),
+        )
+    };
+
+    from_strided(&buffer, lenout, n.max(0) as usize)
+}
+
+/**
+Split a list on any of a set of delimiters, treating runs of them as one.
+
+This function has a [neat version][crate::neat::lparsm].
+*/
+pub fn lparsm(list: &str, delims: &str, nmax: usize, lenout: usize) -> Vec<String> {
+    let list = to_cstring(list);
+    let delims = to_cstring(delims);
+    let lenout = lenout.max(1);
+    let mut buffer = vec![0 as SpiceChar; nmax.max(1) * lenout];
+    let mut n = 0;
+
+    unsafe {
+        crate::c::lparsm_c(
+            list.as_ptr() as *mut SpiceChar,
+            delims.as_ptr() as *mut SpiceChar,
+            nmax as SpiceInt,
+            lenout as SpiceInt,
+            &mut n,
+            buffer.as_mut_ptr().cast(),
+        )
+    };
+
+    from_strided(&buffer, lenout, n.max(0) as usize)
 }
 
 /* -------------------------------------------------------------------------------------------- */

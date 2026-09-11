@@ -33,6 +33,7 @@ mod planes;
 mod pool;
 mod rotations;
 mod spk;
+mod strings;
 mod time;
 mod tle;
 mod vectors;

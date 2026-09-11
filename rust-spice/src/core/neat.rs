@@ -210,6 +210,96 @@ pub fn dskv02(handle: i32, dladsc: raw::DLADSC) -> Vec<[f64; 3]> {
 /* -------------------------------------------------------------------------------------------- */
 
 /**
+Split a list on a single delimiter, sizing the result for you.
+
+See [`raw::lparse`] for the raw interface.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn lparse(list: &str, delim: &str) -> Vec<String> {
+    raw::lparse(list, delim, list.len() + 1, list.len() + 1)
+}
+
+/**
+Split a list on any of a set of delimiters, sizing the result for you.
+
+See [`raw::lparsm`] for the raw interface.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn lparsm(list: &str, delims: &str) -> Vec<String> {
+    raw::lparsm(list, delims, list.len() + 1, list.len() + 1)
+}
+
+/**
+Convert a string to lower case.
+
+See [`raw::lcase`] for the raw interface.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn lcase(input: &str) -> String {
+    raw::lcase(input, input.len() as i32 + 1)
+}
+
+/**
+Convert a string to upper case.
+
+See [`raw::ucase`] for the raw interface.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn ucase(input: &str) -> String {
+    raw::ucase(input, input.len() as i32 + 1)
+}
+
+/**
+Compress runs of a delimiter down to `n` of them.
+
+See [`raw::cmprss`] for the raw interface.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn cmprss(delim: char, n: i32, input: &str) -> String {
+    raw::cmprss(delim, n, input, input.len() as i32 + 1)
+}
+
+/**
+Split a string at the first run of blanks, into the first word and the rest.
+
+See [`raw::nextwd`] for the raw interface.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn nextwd(string: &str) -> (String, String) {
+    raw::nextwd(string, string.len() + 1, string.len() + 1)
+}
+
+/**
+Replace a marker in a string with a string.
+
+See [`raw::repmc`] for the raw interface.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn repmc(input: &str, marker: &str, value: &str) -> String {
+    raw::repmc(input, marker, value, (input.len() + value.len() + 1) as i32)
+}
+
+/**
+Replace a marker in a string with a double precision number.
+
+See [`raw::repmd`] for the raw interface.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn repmd(input: &str, marker: &str, value: f64, sigdig: i32) -> String {
+    raw::repmd(input, marker, value, sigdig, MAX_LEN_OUT as i32)
+}
+
+/**
+Replace a marker in a string with an integer.
+
+See [`raw::repmi`] for the raw interface.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn repmi(input: &str, marker: &str, value: i32) -> String {
+    raw::repmi(input, marker, value, MAX_LEN_OUT as i32)
+}
+
+/**
 Find the set of body ID codes of all objects for which topographic data are provided in a specified
 DSK file.
 

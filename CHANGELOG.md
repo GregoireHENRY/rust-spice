@@ -51,6 +51,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   take slices and size the result themselves, and check that the lengths agree with the dimensions
   rather than letting CSPICE read past the end. The dimension arguments keep the names CSPICE gives
   them, which differ in meaning between `mxmg`, `mtxmg` and `mxmtg`.
++ 42 more, taking the total to 345 of the 648 CSPICE ships: the searching, sorting and ordering
+  routines (`bsrch*`, `bsch*`, `esrchc`, `lstle*`, `lstlt*`, `order*`, `reord*`, `shell*`, `sumad`,
+  `sumai`, `isordv`, `brcktd`, `brckti`) and the string utilities (`lcase`, `ucase`, `cmprss`,
+  `eqstr`, `matchi`, `matchw`, `nextwd`, `lparse`, `lparsm` and the `repm*` family).
 + `Cell<T>` is generic over its element type, owns its backing storage, and gained `len`,
   `capacity`, `get`, `iter`, `to_vec`, `push`, `clear` and a deep `Clone`.
 + A self contained test suite: the SPK, CK, DSK, PCK and text kernels it needs are generated in a
@@ -102,6 +106,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
++ `prefix_c` is not wrapped, and is absent from the index: NAIF declares it in `SpiceZpr.h` but does
+  not compile it into the library, so linking against it fails. That makes the toolkit 648 callable
+  routines rather than the 649 the headers advertise.
 + The declaration of the `rust-spice/hera` submodule, which was never registered and which the test
   suite no longer needs.
 + `Cell<bool>`: no CSPICE C routine operates on a boolean cell. `Cell::new_bool` still hands back an

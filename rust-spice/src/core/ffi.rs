@@ -652,6 +652,37 @@ pub fn from_cbuf(buf: &[SpiceChar]) -> String {
         .to_string()
 }
 
+/**
+Pack strings into the one contiguous, fixed stride, array CSPICE reads them out of.
+
+Returns the buffer and the stride, which is the length of the longest string plus its terminator.
+*/
+pub fn to_strided<S: AsRef<str>>(values: &[S]) -> (Vec<SpiceChar>, usize) {
+    let stride = values
+        .iter()
+        .map(|value| value.as_ref().len() + 1)
+        .max()
+        .unwrap_or(1);
+
+    let mut buffer = vec![0 as SpiceChar; values.len().max(1) * stride];
+    for (index, value) in values.iter().enumerate() {
+        let slot = &mut buffer[index * stride..(index + 1) * stride];
+        for (target, byte) in slot.iter_mut().zip(value.as_ref().as_bytes()) {
+            *target = *byte as SpiceChar;
+        }
+    }
+    (buffer, stride)
+}
+
+/**
+Read `count` strings back out of a buffer of `stride` byte slots.
+*/
+pub fn from_strided(buffer: &[SpiceChar], stride: usize, count: usize) -> Vec<String> {
+    (0..count)
+        .map(|index| from_cbuf(&buffer[index * stride..(index + 1) * stride]))
+        .collect()
+}
+
 /// The size, in elements, of the control area CSPICE keeps at the front of a cell.
 pub(crate) const CELL_CTRLSZ: usize = crate::c::SPICE_CELL_CTRLSZ as usize;
 

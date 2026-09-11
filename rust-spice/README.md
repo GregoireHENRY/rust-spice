@@ -140,7 +140,7 @@ spice::kclear();
 ## In development
 
 Developing an idiomatic interface for Spice in Rust takes time, and not all
-functions are implemented yet: 303 of the 649 routines CSPICE exposes are
+functions are implemented yet: 345 of the 648 routines CSPICE ships are
 wrapped. They cover ephemerides, orientation, shape models, frames, time and
 spacecraft clocks, coordinates, vector and matrix algebra, rotations and
 quaternions, planes and ellipses, two-body orbits, two-line elements, cells,
