@@ -140,13 +140,13 @@ spice::kclear();
 ## In development
 
 Developing an idiomatic interface for Spice in Rust takes time, and not all
-functions are implemented yet: 421 of the 648 routines CSPICE ships are
+functions are implemented yet: 475 of the 648 routines CSPICE ships are
 wrapped. They cover ephemerides, orientation, shape models, frames, time and
 spacecraft clocks, coordinates, vector and matrix algebra, rotations and
 quaternions, planes and ellipses, two-body orbits, two-line elements, cells,
-sets and windows, the kernel pool and error handling. Windows and sets are complete, and so is
-the window arithmetic (`wn*`); the events kernel (`ek*`) is not started, and of
-the geometry finder (`gf*`) only the occultation search is there. In the
+sets and windows, the kernel pool and error handling. Windows, sets and the DAF, DAS
+and DLA file layers are complete; the events kernel (`ek*`) is not started, and
+of the geometry finder (`gf*`) only the occultation search is there. In the
 [documentation online][doc link], a complete guide details which functions are
 available; everything it lists is now implemented. If yours is not there, you
 can always use the unsafe API which contains all [cspice functions][cspice api].

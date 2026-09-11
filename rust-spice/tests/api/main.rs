@@ -26,6 +26,7 @@ mod constants;
 mod coords;
 mod dsk;
 mod errors;
+mod files;
 mod frames;
 mod geometry;
 mod gf;

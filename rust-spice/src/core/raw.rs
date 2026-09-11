@@ -3426,6 +3426,7 @@ cspice_proc! {
     to the first interval of that length.
     */
     #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    #[allow(clippy::type_complexity)]
     pub fn wnsumd(window: &mut Cell<f64>) -> (f64, f64, f64, i32, i32) {}
 }
 
@@ -4690,6 +4691,7 @@ cspice_proc! {
     */
     #[allow(clippy::too_many_arguments)]
     #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    #[allow(clippy::type_complexity)]
     pub fn srfxpt(method: &str, target: &str, et: f64, abcorr: &str, obsrvr: &str, dref: &str, dvec: [f64; 3]) -> ([f64; 3], f64, f64, [f64; 3], bool) {}
 }
 
@@ -4731,6 +4733,7 @@ cspice_proc! {
     */
     #[allow(clippy::too_many_arguments)]
     #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    #[allow(clippy::type_complexity)]
     pub fn tangpt(method: &str, target: &str, et: f64, fixref: &str, abcorr: &str, corloc: &str, obsrvr: &str, dref: &str, dvec: [f64; 3]) -> ([f64; 3], f64, f64, [f64; 3], f64, [f64; 3]) {}
 }
 
@@ -4798,6 +4801,594 @@ cspice_proc! {
     */
     #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
     pub fn ucrss(v1: [f64; 3], v2: [f64; 3]) -> [f64; 3] {}
+}
+
+/* ---------------------------------------------------------------------------------------------- */
+/* DAF, DAS and the kernel file layers                                                            */
+/* ---------------------------------------------------------------------------------------------- */
+
+cspice_proc! {
+    /**
+    Find the position rotation matrix from a C-kernel (CK) frame with the specified frame class ID (CK ID) to the base frame of the highest priority CK segment containing orientation data for this CK frame at the time requested.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn ckfrot(inst: i32, et: f64) -> ([[f64; 3]; 3], i32, bool) {}
+}
+
+cspice_proc! {
+    /**
+    Find the state transformation matrix from a C-kernel (CK) frame with the specified frame class ID (CK ID) to the base frame of the highest priority CK segment containing orientation and angular velocity data for this CK frame at the time requested.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn ckfxfm(inst: i32, et: f64) -> ([[f64; 6]; 6], i32, bool) {}
+}
+
+cspice_proc! {
+    /**
+    Load a CK pointing file for use by the CK readers. Return that file's handle, to be used by other CK routines to refer to the file.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn cklpf(fname: &str) -> i32 {}
+}
+
+cspice_proc! {
+    /**
+    Return (depending upon the user's request) the ID code of either the spacecraft or spacecraft clock associated with a C-Kernel ID code.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn ckmeta(ckid: i32, meta: &str) -> i32 {}
+}
+
+cspice_proc! {
+    /**
+    Unload a CK pointing file so that it will no longer be searched by the readers.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn ckupf(handle: i32) {}
+}
+
+cspice_proc! {
+    /**
+    Begin a backward search for arrays in a DAF.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn dafbbs(handle: i32) {}
+}
+
+cspice_proc! {
+    /**
+    Begin a forward search for arrays in a DAF.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn dafbfs(handle: i32) {}
+}
+
+cspice_proc! {
+    /**
+    Close the DAF associated with a given handle.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn dafcls(handle: i32) {}
+}
+
+cspice_proc! {
+    /**
+    Select a DAF that already has a search in progress as the one to continue searching.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn dafcs(handle: i32) {}
+}
+
+cspice_proc! {
+    /**
+    Delete the entire comment area of a specified DAF file.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn dafdc(handle: i32) {}
+}
+
+cspice_proc! {
+    /**
+    Find the next (forward) array in the current DAF.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn daffna() -> bool {}
+}
+
+cspice_proc! {
+    /**
+    Find the previous (backward) array in the current DAF.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn daffpa() -> bool {}
+}
+
+cspice_proc! {
+    /**
+    Return (get) the handle of the DAF currently being searched.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn dafgh() -> i32 {}
+}
+
+/**
+Read a contiguous run of double precision words from a DAF record.
+
+Returns the `end - begin + 1` words, and whether the record was found.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn dafgsr(handle: i32, recno: i32, begin: i32, end: i32) -> (Vec<f64>, bool) {
+    let words = (end - begin + 1).max(0) as usize;
+    let mut data = vec![0.0; words.max(1)];
+    let mut found = 0;
+    unsafe { crate::c::dafgsr_c(handle, recno, begin, end, data.as_mut_ptr(), &mut found) };
+    data.truncate(words);
+    (data, found != 0)
+}
+
+cspice_proc! {
+    /**
+    Return the summary format associated with a handle.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn dafhsf(handle: i32) -> (i32, i32) {}
+}
+
+cspice_proc! {
+    /**
+    Open a DAF for subsequent read requests.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn dafopr(fname: &str) -> i32 {}
+}
+
+cspice_proc! {
+    /**
+    Open a DAF for subsequent write requests.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn dafopw(fname: &str) -> i32 {}
+}
+
+cspice_proc! {
+    /**
+    Delete the entire comment area of a previously opened binary DAS file.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn dasdc(handle: i32) {}
+}
+
+cspice_proc! {
+    /**
+    Return a file summary for a specified DAS file.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    #[allow(clippy::type_complexity)]
+    pub fn dashfs(handle: i32) -> (i32, i32, i32, i32, i32, [i32; 3], [i32; 3], [i32; 3]) {}
+}
+
+cspice_proc! {
+    /**
+    Return last DAS logical addresses of character, double precision and integer type that are currently in use in a specified DAS file.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn daslla(handle: i32) -> (i32, i32, i32) {}
+}
+
+cspice_proc! {
+    /**
+    Close the DAS file associated with a given handle, without flushing buffered data or segregating the file.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn dasllc(handle: i32) {}
+}
+
+cspice_proc! {
+    /**
+    Open a new DAS file and set the file type.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn dasonw(fname: &str, ftype: &str, ifname: &str, ncomr: i32) -> i32 {}
+}
+
+cspice_proc! {
+    /**
+    Open a scratch DAS file for writing.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn dasops() -> i32 {}
+}
+
+cspice_proc! {
+    /**
+    Open a DAS file for writing.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn dasopw(fname: &str) -> i32 {}
+}
+
+cspice_proc! {
+    /**
+    Write out all buffered records of a specified DAS file.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn daswbr(handle: i32) {}
+}
+
+cspice_proc! {
+    /**
+    Begin a new segment in a DLA file.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn dlabns(handle: i32) {}
+}
+
+cspice_proc! {
+    /**
+    End a new segment in a DLA file.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn dlaens(handle: i32) {}
+}
+
+cspice_proc! {
+    /**
+    Open a new DLA file and set the file type.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn dlaopn(fname: &str, ftype: &str, ifname: &str, ncomch: i32) -> i32 {}
+}
+
+cspice_proc! {
+    /**
+    Close an open PCK file.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn pckcls(handle: i32) {}
+}
+
+cspice_proc! {
+    /**
+    Load a binary PCK file for use by the readers. Return the handle of the loaded file which is used by other PCK routines to refer to the file.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn pcklof(fname: &str) -> i32 {}
+}
+
+cspice_proc! {
+    /**
+    Create a new PCK file, returning the handle of the opened file.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn pckopn(name: &str, ifname: &str, ncomch: i32) -> i32 {}
+}
+
+cspice_proc! {
+    /**
+    Unload a binary PCK file so that it will no longer be searched by the readers.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn pckuof(handle: i32) {}
+}
+
+/* -------------------------------------------------------------------------------------------- */
+/* DAF and DAS, the array files underneath the kernels                                            */
+/* -------------------------------------------------------------------------------------------- */
+
+/// Largest DAF summary, in double precision words.
+pub const DAF_MAXSUM: usize = 125;
+
+/// Read a run of double precision words from a DAF, for the two routines that do it.
+macro_rules! daf_read {
+    ($($name:ident => $cname:ident, $doc:expr);* $(;)?) => {$(
+        #[doc = $doc]
+        ///
+        /// Returns the `end - begin + 1` words, addressed from one.
+        #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+        pub fn $name(handle: i32, begin: i32, end: i32) -> Vec<f64> {
+            let words = (end - begin + 1).max(0) as usize;
+            let mut data = vec![0.0; words.max(1)];
+            unsafe { crate::c::$cname(handle, begin, end, data.as_mut_ptr()) };
+            data.truncate(words);
+            data
+        }
+    )*};
+}
+
+daf_read! {
+    dafgda => dafgda_c, "Read double precision data from the current array of a DAF.";
+    dafrda => dafrda_c, "Read double precision data from a DAF; superseded by `dafgda`.";
+}
+
+cspice_proc! {
+    /**
+    Return the name of the current array in the current DAF.
+    */
+    pub fn dafgn(#[lenout] lenout: i32) -> String {}
+}
+
+/**
+Return the summary of the current array in the current DAF.
+
+At most [`DAF_MAXSUM`] words are returned, which is the largest a DAF summary can be.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn dafgs() -> Vec<f64> {
+    let mut summary = vec![0.0; DAF_MAXSUM];
+    unsafe { crate::c::dafgs_c(summary.as_mut_ptr()) };
+    summary
+}
+
+/**
+Pack the double precision and integer components of a DAF summary into one array.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn dafps(dc: &[f64], ic: &[i32]) -> Vec<f64> {
+    let words = dc.len() + (ic.len() + 1) / 2 + 1;
+    let mut summary = vec![0.0; words.max(1)];
+    unsafe {
+        crate::c::dafps_c(
+            dc.len() as SpiceInt,
+            ic.len() as SpiceInt,
+            dc.as_ptr() as *mut SpiceDouble,
+            ic.as_ptr() as *mut SpiceInt,
+            summary.as_mut_ptr(),
+        )
+    };
+    summary
+}
+
+/**
+Unpack a DAF summary into its `nd` double precision and `ni` integer components.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn dafus(summary: &[f64], nd: usize, ni: usize) -> (Vec<f64>, Vec<i32>) {
+    let mut dc = vec![0.0; nd.max(1)];
+    let mut ic = vec![0; ni.max(1)];
+    unsafe {
+        crate::c::dafus_c(
+            summary.as_ptr() as *mut SpiceDouble,
+            nd as SpiceInt,
+            ni as SpiceInt,
+            dc.as_mut_ptr(),
+            ic.as_mut_ptr(),
+        )
+    };
+    dc.truncate(nd);
+    ic.truncate(ni);
+    (dc, ic)
+}
+
+/**
+Replace the summary of the current array in the current DAF.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn dafrs(summary: &[f64]) {
+    unsafe { crate::c::dafrs_c(summary.as_ptr() as *mut SpiceDouble) }
+}
+
+/**
+Read the file record of a DAF: the summary sizes, the internal file name, and the pointers to the
+first and last summary records and the first free address.
+*/
+#[allow(clippy::type_complexity)]
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn dafrfr(handle: i32, lenout: usize) -> (i32, i32, String, i32, i32, i32) {
+    let mut ifname = vec![0 as SpiceChar; lenout.max(1)];
+    let (mut nd, mut ni, mut fward, mut bward, mut free) = (0, 0, 0, 0, 0);
+    unsafe {
+        crate::c::dafrfr_c(
+            handle,
+            lenout as SpiceInt,
+            &mut nd,
+            &mut ni,
+            ifname.as_mut_ptr(),
+            &mut fward,
+            &mut bward,
+            &mut free,
+        )
+    };
+    (nd, ni, from_cbuf(&ifname), fward, bward, free)
+}
+
+/**
+Add comment lines to the comment area of a DAF.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn dafac<S: AsRef<str>>(handle: i32, buffer: &[S]) {
+    let (packed, lenvals) = to_strided(buffer);
+    unsafe {
+        crate::c::dafac_c(
+            handle,
+            buffer.len() as SpiceInt,
+            lenvals as SpiceInt,
+            packed.as_ptr().cast(),
+        )
+    }
+}
+
+/**
+Read comment lines from the comment area of a DAF.
+
+Returns at most `bufsiz` lines, and whether the comment area has been read to the end.
+
+This function has a [neat version][crate::neat::dafec].
+*/
+pub fn dafec(handle: i32, bufsiz: usize, lenout: usize) -> (Vec<String>, bool) {
+    let lenout = lenout.max(1);
+    let mut buffer = vec![0 as SpiceChar; bufsiz.max(1) * lenout];
+    let (mut n, mut done) = (0, 0);
+    unsafe {
+        crate::c::dafec_c(
+            handle,
+            bufsiz as SpiceInt,
+            lenout as SpiceInt,
+            &mut n,
+            buffer.as_mut_ptr().cast(),
+            &mut done,
+        )
+    };
+    (from_strided(&buffer, lenout, n.max(0) as usize), done != 0)
+}
+
+/// Read a run of words from a DAS, for the double precision and integer cases.
+macro_rules! das_read {
+    ($($name:ident($ty:ty) => $cname:ident, $doc:expr);* $(;)?) => {$(
+        #[doc = $doc]
+        ///
+        /// Returns the `last - first + 1` words, addressed from one.
+        #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+        pub fn $name(handle: i32, first: i32, last: i32) -> Vec<$ty> {
+            let words = (last - first + 1).max(0) as usize;
+            let mut data = vec![<$ty>::default(); words.max(1)];
+            unsafe { crate::c::$cname(handle, first, last, data.as_mut_ptr()) };
+            data.truncate(words);
+            data
+        }
+    )*};
+}
+
+das_read! {
+    dasrdd(f64) => dasrdd_c, "Read double precision data from a DAS.";
+    dasrdi(i32) => dasrdi_c, "Read integer data from a DAS.";
+}
+
+/// Update a run of words in a DAS, for the double precision and integer cases.
+macro_rules! das_update {
+    ($($name:ident($ty:ty) => $cname:ident, $doc:expr);* $(;)?) => {$(
+        #[doc = $doc]
+        #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+        pub fn $name(handle: i32, first: i32, last: i32, data: &[$ty]) {
+            unsafe { crate::c::$cname(handle, first, last, data.as_ptr() as *mut _) }
+        }
+    )*};
+}
+
+das_update! {
+    dasudd(f64) => dasudd_c, "Update double precision data in a DAS.";
+    dasudi(i32) => dasudi_c, "Update integer data in a DAS.";
+}
+
+/// Append data to a DAS, for the double precision and integer cases.
+macro_rules! das_add {
+    ($($name:ident($ty:ty) => $cname:ident, $doc:expr);* $(;)?) => {$(
+        #[doc = $doc]
+        #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+        pub fn $name(handle: i32, data: &[$ty]) {
+            unsafe {
+                crate::c::$cname(handle, data.len() as SpiceInt, data.as_ptr() as *mut _)
+            }
+        }
+    )*};
+}
+
+das_add! {
+    dasadd(f64) => dasadd_c, "Append double precision data to a DAS.";
+    dasadi(i32) => dasadi_c, "Append integer data to a DAS.";
+}
+
+/**
+Append characters to a DAS, taking the substring `bpos ..= epos` of each line.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn dasadc<S: AsRef<str>>(handle: i32, bpos: i32, epos: i32, data: &[S]) {
+    let (packed, datlen) = to_strided(data);
+    unsafe {
+        crate::c::dasadc_c(
+            handle,
+            data.len() as SpiceInt,
+            bpos,
+            epos,
+            datlen as SpiceInt,
+            packed.as_ptr().cast(),
+        )
+    }
+}
+
+/**
+Add comment lines to the comment area of a DAS.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn dasac<S: AsRef<str>>(handle: i32, buffer: &[S]) {
+    let (packed, buflen) = to_strided(buffer);
+    unsafe {
+        crate::c::dasac_c(
+            handle,
+            buffer.len() as SpiceInt,
+            buflen as SpiceInt,
+            packed.as_ptr().cast(),
+        )
+    }
+}
+
+/**
+Read comment lines from the comment area of a DAS.
+
+This function has a [neat version][crate::neat::dasec].
+*/
+pub fn dasec(handle: i32, bufsiz: usize, buflen: usize) -> (Vec<String>, bool) {
+    let buflen = buflen.max(1);
+    let mut buffer = vec![0 as SpiceChar; bufsiz.max(1) * buflen];
+    let (mut n, mut done) = (0, 0);
+    unsafe {
+        crate::c::dasec_c(
+            handle,
+            bufsiz as SpiceInt,
+            buflen as SpiceInt,
+            &mut n,
+            buffer.as_mut_ptr().cast(),
+            &mut done,
+        )
+    };
+    (from_strided(&buffer, buflen, n.max(0) as usize), done != 0)
+}
+
+cspice_proc! {
+    /**
+    Return the name of the file a DAS handle refers to.
+    */
+    pub fn dashfn(handle: i32, #[lenout] namlen: i32) -> String {}
+}
+
+/**
+Read the file record of a DAS: the ID word, the internal file name, and the reserved and comment
+area sizes.
+*/
+#[allow(clippy::type_complexity)]
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn dasrfr(handle: i32, idwlen: usize, ifnlen: usize) -> (String, String, i32, i32, i32, i32) {
+    let mut idword = vec![0 as SpiceChar; idwlen.max(1)];
+    let mut ifname = vec![0 as SpiceChar; ifnlen.max(1)];
+    let (mut nresvr, mut nresvc, mut ncomr, mut ncomc) = (0, 0, 0, 0);
+    unsafe {
+        crate::c::dasrfr_c(
+            handle,
+            idwlen as SpiceInt,
+            ifnlen as SpiceInt,
+            idword.as_mut_ptr(),
+            ifname.as_mut_ptr(),
+            &mut nresvr,
+            &mut nresvc,
+            &mut ncomr,
+            &mut ncomc,
+        )
+    };
+    (
+        from_cbuf(&idword),
+        from_cbuf(&ifname),
+        nresvr,
+        nresvc,
+        ncomr,
+        ncomc,
+    )
+}
+
+cspice_proc! {
+    /**
+    Find the segment preceding a specified segment in a DLA file.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn dlafps(handle: i32, descr: DLADSC) -> (DLADSC, bool) {}
 }
 
 /* -------------------------------------------------------------------------------------------- */

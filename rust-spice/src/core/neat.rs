@@ -170,6 +170,40 @@ pub fn gcpool(name: &str, start: usize, room: usize) -> Vec<String> {
 }
 
 /**
+Read the whole comment area of a DAF.
+
+See [`raw::dafec`] for the raw interface.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn dafec(handle: i32) -> Vec<String> {
+    let mut lines = Vec::new();
+    loop {
+        let (batch, done) = raw::dafec(handle, 64, MAX_LEN_OUT);
+        lines.extend(batch);
+        if done {
+            return lines;
+        }
+    }
+}
+
+/**
+Read the whole comment area of a DAS.
+
+See [`raw::dasec`] for the raw interface.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn dasec(handle: i32) -> Vec<String> {
+    let mut lines = Vec::new();
+    loop {
+        let (batch, done) = raw::dasec(handle, 64, MAX_LEN_OUT);
+        lines.extend(batch);
+        if done {
+            return lines;
+        }
+    }
+}
+
+/**
 Return the names of the kernel pool variables matching a template.
 
 See [`raw::gnpool`] for the raw interface.
