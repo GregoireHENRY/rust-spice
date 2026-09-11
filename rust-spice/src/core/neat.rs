@@ -303,6 +303,45 @@ pub fn pckcov(pck: &str, idcode: i32) -> Cell<f64> {
 }
 
 /**
+Determine the time windows, within a confinement window, when one body is occulted by or in transit
+across another, as seen from an observer.
+
+See [`raw::gfoclt`] for the raw interface.
+*/
+#[allow(clippy::too_many_arguments)]
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn gfoclt(
+    occtyp: &str,
+    front: &str,
+    fshape: &str,
+    fframe: &str,
+    back: &str,
+    bshape: &str,
+    bframe: &str,
+    abcorr: &str,
+    obsrvr: &str,
+    step: f64,
+    cnfine: &mut Cell<f64>,
+) -> Cell<f64> {
+    let mut result = Cell::new(CELL_MAXWIN);
+    raw::gfoclt(
+        occtyp,
+        front,
+        fshape,
+        fframe,
+        back,
+        bshape,
+        bframe,
+        abcorr,
+        obsrvr,
+        step,
+        cnfine,
+        &mut result,
+    );
+    result
+}
+
+/**
 Find the set of reference frame class ID codes of all frames in a specified binary PCK file.
 
 See [`raw::pckfrm`] for the raw interface.

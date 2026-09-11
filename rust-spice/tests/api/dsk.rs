@@ -280,3 +280,81 @@ fn dskw02_rejects_too_few_coordinate_parameters() {
         &[0; 10],
     );
 }
+
+#[test]
+#[serial]
+fn dskxv() {
+    common::load();
+
+    // The same ray as `dskx02`, but through the high level interface: aimed at the centre from the
+    // (+,+,+) octant, it lands on the plane x + y + z = r.
+    let vertex = [3.0 * common::SHAPE_RADIUS; 3];
+    let inward = spice::vminus(spice::vhat(vertex));
+    let outward = spice::vhat(vertex);
+
+    let (points, found) = spice::dskxv(
+        false,
+        "EARTH",
+        &[],
+        common::EPOCH,
+        "IAU_EARTH",
+        &[vertex, vertex],
+        &[inward, outward],
+    );
+    common::assert_ok("dskxv");
+
+    assert_eq!(points.len(), 2);
+    assert_eq!(
+        found,
+        vec![true, false],
+        "one ray hits, the one aimed away misses"
+    );
+    assert_slice_eq(&points[0], &[common::SHAPE_RADIUS / 3.0; 3], 1e-9);
+
+    common::unload();
+}
+
+#[test]
+#[serial]
+fn dskxsi() {
+    common::load();
+
+    let vertex = [3.0 * common::SHAPE_RADIUS; 3];
+    let raydir = spice::vminus(spice::vhat(vertex));
+
+    let (point, handle, _dladsc, dskdsc, _dc, ic, found) = spice::dskxsi(
+        false,
+        "EARTH",
+        &[],
+        common::EPOCH,
+        "IAU_EARTH",
+        vertex,
+        raydir,
+    );
+    common::assert_ok("dskxsi");
+
+    assert!(found);
+    assert_slice_eq(&point, &[common::SHAPE_RADIUS / 3.0; 3], 1e-9);
+    assert!(handle != 0);
+
+    // The source information identifies the segment the intercept came from...
+    assert_eq!(dskdsc.center, common::TARGET);
+    assert_eq!(dskdsc.surfce, common::SURFACE);
+    // ... and, for a type 2 segment, the plate it landed on.
+    assert_eq!(ic[0], 1);
+    assert_eq!(ic.len(), spice::raw::DSKXSI_ICSIZE);
+
+    // The intercept agrees with what `dskxv` reports for the same ray.
+    let (points, _) = spice::dskxv(
+        false,
+        "EARTH",
+        &[],
+        common::EPOCH,
+        "IAU_EARTH",
+        &[vertex],
+        &[raydir],
+    );
+    assert_slice_eq(&point, &points[0], 0.0);
+
+    common::unload();
+}

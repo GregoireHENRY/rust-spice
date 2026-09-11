@@ -70,8 +70,8 @@ CSPICE | **rust-spice** | Description
 [dskv02_c][dskv02_c link] | [`neat::dskv02`] | DSK, fetch type 2 vertex data
 [dskw02_c][dskw02_c link] | [`raw::dskw02`] | DSK, write type 2 segment
 [dskx02_c][dskx02_c link] | [`raw::dskx02`] | DSK, ray-surface intercept, type 2
-[dskxsi_c][dskxsi_c link] | *TODO*
-[dskxv_c][dskxv_c link] | *TODO*
+[dskxsi_c][dskxsi_c link] | [`raw::dskxsi`] | DSK, ray-surface intercept with source information
+[dskxv_c][dskxv_c link] | [`raw::dskxv`] | DSK, ray-surface intercepts, vectorized
 [dskz02_c][dskz02_c link] | [`raw::dskz02`] | DSK, fetch type 2 model size parameters
 [dtpool_c][dtpool_c link] | [`raw::dtpool`] | Data for a kernel pool variable
 [edterm_c][edterm_c link] | [`raw::edterm`] | Ellipsoid terminator
@@ -79,7 +79,7 @@ CSPICE | **rust-spice** | Description
 [errdev_c][errdev_c link] | [`errors::errdev`] | Get/Set error output device name
 [errprt_c][errprt_c link] | [`errors::errprt`] | Get/Set error output items
 [et2utc_c][et2utc_c link] | [`neat::et2utc`] | Ephemeris time to UTC
-[evsgp4_c][evsgp4_c link] | *TODO*
+[evsgp4_c][evsgp4_c link] | [`raw::evsgp4`] | Evaluate two-line element set with SGP4
 [expool_c][expool_c link] | [`raw::expool`] | Confirm the existence of a pool kernel variable
 [failed_c][failed_c link] | [`errors::failed`] | Error status indicator
 [frmnam_c][frmnam_c link] | [`neat::frmnam`] | Frame to name translation
@@ -87,10 +87,10 @@ CSPICE | **rust-spice** | Description
 [gcpool_c][gcpool_c link] | [`neat::gcpool`] | Get character values from the kernel pool
 [gdpool_c][gdpool_c link] | [`raw::gdpool`] | Get d.p. values from the kernel pool
 [georec_c][georec_c link] | [`raw::georec`] | Geodetic to rectangular coordinates
-[getelm_c][getelm_c link] | *TODO*
+[getelm_c][getelm_c link] | [`raw::getelm`] | Parse a two-line element set
 [getfov_c][getfov_c link] | [`neat::getfov`] | Get instrument FOV parameters
 [getmsg_c][getmsg_c link] | [`errors::getmsg`] | Get error message
-[gfoclt_c][gfoclt_c link] | *TODO*
+[gfoclt_c][gfoclt_c link] | [`neat::gfoclt`] | GF, occultation search
 [gipool_c][gipool_c link] | [`raw::gipool`] | Get integers from the kernel pool
 [halfpi_c][halfpi_c link] | [`raw::halfpi`] | Toolkit constant
 [illumf_c][illumf_c link] | [`raw::illumf`] | Illumination angles, general source, return flags
@@ -108,7 +108,7 @@ CSPICE | **rust-spice** | Description
 [latrec_c][latrec_c link] | [`raw::latrec`] | Latitudinal to rectangular coordinates
 [latsrf_c][latsrf_c link] | [`raw::latsrf`] | Latitudinal grid to surface points
 [ldpool_c][ldpool_c link] | [`raw::ldpool`] | Load variables from a kernel file into the pool
-[limbpt_c][limbpt_c link] | *TODO*
+[limbpt_c][limbpt_c link] | [`raw::limbpt`] | Limb points on an extended object
 [lspcn_c][lspcn_c link] | [`raw::lspcn`] | Longitude of the sun, planetocentric
 [mtxm_c][mtxm_c link] | [`raw::mtxm`] | Matrix transpose times matrix, 3x3
 [mtxv_c][mtxv_c link] | [`raw::mtxv`] | Matrix transpose times vector, 3x3
@@ -178,7 +178,7 @@ CSPICE | **rust-spice** | Description
 [subslr_c][subslr_c link] | [`raw::subslr`] | Sub-solar point
 [surfpt_c][surfpt_c link] | [`raw::surfpt`] | Surface point on an ellipsoid
 [sxform_c][sxform_c link] | [`raw::sxform`] | State transformation matrix
-[termpt_c][termpt_c link] | *TODO*
+[termpt_c][termpt_c link] | [`raw::termpt`] | Terminator points on an extended object
 [timout_c][timout_c link] | [`neat::timout`] | Time output
 [tkvrsn_c][tkvrsn_c link] | [`raw::tkvrsn`] | Toolkit version strings
 [tparse_c][tparse_c link] | [`neat::tparse`] | Parse a UTC time string
@@ -202,6 +202,9 @@ CSPICE | **rust-spice** | Description
 [vscl_c][vscl_c link] | [`raw::vscl`] | Vector scaling, 3 dimensions
 [vsep_c][vsep_c link] | [`raw::vsep`] | Angular separation of vectors, 3 dimensions
 [vsub_c][vsub_c link] | [`raw::vsub`] | Vector subtraction, 3 dimensions
+[wncard_c][wncard_c link] | [`raw::wncard`] | Cardinality of a double precision window
+[wnfetd_c][wnfetd_c link] | [`raw::wnfetd`] | Fetch an interval from a window
+[wninsd_c][wninsd_c link] | [`raw::wninsd`] | Insert an interval into a window
 [xpose_c][xpose_c link] | [`raw::xpose`] | Transpose a matrix, 3x3
 
 [b1900_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/b1900_c.html
@@ -377,6 +380,9 @@ CSPICE | **rust-spice** | Description
 [vscl_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/vscl_c.html
 [vsep_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/vsep_c.html
 [vsub_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/vsub_c.html
+[wncard_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/wncard_c.html
+[wnfetd_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/wnfetd_c.html
+[wninsd_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/wninsd_c.html
 [xpose_c link]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/xpose_c.html
 */
 
@@ -395,22 +401,25 @@ pub use self::cell::{Cell, CellItem};
 #[allow(unused_imports)]
 pub use self::neat::{
     bodc2n, bodc2s, ckcov, ckobj, dskobj, dskp02, dsksrf, dskv02, et2utc, frmnam, gcpool, getfov,
-    kdata, kinfo, pckcov, pckfrm, scdecd, sce2s, spkcov, spkobj, srfc2s, srfcss, timout, tparse,
+    gfoclt, kdata, kinfo, pckcov, pckfrm, scdecd, sce2s, spkcov, spkobj, srfc2s, srfcss, timout,
+    tparse,
 };
 #[allow(unused_imports)]
 pub use self::raw::{
     b1900, b1950, bodfnd, bodn2c, bods2c, bodvcd, bodvrd, ckcls, ckgp, ckgpav, ckopn, ckw03,
     clight, clpool, conics, cylrec, dascls, dasopr, deltet, det, dlabbs, dlabfs, dlafns, dpr,
-    dskcls, dskgd, dskgtl, dskmi2, dskn02, dskopn, dskstl, dskw02, dskx02, dskz02, dtpool, edterm,
-    expool, furnsh, gdpool, georec, gipool, halfpi, illumf, ilumin, invert, j1900, j1950, j2000,
-    j2100, jyear, kclear, ktotal, latrec, latsrf, ldpool, lspcn, mtxm, mtxv, mxm, mxmt, mxv,
-    namfrm, nearpt, occult, oscelt, oscltx, pcpool, pdpool, pgrrec, phaseq, pi, pipool, prop2b,
-    pxform, pxfrm2, radrec, reccyl, recgeo, reclat, recpgr, recrad, recsph, rotate, rotmat, rpd,
-    sce2c, scencd, scs2e, sct2e, sincpt, spd, sphrec, spkcls, spkcpo, spkcpt, spkcvo, spkcvt,
-    spkez, spkezp, spkezr, spkgeo, spkopa, spkopn, spkpos, spkw09, srfnrm, srfrec, srfs2c, srfscc,
-    str2et, subpnt, subslr, surfpt, sxform, tkvrsn, trace, twopi, twovec, tyear, unitim, unload,
-    unorm, utc2et, vadd, vcrss, vdist, vdot, vequ, vhat, vminus, vnorm, vrel, vscl, vsep, vsub,
-    xpose, DLADSC, DSKDSC,
+    dskcls, dskgd, dskgtl, dskmi2, dskn02, dskopn, dskstl, dskw02, dskx02, dskxsi, dskxv, dskz02,
+    dtpool, edterm, evsgp4, expool, furnsh, gdpool, georec, getelm, gipool, halfpi, illumf, ilumin,
+    invert, j1900, j1950, j2000, j2100, jyear, kclear, ktotal, latrec, latsrf, ldpool, limbpt,
+    lspcn, mtxm, mtxv, mxm, mxmt, mxv, namfrm, nearpt, occult, oscelt, oscltx, pcpool, pdpool,
+    pgrrec, phaseq, pi, pipool, prop2b, pxform, pxfrm2, radrec, reccyl, recgeo, reclat, recpgr,
+    recrad, recsph, rotate, rotmat, rpd, sce2c, scencd, scs2e, sct2e, sincpt, spd, sphrec, spkcls,
+    spkcpo, spkcpt, spkcvo, spkcvt, spkez, spkezp, spkezr, spkgeo, spkopa, spkopn, spkpos, spkw09,
+    srfnrm, srfrec, srfs2c, srfscc, str2et, subpnt, subslr, surfpt, sxform, termpt, tkvrsn, trace,
+    twopi, twovec, tyear, unitim, unload, unorm, utc2et, vadd, vcrss, vdist, vdot, vequ, vhat,
+    vminus, vnorm, vrel, vscl, vsep, vsub, wncard, wnfetd, wninsd, xpose, CELL, DLADSC,
+    DSK02_SPADSZ, DSKDSC, DSKXSI_DCSIZE, DSKXSI_ICSIZE, DSK_KEYAMG, DSK_KEYLAL, DSK_KEYPTM,
+    DSK_KEYSGR, DSK_KEYSPM, DSK_KEYXFR, DSK_NSYPAR, TLE_NELTS, TLE_NGEOPHS,
 };
 
 /**

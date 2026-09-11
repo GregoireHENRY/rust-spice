@@ -414,6 +414,116 @@ cspice_proc! {
     pub fn dskz02(handle: i32, dladsc: DLADSC) -> (i32, i32) {}
 }
 
+/// Size of the `dc` output of [`dskxsi`].
+pub const DSKXSI_DCSIZE: usize = 1;
+/// Size of the `ic` output of [`dskxsi`]; for a type 2 segment `ic[0]` is the plate ID.
+pub const DSKXSI_ICSIZE: usize = 1;
+
+/**
+Compute a ray-surface intercept using data provided by multiple loaded DSK segments, and return
+information about the source of the data defining the surface on which the intercept was found.
+
+`srflst` is the list of surface IDs to consider; leave it empty to let CSPICE choose.
+*/
+#[allow(clippy::too_many_arguments, clippy::type_complexity)]
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn dskxsi(
+    pri: bool,
+    target: &str,
+    srflst: &[i32],
+    et: f64,
+    fixref: &str,
+    vertex: [f64; 3],
+    raydir: [f64; 3],
+) -> (
+    [f64; 3],
+    i32,
+    DLADSC,
+    DSKDSC,
+    [f64; DSKXSI_DCSIZE],
+    [i32; DSKXSI_ICSIZE],
+    bool,
+) {
+    let target = to_cstring(target);
+    let fixref = to_cstring(fixref);
+
+    let mut xpt = [0.0; 3];
+    let mut handle = 0;
+    // SAFETY: both descriptors are plain old data, for which all-zero is a valid value.
+    let mut dladsc: DLADSC = unsafe { std::mem::zeroed() };
+    let mut dskdsc: DSKDSC = unsafe { std::mem::zeroed() };
+    let mut dc = [0.0; DSKXSI_DCSIZE];
+    let mut ic = [0; DSKXSI_ICSIZE];
+    let mut found = 0;
+
+    unsafe {
+        crate::c::dskxsi_c(
+            pri as crate::c::SpiceBoolean,
+            target.as_ptr() as *mut SpiceChar,
+            srflst.len() as SpiceInt,
+            srflst.as_ptr() as *mut SpiceInt,
+            et,
+            fixref.as_ptr() as *mut SpiceChar,
+            vertex.as_ptr() as *mut SpiceDouble,
+            raydir.as_ptr() as *mut SpiceDouble,
+            DSKXSI_DCSIZE as SpiceInt,
+            DSKXSI_ICSIZE as SpiceInt,
+            xpt.as_mut_ptr(),
+            &mut handle,
+            &mut dladsc,
+            &mut dskdsc,
+            dc.as_mut_ptr(),
+            ic.as_mut_ptr(),
+            &mut found,
+        );
+    }
+
+    (xpt, handle, dladsc, dskdsc, dc, ic, found != 0)
+}
+
+/**
+Compute ray-surface intercepts for a set of rays, using data provided by multiple loaded DSK
+segments.
+
+Returns one intercept and one flag per ray.
+*/
+#[allow(clippy::too_many_arguments)]
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn dskxv(
+    pri: bool,
+    target: &str,
+    srflst: &[i32],
+    et: f64,
+    fixref: &str,
+    vtxarr: &[[f64; 3]],
+    dirarr: &[[f64; 3]],
+) -> (Vec<[f64; 3]>, Vec<bool>) {
+    let rays = vtxarr.len().min(dirarr.len());
+    let target = to_cstring(target);
+    let fixref = to_cstring(fixref);
+
+    let mut xptarr = vec![[0.0; 3]; rays];
+    let mut fndarr = vec![0 as crate::c::SpiceBoolean; rays];
+
+    unsafe {
+        crate::c::dskxv_c(
+            pri as crate::c::SpiceBoolean,
+            target.as_ptr() as *mut SpiceChar,
+            srflst.len() as SpiceInt,
+            srflst.as_ptr() as *mut SpiceInt,
+            et,
+            fixref.as_ptr() as *mut SpiceChar,
+            rays as SpiceInt,
+            vtxarr.as_ptr() as *mut [f64; 3],
+            dirarr.as_ptr() as *mut [f64; 3],
+            xptarr.as_mut_ptr(),
+            fndarr.as_mut_ptr(),
+        );
+    }
+
+    (xptarr, fndarr.into_iter().map(|flag| flag != 0).collect())
+}
+
 cspice_proc! {
     /**
     Open a new DSK file for subsequent write operations.
@@ -1860,6 +1970,145 @@ pub fn edterm(
 }
 
 /**
+Find limb points on a target body, on cuts of a half-plane pencil rotating about the observer-target
+vector.
+
+Returns, per cut, the number of points found, then the points themselves, the epoch associated with
+each, and the tangent vector from the observer to each.
+*/
+#[allow(clippy::too_many_arguments, clippy::type_complexity)]
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn limbpt(
+    method: &str,
+    target: &str,
+    et: f64,
+    fixref: &str,
+    abcorr: &str,
+    corloc: &str,
+    obsrvr: &str,
+    refvec: [f64; 3],
+    rolstp: f64,
+    ncuts: usize,
+    schstp: f64,
+    soltol: f64,
+    maxn: usize,
+) -> (Vec<i32>, Vec<[f64; 3]>, Vec<f64>, Vec<[f64; 3]>) {
+    let method = to_cstring(method);
+    let target = to_cstring(target);
+    let fixref = to_cstring(fixref);
+    let abcorr = to_cstring(abcorr);
+    let corloc = to_cstring(corloc);
+    let obsrvr = to_cstring(obsrvr);
+
+    let mut npts = vec![0; ncuts.max(1)];
+    let mut points = vec![[0.0; 3]; maxn];
+    let mut epochs = vec![0.0; maxn];
+    let mut tangts = vec![[0.0; 3]; maxn];
+
+    unsafe {
+        crate::c::limbpt_c(
+            method.as_ptr() as *mut SpiceChar,
+            target.as_ptr() as *mut SpiceChar,
+            et,
+            fixref.as_ptr() as *mut SpiceChar,
+            abcorr.as_ptr() as *mut SpiceChar,
+            corloc.as_ptr() as *mut SpiceChar,
+            obsrvr.as_ptr() as *mut SpiceChar,
+            refvec.as_ptr() as *mut SpiceDouble,
+            rolstp,
+            ncuts as SpiceInt,
+            schstp,
+            soltol,
+            maxn as SpiceInt,
+            npts.as_mut_ptr(),
+            points.as_mut_ptr(),
+            epochs.as_mut_ptr(),
+            tangts.as_mut_ptr(),
+        );
+    }
+
+    truncate_cuts(npts, points, epochs, tangts)
+}
+
+/**
+Find terminator points on a target body, on cuts of a half-plane pencil rotating about the
+observer-target vector.
+
+Shaped like [`limbpt`], with the illumination source named separately.
+*/
+#[allow(clippy::too_many_arguments, clippy::type_complexity)]
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn termpt(
+    method: &str,
+    ilusrc: &str,
+    target: &str,
+    et: f64,
+    fixref: &str,
+    abcorr: &str,
+    corloc: &str,
+    obsrvr: &str,
+    refvec: [f64; 3],
+    rolstp: f64,
+    ncuts: usize,
+    schstp: f64,
+    soltol: f64,
+    maxn: usize,
+) -> (Vec<i32>, Vec<[f64; 3]>, Vec<f64>, Vec<[f64; 3]>) {
+    let method = to_cstring(method);
+    let ilusrc = to_cstring(ilusrc);
+    let target = to_cstring(target);
+    let fixref = to_cstring(fixref);
+    let abcorr = to_cstring(abcorr);
+    let corloc = to_cstring(corloc);
+    let obsrvr = to_cstring(obsrvr);
+
+    let mut npts = vec![0; ncuts.max(1)];
+    let mut points = vec![[0.0; 3]; maxn];
+    let mut epochs = vec![0.0; maxn];
+    let mut tangts = vec![[0.0; 3]; maxn];
+
+    unsafe {
+        crate::c::termpt_c(
+            method.as_ptr() as *mut SpiceChar,
+            ilusrc.as_ptr() as *mut SpiceChar,
+            target.as_ptr() as *mut SpiceChar,
+            et,
+            fixref.as_ptr() as *mut SpiceChar,
+            abcorr.as_ptr() as *mut SpiceChar,
+            corloc.as_ptr() as *mut SpiceChar,
+            obsrvr.as_ptr() as *mut SpiceChar,
+            refvec.as_ptr() as *mut SpiceDouble,
+            rolstp,
+            ncuts as SpiceInt,
+            schstp,
+            soltol,
+            maxn as SpiceInt,
+            npts.as_mut_ptr(),
+            points.as_mut_ptr(),
+            epochs.as_mut_ptr(),
+            tangts.as_mut_ptr(),
+        );
+    }
+
+    truncate_cuts(npts, points, epochs, tangts)
+}
+
+/// Cut the per-cut output arrays down to the number of points CSPICE actually wrote.
+#[allow(clippy::type_complexity)]
+fn truncate_cuts(
+    npts: Vec<SpiceInt>,
+    mut points: Vec<[f64; 3]>,
+    mut epochs: Vec<f64>,
+    mut tangts: Vec<[f64; 3]>,
+) -> (Vec<i32>, Vec<[f64; 3]>, Vec<f64>, Vec<[f64; 3]>) {
+    let found = npts.iter().map(|count| count.max(&0)).sum::<SpiceInt>() as usize;
+    points.truncate(found);
+    epochs.truncate(found);
+    tangts.truncate(found);
+    (npts, points, epochs, tangts)
+}
+
+/**
 Return the field-of-view (FOV) parameters for a specified instrument. The instrument is specified by
 its NAIF ID code.
 
@@ -1993,6 +2242,134 @@ cspice_proc! {
     */
     #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
     pub fn prop2b(gm: f64, pvinit: [f64; 6], dt: f64) -> [f64; 6] {}
+}
+
+/* -------------------------------------------------------------------------------------------- */
+/* Windows                                                                                        */
+/* -------------------------------------------------------------------------------------------- */
+
+cspice_proc! {
+    /**
+    Insert the interval `[left, right]` into a double precision window.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn wninsd(left: f64, right: f64, window: &mut Cell<f64>) {}
+}
+
+cspice_proc! {
+    /**
+    Fetch the endpoints of the `n`th interval of a double precision window, counting from zero.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn wnfetd(window: &mut Cell<f64>, n: i32) -> (f64, f64) {}
+}
+
+cspice_proc! {
+    /**
+    Return the number of intervals in a double precision window.
+    */
+    #[return_output]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn wncard(window: &mut Cell<f64>) -> i32 {}
+}
+
+/* -------------------------------------------------------------------------------------------- */
+/* Geometry finder                                                                                */
+/* -------------------------------------------------------------------------------------------- */
+
+cspice_proc! {
+    /**
+    Determine the time windows, within a confinement window, when one body is occulted by or in
+    transit across another, as seen from an observer.
+
+    This function has a [neat version][crate::neat::gfoclt].
+    */
+    #[allow(clippy::too_many_arguments)]
+    pub fn gfoclt(
+        occtyp: &str,
+        front: &str,
+        fshape: &str,
+        fframe: &str,
+        back: &str,
+        bshape: &str,
+        bframe: &str,
+        abcorr: &str,
+        obsrvr: &str,
+        step: f64,
+        cnfine: &mut Cell<f64>,
+        result: &mut Cell<f64>
+    ) {
+    }
+}
+
+/* -------------------------------------------------------------------------------------------- */
+/* Two-line elements                                                                              */
+/* -------------------------------------------------------------------------------------------- */
+
+/// Number of elements a two-line element set is parsed into.
+pub const TLE_NELTS: usize = 10;
+
+/// Number of geophysical constants the SGP4 propagator needs.
+pub const TLE_NGEOPHS: usize = 8;
+
+/**
+Parse the two lines of a NORAD two-line element set into the epoch and the element set CSPICE uses.
+
+`frstyr` is the first year of the century the two digit years in the set belong to; 1957, the start
+of the space age, is the usual choice.
+
+# Panics
+
+Panics if `lines` does not hold exactly two lines.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn getelm<S: AsRef<str>>(frstyr: i32, lines: &[S]) -> (f64, [f64; TLE_NELTS]) {
+    assert!(
+        lines.len() == 2,
+        "a two-line element set has two lines, got {}",
+        lines.len()
+    );
+
+    // CSPICE reads the pair out of one contiguous, fixed stride, char array.
+    let lineln = lines
+        .iter()
+        .map(|line| line.as_ref().len())
+        .max()
+        .unwrap_or(0)
+        + 1;
+    let mut buffer = vec![0 as SpiceChar; 2 * lineln];
+    for (index, line) in lines.iter().enumerate() {
+        let slot = &mut buffer[index * lineln..(index + 1) * lineln];
+        for (target, byte) in slot.iter_mut().zip(line.as_ref().as_bytes()) {
+            *target = *byte as SpiceChar;
+        }
+    }
+
+    let mut epoch = 0.0;
+    let mut elems = [0.0; TLE_NELTS];
+
+    unsafe {
+        crate::c::getelm_c(
+            frstyr,
+            lineln as SpiceInt,
+            buffer.as_ptr().cast(),
+            &mut epoch,
+            elems.as_mut_ptr(),
+        );
+    }
+
+    (epoch, elems)
+}
+
+cspice_proc! {
+    /**
+    Evaluate a two-line element set with the SGP4 propagator.
+
+    `geophs` holds the eight geophysical constants the propagator needs, in the order
+    `J2, J3, J4, KE, QO, SO, ER, AE`; they normally come from a geophysical constants kernel.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn evsgp4(et: f64, geophs: [f64; 8], elems: [f64; 10]) -> [f64; 6] {}
 }
 
 /* -------------------------------------------------------------------------------------------- */

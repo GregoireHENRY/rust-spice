@@ -23,8 +23,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `gcpool`, `gipool`, `latsrf`, `pckcov`, `scdecd`, `sce2c`, `sce2s`, `scencd`, `scs2e`, `sct2e`,
   `spkcov`, `spkcpo`, `spkcpt`, `spkcvo`, `spkcvt`, `spkobj`, `srfc2s`, `srfcss`, `srfnrm`,
   `srfs2c`, `srfscc` and `sxform`, along with the CK, DSK and SPK writers and the coordinate,
-  vector, matrix, two-body, kernel pool, surface geometry and toolkit constant families. Seven new
-  entries are listed as *TODO*: `dskxsi`, `dskxv`, `evsgp4`, `getelm`, `gfoclt`, `limbpt`, `termpt`.
+  vector, matrix, two-body, kernel pool, surface geometry and toolkit constant families.
++ 10 more, taking the total to 177 and leaving nothing marked *TODO* in the index for the first
+  time: `dskxsi` and `dskxv` cast rays at whatever shape data is loaded, `limbpt` and `termpt` find
+  limb and terminator points, `getelm` and `evsgp4` read and propagate a two-line element set, and
+  `gfoclt` searches for occultations, with `wninsd`, `wnfetd` and `wncard` to build the confinement
+  window it takes and read the window it returns.
 + `Cell<T>` is generic over its element type, owns its backing storage, and gained `len`,
   `capacity`, `get`, `iter`, `to_vec`, `push`, `clear` and a deep `Clone`.
 + A self contained test suite: the SPK, CK, DSK, PCK and text kernels it needs are generated in a

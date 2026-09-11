@@ -14,8 +14,10 @@ cannot read a half written file.
 The scenario is deliberately analytic, so that the expected values can be written down rather than
 recorded:
 
-+ body 399 (`EARTH`) moves on a circular orbit of [`ORBIT_RADIUS`] around body 10 (`SUN`), in the
-  plane of `J2000`, described by a type 9 SPK segment;
++ body 399 (`EARTH`) moves on a circular orbit of [`ORBIT_RADIUS`] around body 10 (`SUN`), and body
+  301 (`MOON`) on one of [`SATELLITE_RADIUS`] around body 399, both in the plane of `J2000` and both
+  described by a type 9 SPK segment. Being coplanar, the three line up twice a lunar period, which
+  is what makes an occultation search find anything;
 + the shape of body 399 is, in the DSK, a regular octahedron of "radius" [`SHAPE_RADIUS`];
 + spacecraft [`SPACECRAFT`] carries instrument [`INSTRUMENT`], whose orientation is the identity
   rotation with respect to `J2000` at every epoch of the CK;
@@ -77,10 +79,10 @@ pub const GM_CENTER: f64 = 1.327_124_400_419_393_8e11;
 pub const SHAPE_RADIUS: f64 = 6378.0;
 
 /// First epoch covered by the generated kernels, in TDB seconds past J2000.
-pub const FIRST: f64 = -5.0 * 86400.0;
+pub const FIRST: f64 = -20.0 * 86400.0;
 
 /// Last epoch covered by the generated kernels, in TDB seconds past J2000.
-pub const LAST: f64 = 5.0 * 86400.0;
+pub const LAST: f64 = 20.0 * 86400.0;
 
 /// Step between the states of the SPK and the records of the CK, in seconds.
 pub const STEP: f64 = 3600.0;
@@ -190,7 +192,7 @@ SCLK01_OUTPUT_DELIM_999    = ( 2 )
 SCLK_PARTITION_START_999   = ( 0.0000000000000E+00 )
 SCLK_PARTITION_END_999     = ( 9.9900000000000E+11 )
 SCLK01_COEFFICIENTS_999    = ( 0.0000000000000E+00
-                              -4.3200000000000E+05
+                               {epoch:.7E}
                                1.0000000000000E+00 )
 \begintext
 "#;
@@ -395,7 +397,11 @@ fn build() {
     write("naif.tls", LSK);
     write("test.tpc", PCK);
     write("test.tf", FK);
-    write("test.tsc", SCLK);
+    // Tick zero is the start of the coverage, so that the clock never runs negative.
+    write(
+        "test.tsc",
+        &SCLK.replace("{epoch:.7E}", &format!("{:.7E}", TICK_EPOCH)),
+    );
     write("test.ti", IK);
     // The kernels are named through a path symbol, so that a long temporary directory does not
     // push the entries themselves past what a pool string can hold.

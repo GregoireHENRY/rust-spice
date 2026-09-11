@@ -27,10 +27,12 @@ mod dsk;
 mod errors;
 mod frames;
 mod geometry;
+mod gf;
 mod orbits;
 mod pool;
 mod spk;
 mod time;
+mod tle;
 mod vectors;
 
 /// Assert that two slices of floats agree to within `epsilon`.

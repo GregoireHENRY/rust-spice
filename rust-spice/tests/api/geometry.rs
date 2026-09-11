@@ -413,3 +413,150 @@ fn getfov() {
 
     common::unload();
 }
+
+#[test]
+#[serial]
+fn limbpt() {
+    common::load();
+
+    let et = common::EPOCH;
+    let cuts = 8;
+    let (npts, points, epochs, tangents) = spice::limbpt(
+        "TANGENT/ELLIPSOID",
+        "EARTH",
+        et,
+        "IAU_EARTH",
+        "NONE",
+        "CENTER",
+        "MOON",
+        [0.0, 0.0, 1.0],
+        std::f64::consts::TAU / cuts as f64,
+        cuts,
+        1.0e-4,
+        1.0e-7,
+        cuts,
+    );
+    common::assert_ok("limbpt");
+
+    // An ellipsoid limb gives exactly one point per cut.
+    assert_eq!(npts, vec![1; cuts]);
+    assert_eq!(points.len(), cuts);
+    assert_eq!(epochs.len(), cuts);
+    assert_eq!(tangents.len(), cuts);
+
+    let radii = spice::bodvrd("EARTH", "RADII", 3);
+    for (point, epoch) in points.iter().zip(&epochs) {
+        // Every limb point lies on the ellipsoid...
+        let scaled = (0..3).map(|i| (point[i] / radii[i]).powi(2)).sum::<f64>();
+        assert_relative_eq!(scaled, 1.0, epsilon = 1e-9);
+        assert_relative_eq!(epoch, &et, epsilon = 1e-9);
+    }
+
+    // ... and, being on the limb, has an outward normal perpendicular to the line of sight that
+    // reaches it. The normal of an ellipsoid at (x, y, z) is (x/a², y/b², z/c²).
+    for (point, tangent) in points.iter().zip(&tangents) {
+        let normal = spice::vhat([
+            point[0] / radii[0].powi(2),
+            point[1] / radii[1].powi(2),
+            point[2] / radii[2].powi(2),
+        ]);
+        assert_relative_eq!(
+            spice::vdot(normal, spice::vhat(*tangent)),
+            0.0,
+            epsilon = 1e-6
+        );
+    }
+
+    common::unload();
+}
+
+#[test]
+#[serial]
+fn termpt() {
+    common::load();
+
+    let et = common::EPOCH;
+    let cuts = 6;
+    let (npts, points, _, _) = spice::termpt(
+        "UMBRAL/TANGENT/ELLIPSOID",
+        "SUN",
+        "EARTH",
+        et,
+        "IAU_EARTH",
+        "NONE",
+        "CENTER",
+        "MOON",
+        [0.0, 0.0, 1.0],
+        std::f64::consts::TAU / cuts as f64,
+        cuts,
+        1.0e-4,
+        1.0e-7,
+        cuts,
+    );
+    common::assert_ok("termpt");
+
+    assert_eq!(npts, vec![1; cuts]);
+    assert_eq!(points.len(), cuts);
+
+    // On the umbral terminator the whole solar disc is just below the horizon, so the incidence
+    // angle to the centre of the Sun overshoots a right angle by the Sun's angular radius.
+    let (to_sun, _) = spice::spkpos("SUN", et, "IAU_EARTH", "NONE", "EARTH");
+    let angular_radius = (spice::bodvrd("SUN", "RADII", 3)[0] / spice::vnorm(to_sun)).asin();
+
+    let radii = spice::bodvrd("EARTH", "RADII", 3);
+    for point in &points {
+        let scaled = (0..3).map(|i| (point[i] / radii[i]).powi(2)).sum::<f64>();
+        assert_relative_eq!(scaled, 1.0, epsilon = 1e-9);
+
+        let (_, _, _, incidence, _) = spice::ilumin(
+            "Ellipsoid",
+            "EARTH",
+            et,
+            "IAU_EARTH",
+            "NONE",
+            "MOON",
+            *point,
+        );
+        assert_relative_eq!(
+            incidence,
+            std::f64::consts::FRAC_PI_2 + angular_radius,
+            epsilon = 1e-4
+        );
+    }
+
+    // The penumbral terminator is the other tangent, a solar radius the other side of the
+    // right angle.
+    let (_, penumbral, _, _) = spice::termpt(
+        "PENUMBRAL/TANGENT/ELLIPSOID",
+        "SUN",
+        "EARTH",
+        et,
+        "IAU_EARTH",
+        "NONE",
+        "CENTER",
+        "MOON",
+        [0.0, 0.0, 1.0],
+        std::f64::consts::TAU / cuts as f64,
+        cuts,
+        1.0e-4,
+        1.0e-7,
+        cuts,
+    );
+    common::assert_ok("termpt, penumbral");
+    let (_, _, _, incidence, _) = spice::ilumin(
+        "Ellipsoid",
+        "EARTH",
+        et,
+        "IAU_EARTH",
+        "NONE",
+        "MOON",
+        penumbral[0],
+    );
+    assert_relative_eq!(
+        incidence,
+        std::f64::consts::FRAC_PI_2 - angular_radius,
+        epsilon = 1e-4
+    );
+
+    common::unload();
+}
