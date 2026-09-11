@@ -18,6 +18,7 @@ extern crate serial_test;
 mod common;
 
 mod against_c;
+mod assorted;
 mod bodies;
 mod cells;
 mod ck;

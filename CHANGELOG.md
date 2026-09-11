@@ -59,6 +59,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   form, the string position searches, `etcal`, `tparch`, `badkpv`, `bodvar`, the frame lookups
   (`ccifrm`, `cidfrm`, `cnmfrm`, `bltfrm`) and the kernel pool watches (`swpool`, `cvpool`,
   `gnpool`).
++ 56 more, taking the total to 421: the state derivative vectors, the ellipsoid helpers, the
+  lexers and parsers, the error stack (`chkin`, `chkout`, `trcdep`, `setmsg`, `errch`, `errdp`,
+  `errint`, `sigerr`, `return_c`), the observation geometry (`ltime`, `stelab`, `stlabx`, `trgsep`,
+  `azlcpo`, `tangpt`), the body orientation matrices (`tipbod`, `tisbod`, `tkfram`) and the
+  deprecated entry points `illum`, `subpt`, `subsol` and `srfxpt`.
 + `Cell<T>` is generic over its element type, owns its backing storage, and gained `len`,
   `capacity`, `get`, `iter`, `to_vec`, `push`, `clear` and a deep `Clone`.
 + A self contained test suite: the SPK, CK, DSK, PCK and text kernels it needs are generated in a

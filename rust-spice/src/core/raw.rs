@@ -4329,6 +4329,477 @@ cspice_proc! {
     pub fn cvpool(agent: &str) -> bool {}
 }
 
+/* ---------------------------------------------------------------------------------------------- */
+/* Assorted routines                                                                              */
+/* ---------------------------------------------------------------------------------------------- */
+
+cspice_proc! {
+    /**
+    Return the azimuth/elevation coordinates of a specified target relative to an "observer," where the observer has constant position in a specified reference frame. The observer's position is provided by the calling program rather than by loaded SPK files.
+    */
+    #[allow(clippy::too_many_arguments)]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn azlcpo(method: &str, target: &str, et: f64, abcorr: &str, azccw: bool, elplsz: bool, obspos: [f64; 3], obsctr: &str, obsref: &str) -> ([f64; 6], f64) {}
+}
+
+cspice_proc! {
+    /**
+    Define a body name/ID code pair for later translation via bodn2c_c or bodc2n_c.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn boddef(name: &str, code: i32) {}
+}
+
+cspice_proc! {
+    /**
+    Inform the CSPICE error handling mechanism of entry into a routine.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn chkin(module: &str) {}
+}
+
+cspice_proc! {
+    /**
+    Inform the CSPICE error handling mechanism of exit from a routine.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn chkout(module: &str) {}
+}
+
+cspice_proc! {
+    /**
+    Compute the state (position and velocity) of an ellipsoid surface point nearest to the position component of a specified state.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn dnearp(state: [f64; 6], a: f64, b: f64, c: f64) -> ([f64; 6], [f64; 2], bool) {}
+}
+
+cspice_proc! {
+    /**
+    Compute the unit vector parallel to the cross product of two 3-dimensional vectors and the derivative of this unit vector.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn ducrss(s1: [f64; 6], s2: [f64; 6]) -> [f64; 6] {}
+}
+
+cspice_proc! {
+    /**
+    Compute the cross product of two 3-dimensional vectors and the derivative of this cross product.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn dvcrss(s1: [f64; 6], s2: [f64; 6]) -> [f64; 6] {}
+}
+
+cspice_proc! {
+    /**
+    Compute the derivative of the dot product of two double precision position vectors.
+    */
+    #[return_output]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn dvdot(s1: [f64; 6], s2: [f64; 6]) -> f64 {}
+}
+
+cspice_proc! {
+    /**
+    Find the unit vector corresponding to a state vector and the derivative of the unit vector.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn dvhat(s1: [f64; 6]) -> [f64; 6] {}
+}
+
+cspice_proc! {
+    /**
+    Calculate the derivative of the norm of a 3-vector.
+    */
+    #[return_output]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn dvnorm(state: [f64; 6]) -> f64 {}
+}
+
+cspice_proc! {
+    /**
+    Delete a variable from the kernel pool.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn dvpool(name: &str) {}
+}
+
+cspice_proc! {
+    /**
+    Calculate the time derivative of the separation angle between two input states, S1 and S2.
+    */
+    #[return_output]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn dvsep(s1: [f64; 6], s2: [f64; 6]) -> f64 {}
+}
+
+cspice_proc! {
+    /**
+    Return the unique point on an ellipsoid's surface where the outward normal direction is a given vector.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn ednmpt(a: f64, b: f64, c: f64, normal: [f64; 3]) -> [f64; 3] {}
+}
+
+cspice_proc! {
+    /**
+    Scale a point so that it lies on the surface of a specified triaxial ellipsoid that is centered at the origin and aligned with the Cartesian coordinate axes.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn edpnt(p: [f64; 3], a: f64, b: f64, c: f64) -> [f64; 3] {}
+}
+
+cspice_proc! {
+    /**
+    Compute the state (position and velocity) of an object whose trajectory is described via equinoctial elements relative to some fixed plane (usually the equatorial plane of some planet).
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn eqncpv(et: f64, epoch: f64, eqel: [f64; 9], rapol: f64, decpol: f64) -> [f64; 6] {}
+}
+
+cspice_proc! {
+    /**
+    Whether a routine should return immediately because the toolkit is in an error state.
+
+    Named `return_c` rather than `return`, which is a keyword in Rust. It is the only routine in
+    the toolkit whose name has to change, and SpiceyPy renames it the same way for the same reason.
+    */
+    #[return_output]
+    #[cname(return_c)]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn return_c() -> bool {}
+}
+
+cspice_proc! {
+    /**
+    Signal an error, with the short message given.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn sigerr(message: &str) {}
+}
+
+cspice_proc! {
+    /**
+    Substitute a double precision number for the first occurrence of a marker in the long error
+    message being built.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn errdp(marker: &str, number: f64) {}
+}
+
+cspice_proc! {
+    /**
+    Substitute an integer for the first occurrence of a marker in the long error message being
+    built.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn errint(marker: &str, number: i32) {}
+}
+
+cspice_proc! {
+    /**
+    Substitute a character string for the first occurrence of a marker in the current long error message.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn errch(marker: &str, string: &str) {}
+}
+
+cspice_proc! {
+    /**
+    Close a file designated by a Fortran-style integer logical unit.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn ftncls(unit: i32) {}
+}
+
+cspice_proc! {
+    /**
+    Deprecated: This routine has been superseded by the CSPICE routine ilumin_c. This routine is supported for purposes of backward compatibility only.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn illum(target: &str, et: f64, abcorr: &str, obsrvr: &str, spoint: [f64; 3]) -> (f64, f64, f64) {}
+}
+
+cspice_proc! {
+    /**
+    Return the inverse of a state transformation matrix.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn invstm(mat: [[f64; 6]; 6]) -> [[f64; 6]; 6] {}
+}
+
+cspice_proc! {
+    /**
+    Return a boolean value indicating whether a string contains only white space characters.
+    */
+    #[return_output]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn iswhsp(string: &str) -> bool {}
+}
+
+cspice_proc! {
+    /**
+    Return the zero based index of the last non-blank character in a character string.
+    */
+    #[return_output]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn lastnb(string: &str) -> i32 {}
+}
+
+cspice_proc! {
+    /**
+    Compute the transmission (or reception) time of a signal at a specified target, given the reception (or transmission) time at a specified observer. Also return the elapsed time between transmission and reception.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn ltime(etobs: f64, obs: i32, dir: &str, targ: i32) -> (f64, f64) {}
+}
+
+cspice_proc! {
+    /**
+    Scan a string from a specified starting position for the end of a decimal number.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn lx4dec(string: &str, first: i32) -> (i32, i32) {}
+}
+
+cspice_proc! {
+    /**
+    Scan a string from a specified starting position for the end of a number.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn lx4num(string: &str, first: i32) -> (i32, i32) {}
+}
+
+cspice_proc! {
+    /**
+    Scan a string from a specified starting position for the end of a signed integer.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn lx4sgn(string: &str, first: i32) -> (i32, i32) {}
+}
+
+cspice_proc! {
+    /**
+    Scan a string from a specified starting position for the end of an unsigned integer.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn lx4uns(string: &str, first: i32) -> (i32, i32) {}
+}
+
+cspice_proc! {
+    /**
+    Scan (lex) a quoted string.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn lxqstr(string: &str, qchar: char, first: i32) -> (i32, i32) {}
+}
+
+cspice_proc! {
+    /**
+    Find the first occurrence in a string of a character NOT belonging to a collection of characters, starting at a specified location, searching forward.
+    */
+    #[return_output]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn ncpos(string: &str, chars: &str, start: i32) -> i32 {}
+}
+
+cspice_proc! {
+    /**
+    Find the first occurrence in a string of a character NOT belonging to a collection of characters, starting at a specified location, searching in reverse.
+    */
+    #[return_output]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn ncposr(string: &str, chars: &str, start: i32) -> i32 {}
+}
+
+cspice_proc! {
+    /**
+    Expand a triangular plate by a specified amount. The expanded plate is co-planar with, and has the same orientation as, the original. The centroids of the two plates coincide.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn pltexp(iverts: [[f64; 3]; 3], delta: f64) -> [[f64; 3]; 3] {}
+}
+
+cspice_proc! {
+    /**
+    Parse a string as a double precision number, encapsulating error handling.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn prsdp(string: &str) -> f64 {}
+}
+
+cspice_proc! {
+    /**
+    Parse a string as an integer, encapsulating error handling.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn prsint(string: &str) -> i32 {}
+}
+
+cspice_proc! {
+    /**
+    Derive angular velocity from a unit quaternion and its derivative with respect to time.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn qdq2av(q: [f64; 4], dq: [f64; 4]) -> [f64; 3] {}
+}
+
+cspice_proc! {
+    /**
+    Transform a vector to a new coordinate system rotated by `angle' radians about axis `iaxis'. This transformation rotates `v1' by -angle radians about the specified axis.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn rotvec(v1: [f64; 3], angle: f64, iaxis: i32) -> [f64; 3] {}
+}
+
+cspice_proc! {
+    /**
+    Find the roots of a quadratic equation.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn rquad(a: f64, b: f64, c: f64) -> ([f64; 2], [f64; 2]) {}
+}
+
+cspice_proc! {
+    /**
+    Convert ephemeris seconds past J2000 (ET) to integral encoded spacecraft clock (`ticks'). For conversion to fractional ticks, (required for C-kernel production), see the routine sce2c_c.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn sce2t(sc: i32, et: f64) -> f64 {}
+}
+
+cspice_proc! {
+    /**
+    Convert a spacecraft clock format string to number of "ticks".
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn sctiks(sc: i32, clkstr: &str) -> f64 {}
+}
+
+cspice_proc! {
+    /**
+    Set the value of the current long error message.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn setmsg(msg: &str) {}
+}
+
+cspice_proc! {
+    /**
+    Deprecated: This routine has been superseded by the CSPICE routine sincpt_c. This routine is supported for purposes of backward compatibility only.
+    */
+    #[allow(clippy::too_many_arguments)]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn srfxpt(method: &str, target: &str, et: f64, abcorr: &str, obsrvr: &str, dref: &str, dvec: [f64; 3]) -> ([f64; 3], f64, f64, [f64; 3], bool) {}
+}
+
+cspice_proc! {
+    /**
+    Correct the apparent position of an object for stellar aberration.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn stelab(pobj: [f64; 3], vobs: [f64; 3]) -> [f64; 3] {}
+}
+
+cspice_proc! {
+    /**
+    Correct the position of a target for the stellar aberration effect on radiation transmitted from a specified observer to the target.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn stlabx(pobj: [f64; 3], vobs: [f64; 3]) -> [f64; 3] {}
+}
+
+cspice_proc! {
+    /**
+    Deprecated: This routine has been superseded by the CSPICE routine subpnt_c. This routine is supported for purposes of backward compatibility only.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn subpt(method: &str, target: &str, et: f64, abcorr: &str, obsrvr: &str) -> ([f64; 3], f64) {}
+}
+
+cspice_proc! {
+    /**
+    Deprecated: This routine has been superseded by the CSPICE routine subslr_c. This routine is supported for purposes of backward compatibility only.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn subsol(method: &str, target: &str, et: f64, abcorr: &str, obsrvr: &str) -> [f64; 3] {}
+}
+
+cspice_proc! {
+    /**
+    Compute, for a given observer, ray emanating from the observer, and target, the "tangent point": the point on the ray nearest to the target's surface. Also compute the point on the target's surface nearest to the tangent point.
+    */
+    #[allow(clippy::too_many_arguments)]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn tangpt(method: &str, target: &str, et: f64, fixref: &str, abcorr: &str, corloc: &str, obsrvr: &str, dref: &str, dvec: [f64; 3]) -> ([f64; 3], f64, f64, [f64; 3], f64, [f64; 3]) {}
+}
+
+cspice_proc! {
+    /**
+    Return a 3x3 matrix that transforms positions in inertial coordinates to positions in body-equator-and-prime-meridian coordinates.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn tipbod(frame: &str, body: i32, et: f64) -> [[f64; 3]; 3] {}
+}
+
+cspice_proc! {
+    /**
+    Return a 6x6 matrix that transforms states in inertial coordinates to states in body-equator-and-prime-meridian coordinates.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn tisbod(frame: &str, body: i32, et: f64) -> [[f64; 6]; 6] {}
+}
+
+cspice_proc! {
+    /**
+    Find the position rotation matrix from a Text Kernel (TK) frame with the specified frame class ID to its base frame.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn tkfram(frcode: i32) -> ([[f64; 3]; 3], i32, bool) {}
+}
+
+cspice_proc! {
+    /**
+    Return the number of modules in the traceback representation.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn trcdep() -> i32 {}
+}
+
+cspice_proc! {
+    /**
+    Compute the angular separation in radians between two spherical or point objects.
+    */
+    #[allow(clippy::too_many_arguments)]
+    #[return_output]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn trgsep(et: f64, targ1: &str, shape1: &str, frame1: &str, targ2: &str, shape2: &str, frame2: &str, obsrvr: &str, abcorr: &str) -> f64 {}
+}
+
+cspice_proc! {
+    /**
+    Set the lower bound on the 100 year range
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn tsetyr(year: i32) {}
+}
+
+cspice_proc! {
+    /**
+    Find the state transformation from a base frame to the right-handed frame defined by two state vectors: one state vector defining a specified axis and a second state vector defining a specified coordinate plane.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn twovxf(axdef: [f64; 6], indexa: i32, plndef: [f64; 6], indexp: i32) -> [[f64; 6]; 6] {}
+}
+
+cspice_proc! {
+    /**
+    Compute the normalized cross product of two 3-vectors.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn ucrss(v1: [f64; 3], v2: [f64; 3]) -> [f64; 3] {}
+}
+
 /* -------------------------------------------------------------------------------------------- */
 /* Constants                                                                                      */
 /* -------------------------------------------------------------------------------------------- */
