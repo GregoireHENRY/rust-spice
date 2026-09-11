@@ -1,3 +1,0 @@
-[submodule "rust-spice/hera"]
-	path = rust-spice/hera
-	url = https://repos.cosmos.esa.int/socci/scm/spice_kernels/hera.git

@@ -1,0 +1,77 @@
+name: CI
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+  # Bump to invalidate the cached toolkit when NAIF publishes a new version.
+  CSPICE_VERSION: N0067
+
+jobs:
+  format:
+    name: format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+      - run: cargo fmt --all --check
+
+  test:
+    name: test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        # The NAIF toolkit is published for Windows too, but the build has not been tried there.
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+
+      - uses: Swatinem/rust-cache@v2
+
+      # `cspice-sys` generates its bindings with bindgen, which needs libclang.
+      - name: Install libclang
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install --yes --no-install-recommends libclang-dev
+
+      - name: Cache the CSPICE toolkit
+        id: cspice
+        uses: actions/cache@v6
+        with:
+          path: ~/cspice
+          key: cspice-${{ env.CSPICE_VERSION }}-${{ runner.os }}-${{ runner.arch }}
+
+      - name: Install the CSPICE toolkit
+        if: steps.cspice.outputs.cache-hit != 'true'
+        run: .github/install-cspice.sh "$HOME/cspice"
+
+      - name: Point the build at CSPICE
+        run: echo "CSPICE_DIR=$HOME/cspice" >> "$GITHUB_ENV"
+
+      - name: Lint
+        run: |
+          cargo clippy --all --all-targets -- --deny warnings
+          cargo clippy --package rust-spice --features lock --all-targets -- --deny warnings
+
+      # The test suite writes the SPK, CK, DSK, PCK and text kernels it needs into a temporary
+      # directory as it starts, so there is nothing else to fetch.
+      - name: Test
+        run: cargo test --all
+
+      - name: Test with the lock feature
+        run: cargo test --package rust-spice --features lock
+
+      - name: Build the documentation
+        run: cargo doc --all --no-deps
+        env:
+          RUSTDOCFLAGS: --deny warnings

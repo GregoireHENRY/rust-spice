@@ -9,6 +9,105 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-09-11
+
+### Added
+
++ `errors` module: `check` turns the CSPICE error state into a Rust `Result`, and `quiet` stops the
+  toolkit printing to the screen and aborting the process on failure. Also wraps `failed`, `reset`,
+  `getmsg`, `qcktrc`, `erract`, `errdev` and `errprt`.
++ `ffi` module: the `SpiceArg`/`SpiceRet`/`SpiceReturn` traits describing how each Rust type is
+  handed to, and read back from, a C routine.
++ 120 more wrapped functions, taking the total from 47 to 167 of the 649 CSPICE exposes. Every
+  entry of the previous *TODO* list is now wrapped: `ckcov`, `ckgp`, `ckgpav`, `ckobj`, `dsksrf`,
+  `gcpool`, `gipool`, `latsrf`, `pckcov`, `scdecd`, `sce2c`, `sce2s`, `scencd`, `scs2e`, `sct2e`,
+  `spkcov`, `spkcpo`, `spkcpt`, `spkcvo`, `spkcvt`, `spkobj`, `srfc2s`, `srfcss`, `srfnrm`,
+  `srfs2c`, `srfscc` and `sxform`, along with the CK, DSK and SPK writers and the coordinate,
+  vector, matrix, two-body, kernel pool, surface geometry and toolkit constant families.
++ 10 more, taking the total to 177 and leaving nothing marked *TODO* in the index for the first
+  time: `dskxsi` and `dskxv` cast rays at whatever shape data is loaded, `limbpt` and `termpt` find
+  limb and terminator points, `getelm` and `evsgp4` read and propagate a two-line element set, and
+  `gfoclt` searches for occultations, with `wninsd`, `wnfetd` and `wncard` to build the confinement
+  window it takes and read the window it returns.
++ 13 more, taking the total to 190: `axisar`, `eul2m`, `eul2xf`, `invort`, `isrot`, `m2eul`, `m2q`,
+  `q2m`, `qxq`, `rav2xf`, `raxisa`, `xf2eul` and `xf2rav` cover rotations, quaternions, Euler angles
+  and state transformations.
++ 35 more, taking the total to 225: the whole of the window arithmetic (`wncomd`, `wncond`,
+  `wndifd`, `wnelmd`, `wnexpd`, `wnextd`, `wnfild`, `wnfltd`, `wnincd`, `wnintd`, `wnreld`,
+  `wnsumd`, `wnunid`, `wnvald`) and of the cell and set operations (`union`, `inter`, `diff`,
+  `copy`, `card`, `scard`, `size`, `ssize`, `valid`, and the `elem`, `insrt`, `remov` and `appnd`
+  families). The set operations are generic over the element type, so one declaration covers the
+  integer, double precision and character cells.
++ 33 more, taking the total to 258: the conversions between the curvilinear coordinate systems
+  (`latcyl`, `cyllat`, `latsph`, `sphlat`, `cylsph`, `sphcyl`, `azlrec`, `recazl`), all twelve
+  Jacobians relating them to rectangular coordinates, `xfmsta` to move a state between systems, and
+  `vpack`, `vupack`, `vzero`, `vperp`, `vproj`, `vrotv`, `vlcom`, `vlcom3`, `vtmv`, `ident`, `mequ`
+  and `xpose6`.
++ 21 more, taking the total to 279: planes and ellipses, as the `PLANE` and `ELLIPSE` types and the
+  routines that build, take apart, intersect and project them (`nvc2pl`, `nvp2pl`, `psv2pl`,
+  `pl2nvc`, `pl2nvp`, `pl2psv`, `cgv2el`, `el2cgv`, `saelgv`, `inedpl`, `inelpl`, `inrypl`,
+  `edlimb`, `pjelpl`, `vprjp`, `vprjpi`, `npelpt`, `npedln`, `nplnpt`, `surfnm`, `surfpv`).
++ 24 more, taking the total to 303: the vector and matrix routines of arbitrary dimension. They
+  take slices and size the result themselves, and check that the lengths agree with the dimensions
+  rather than letting CSPICE read past the end. The dimension arguments keep the names CSPICE gives
+  them, which differ in meaning between `mxmg`, `mtxmg` and `mxmtg`.
++ `Cell<T>` is generic over its element type, owns its backing storage, and gained `len`,
+  `capacity`, `get`, `iter`, `to_vec`, `push`, `clear` and a deep `Clone`.
++ A self contained test suite: the SPK, CK, DSK, PCK and text kernels it needs are generated in a
+  temporary directory when it starts, so `cargo test` works on any machine that can build the
+  crate. Every wrapped function is covered, and the marshalling of each argument shape is checked
+  against a direct call to the C routine.
++ GitHub Actions CI: formatting, clippy, the test suite with and without `lock`, and the
+  documentation, on Linux and macOS. `.github/install-cspice.sh` installs the toolkit, and is
+  useful outside CI too.
+
+### Fixed
+
++ The `lock` feature did not compile: `dskp02`, `dskv02`, `kdata` and `timout` each generated two
+  methods of the same name on `SpiceLock`. The guard now exposes the neat version where there is
+  one, as the documentation always claimed.
++ Wrappers no longer leak. Every string and buffer handed to CSPICE was `malloc`ed or leaked through
+  `CString::into_raw` and never freed, once per call.
++ String outputs were read out of uninitialised memory when a routine failed without writing them.
++ `raw::bodc2n` and the other wrappers taking a `lenout` allocated `MAX_LEN_OUT` bytes whatever the
+  length they promised CSPICE, so a larger `lenout` overran the buffer.
++ `neat::timout` sized its output buffer from the length of the format picture, truncating any
+  output at least as long as its picture.
++ `Cell` leaked its buffer, computed the address of the data area of a character cell in elements
+  rather than bytes, and `get_data_character` returned a single character.
++ `Cell::new_time` allocated a buffer of integers for a cell CSPICE reads as doubles.
++ `gdpool` reported the values of a variable absent from the pool rather than an empty vector.
++ `raw::dskz02` documented its two outputs in the wrong order; it returns the vertex count first.
++ `SpiceLock` kept its flag in a `static mut`, which is unsound and rejected from the 2024 edition.
++ Several wrong links in the bindings table.
+
+### Changed
+
++ The procedural macro no longer builds Rust code by formatting and re-parsing strings, and no
+  longer knows about the SPICE types: the conversions live in `ffi`, where the compiler checks them.
+  It also reports a proper compile error instead of panicking with `->1`.
++ Strings crossing the FFI boundary are copied into a stack buffer while they fit, so a wrapper no
+  longer allocates once per string argument: marshalling one argument went from 22 ns to 3.8 ns, and
+  a `spkpos` call from 1597 ns to 1548 ns (Apple M-series, CSPICE N0067).
++ `spkw09`, `ckw03` and `dskw02` panic rather than letting CSPICE read past the end of a slice.
++ `spkw09` takes `&[...]` instead of `&mut [...]`.
++ `raw::dskobj` takes the cell to fill, like CSPICE; `neat::dskobj` keeps returning an owned one.
++ `recpgr` returns the longitude, latitude and altitude as a tuple rather than as a `[f64; 3]`, and
+  `getfov` takes the instrument ID as an `i32`. `getfov` also gained a neat version, which is what
+  `spice::getfov` now refers to.
++ `cstr!`, `fcstr!`, `malloc!` and `mallocstr!` are kept for use with the unsafe C API. `malloc!`
+  and `mallocstr!` now zero what they allocate, and `fcstr!` no longer panics on invalid UTF-8.
++ Edition 2021, `syn` 2 to 3, and the unused `nalgebra`, `serde`, `serde_json`, `serde_repr` and
+  `log` dependencies dropped. `approx`, `itertools` and `serial_test` moved to dev-dependencies.
+
+### Removed
+
++ The declaration of the `rust-spice/hera` submodule, which was never registered and which the test
+  suite no longer needs.
++ `Cell<bool>`: no CSPICE C routine operates on a boolean cell. `Cell::new_bool` still hands back an
+  integer cell tagged as boolean.
+
+
 ## [0.7.1] - 2021-10-24
 
 ### Added

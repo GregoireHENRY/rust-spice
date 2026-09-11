@@ -16,4 +16,4 @@ Cargo.lock
 !*/rsc/data/hera_PO_EMA_2024.tm
 
 # SPICE kernels
-rust-spice/hera/
+# The test suite generates the ones it needs into a temporary directory.
