@@ -38,6 +38,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `copy`, `card`, `scard`, `size`, `ssize`, `valid`, and the `elem`, `insrt`, `remov` and `appnd`
   families). The set operations are generic over the element type, so one declaration covers the
   integer, double precision and character cells.
++ 33 more, taking the total to 258: the conversions between the curvilinear coordinate systems
+  (`latcyl`, `cyllat`, `latsph`, `sphlat`, `cylsph`, `sphcyl`, `azlrec`, `recazl`), all twelve
+  Jacobians relating them to rectangular coordinates, `xfmsta` to move a state between systems, and
+  `vpack`, `vupack`, `vzero`, `vperp`, `vproj`, `vrotv`, `vlcom`, `vlcom3`, `vtmv`, `ident`, `mequ`
+  and `xpose6`.
 + `Cell<T>` is generic over its element type, owns its backing storage, and gained `len`,
   `capacity`, `get`, `iter`, `to_vec`, `push`, `clear` and a deep `Clone`.
 + A self contained test suite: the SPK, CK, DSK, PCK and text kernels it needs are generated in a

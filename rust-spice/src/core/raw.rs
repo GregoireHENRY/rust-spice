@@ -1268,6 +1268,301 @@ cspice_proc! {
 
 /* -------------------------------------------------------------------------------------------- */
 /* Vectors and matrices                                                                           */
+
+cspice_proc! {
+    /**
+    Pack three scalars into a vector.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn vpack(x: f64, y: f64, z: f64) -> [f64; 3] {}
+}
+
+cspice_proc! {
+    /**
+    Unpack a vector into three scalars.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn vupack(v: [f64; 3]) -> (f64, f64, f64) {}
+}
+
+cspice_proc! {
+    /**
+    Whether a vector is the zero vector.
+    */
+    #[return_output]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn vzero(v: [f64; 3]) -> bool {}
+}
+
+cspice_proc! {
+    /**
+    The component of `a` perpendicular to `b`.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn vperp(a: [f64; 3], b: [f64; 3]) -> [f64; 3] {}
+}
+
+cspice_proc! {
+    /**
+    The projection of `a` onto `b`.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn vproj(a: [f64; 3], b: [f64; 3]) -> [f64; 3] {}
+}
+
+cspice_proc! {
+    /**
+    Rotate a vector about an axis by a given angle.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn vrotv(v: [f64; 3], axis: [f64; 3], theta: f64) -> [f64; 3] {}
+}
+
+cspice_proc! {
+    /**
+    The linear combination `a * v1 + b * v2`.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn vlcom(a: f64, v1: [f64; 3], b: f64, v2: [f64; 3]) -> [f64; 3] {}
+}
+
+cspice_proc! {
+    /**
+    The linear combination `a * v1 + b * v2 + c * v3`.
+    */
+    #[allow(clippy::too_many_arguments)]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn vlcom3(
+        a: f64,
+        v1: [f64; 3],
+        b: f64,
+        v2: [f64; 3],
+        c: f64,
+        v3: [f64; 3]
+    ) -> [f64; 3] {
+    }
+}
+
+cspice_proc! {
+    /**
+    The quadratic form `v1 * matrix * v2`.
+    */
+    #[return_output]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn vtmv(v1: [f64; 3], matrix: [[f64; 3]; 3], v2: [f64; 3]) -> f64 {}
+}
+
+cspice_proc! {
+    /**
+    The 3x3 identity matrix.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn ident() -> [[f64; 3]; 3] {}
+}
+
+cspice_proc! {
+    /**
+    Copy a 3x3 matrix.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn mequ(m1: [[f64; 3]; 3]) -> [[f64; 3]; 3] {}
+}
+
+cspice_proc! {
+    /**
+    Transpose a 6x6 matrix.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn xpose6(m1: [[f64; 6]; 6]) -> [[f64; 6]; 6] {}
+}
+
+/* -------------------------------------------------------------------------------------------- */
+/* Coordinate conversions between non-rectangular systems                                         */
+/* -------------------------------------------------------------------------------------------- */
+
+cspice_proc! {
+    /**
+    Convert from latitudinal to cylindrical coordinates.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn latcyl(radius: f64, lon: f64, lat: f64) -> (f64, f64, f64) {}
+}
+
+cspice_proc! {
+    /**
+    Convert from cylindrical to latitudinal coordinates.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn cyllat(r: f64, lonc: f64, z: f64) -> (f64, f64, f64) {}
+}
+
+cspice_proc! {
+    /**
+    Convert from latitudinal to spherical coordinates.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn latsph(radius: f64, lon: f64, lat: f64) -> (f64, f64, f64) {}
+}
+
+cspice_proc! {
+    /**
+    Convert from spherical to latitudinal coordinates.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn sphlat(r: f64, colat: f64, lons: f64) -> (f64, f64, f64) {}
+}
+
+cspice_proc! {
+    /**
+    Convert from cylindrical to spherical coordinates.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn cylsph(r: f64, lonc: f64, z: f64) -> (f64, f64, f64) {}
+}
+
+cspice_proc! {
+    /**
+    Convert from spherical to cylindrical coordinates.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn sphcyl(radius: f64, colat: f64, slon: f64) -> (f64, f64, f64) {}
+}
+
+cspice_proc! {
+    /**
+    Convert from range, azimuth and elevation to rectangular coordinates.
+
+    `azccw` says whether azimuth increases counterclockwise, `elplsz` whether elevation is positive
+    toward `+z`.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn azlrec(range: f64, az: f64, el: f64, azccw: bool, elplsz: bool) -> [f64; 3] {}
+}
+
+cspice_proc! {
+    /**
+    Convert from rectangular coordinates to range, azimuth and elevation.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn recazl(rectan: [f64; 3], azccw: bool, elplsz: bool) -> (f64, f64, f64) {}
+}
+
+/* -------------------------------------------------------------------------------------------- */
+/* Jacobians of the coordinate conversions                                                        */
+/* -------------------------------------------------------------------------------------------- */
+
+cspice_proc! {
+    /**
+    Jacobian of the transformation from rectangular to latitudinal coordinates.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn dlatdr(x: f64, y: f64, z: f64) -> [[f64; 3]; 3] {}
+}
+
+cspice_proc! {
+    /**
+    Jacobian of the transformation from latitudinal to rectangular coordinates.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn drdlat(r: f64, lon: f64, lat: f64) -> [[f64; 3]; 3] {}
+}
+
+cspice_proc! {
+    /**
+    Jacobian of the transformation from rectangular to spherical coordinates.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn dsphdr(x: f64, y: f64, z: f64) -> [[f64; 3]; 3] {}
+}
+
+cspice_proc! {
+    /**
+    Jacobian of the transformation from spherical to rectangular coordinates.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn drdsph(r: f64, colat: f64, lon: f64) -> [[f64; 3]; 3] {}
+}
+
+cspice_proc! {
+    /**
+    Jacobian of the transformation from rectangular to cylindrical coordinates.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn dcyldr(x: f64, y: f64, z: f64) -> [[f64; 3]; 3] {}
+}
+
+cspice_proc! {
+    /**
+    Jacobian of the transformation from cylindrical to rectangular coordinates.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn drdcyl(r: f64, lon: f64, z: f64) -> [[f64; 3]; 3] {}
+}
+
+cspice_proc! {
+    /**
+    Jacobian of the transformation from rectangular to geodetic coordinates.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn dgeodr(x: f64, y: f64, z: f64, re: f64, f: f64) -> [[f64; 3]; 3] {}
+}
+
+cspice_proc! {
+    /**
+    Jacobian of the transformation from geodetic to rectangular coordinates.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn drdgeo(lon: f64, lat: f64, alt: f64, re: f64, f: f64) -> [[f64; 3]; 3] {}
+}
+
+cspice_proc! {
+    /**
+    Jacobian of the transformation from rectangular to planetographic coordinates.
+    */
+    #[allow(clippy::too_many_arguments)]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn dpgrdr(body: &str, x: f64, y: f64, z: f64, re: f64, f: f64) -> [[f64; 3]; 3] {}
+}
+
+cspice_proc! {
+    /**
+    Jacobian of the transformation from planetographic to rectangular coordinates.
+    */
+    #[allow(clippy::too_many_arguments)]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn drdpgr(body: &str, lon: f64, lat: f64, alt: f64, re: f64, f: f64) -> [[f64; 3]; 3] {}
+}
+
+cspice_proc! {
+    /**
+    Jacobian of the transformation from rectangular to azimuth/elevation coordinates.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn dazldr(x: f64, y: f64, z: f64, azccw: bool, elplsz: bool) -> [[f64; 3]; 3] {}
+}
+
+cspice_proc! {
+    /**
+    Jacobian of the transformation from azimuth/elevation to rectangular coordinates.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn drdazl(range: f64, az: f64, el: f64, azccw: bool, elplsz: bool) -> [[f64; 3]; 3] {}
+}
+
+cspice_proc! {
+    /**
+    Transform a state between two coordinate systems.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn xfmsta(
+        input_state: [f64; 6],
+        input_coord_sys: &str,
+        output_coord_sys: &str,
+        body: &str
+    ) -> [f64; 6] {
+    }
+}
+
 /* -------------------------------------------------------------------------------------------- */
 
 cspice_proc! {

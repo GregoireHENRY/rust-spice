@@ -141,3 +141,107 @@ fn twovec() {
     }
     assert_relative_eq!(spice::det(matrix), 1.0, epsilon = 1e-14);
 }
+
+#[test]
+#[serial]
+fn packing() {
+    assert_eq!(spice::vpack(1.0, 2.0, 3.0), A);
+    assert_eq!(spice::vupack(A), (1.0, 2.0, 3.0));
+
+    assert!(spice::vzero([0.0; 3]));
+    assert!(!spice::vzero(A));
+}
+
+#[test]
+#[serial]
+fn projections() {
+    // Projecting onto an axis keeps only that component; the perpendicular part keeps the rest.
+    assert_slice_eq(&spice::vproj(A, [1.0, 0.0, 0.0]), &[1.0, 0.0, 0.0], 1e-15);
+    assert_slice_eq(&spice::vperp(A, [1.0, 0.0, 0.0]), &[0.0, 2.0, 3.0], 1e-15);
+
+    // The two parts add back up, and are orthogonal.
+    let (along, across) = (spice::vproj(A, B), spice::vperp(A, B));
+    assert_slice_eq(&spice::vadd(along, across), &A, 1e-14);
+    assert_relative_eq!(spice::vdot(along, across), 0.0, epsilon = 1e-14);
+}
+
+#[test]
+#[serial]
+fn combinations() {
+    assert_slice_eq(&spice::vlcom(2.0, A, 3.0, B), &[14.0, -11.0, 24.0], 1e-14);
+    assert_slice_eq(
+        &spice::vlcom3(1.0, A, 1.0, B, 1.0, [1.0, 1.0, 1.0]),
+        &[6.0, -2.0, 10.0],
+        1e-14,
+    );
+
+    // `vlcom` agrees with scaling and adding by hand.
+    assert_slice_eq(
+        &spice::vlcom(2.0, A, 3.0, B),
+        &spice::vadd(spice::vscl(2.0, A), spice::vscl(3.0, B)),
+        1e-14,
+    );
+}
+
+#[test]
+#[serial]
+fn rotating_a_vector() {
+    let quarter = std::f64::consts::FRAC_PI_2;
+
+    // A quarter turn about +z takes +x to +y.
+    assert_slice_eq(
+        &spice::vrotv([1.0, 0.0, 0.0], [0.0, 0.0, 1.0], quarter),
+        &[0.0, 1.0, 0.0],
+        1e-15,
+    );
+    // A vector along the axis is unchanged.
+    assert_slice_eq(
+        &spice::vrotv([0.0, 0.0, 5.0], [0.0, 0.0, 1.0], quarter),
+        &[0.0, 0.0, 5.0],
+        1e-15,
+    );
+
+    // It agrees with building the matrix and applying it.
+    assert_slice_eq(
+        &spice::vrotv(A, [1.0, 1.0, 1.0], 0.7),
+        &spice::mxv(spice::axisar([1.0, 1.0, 1.0], 0.7), A),
+        1e-14,
+    );
+}
+
+#[test]
+#[serial]
+fn quadratic_form_and_identity() {
+    let identity = spice::ident();
+    assert_matrix_eq(
+        &identity,
+        &[[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]],
+        0.0,
+    );
+    assert_matrix_eq(&spice::mequ(M), &M, 0.0);
+    assert_matrix_eq(&spice::mxm(M, identity), &M, 0.0);
+
+    // With the identity in the middle, the quadratic form is just the dot product.
+    assert_relative_eq!(
+        spice::vtmv(A, identity, B),
+        spice::vdot(A, B),
+        epsilon = 1e-14
+    );
+    // The quadratic form is the dot product of `A` with `M * B`.
+    assert_relative_eq!(
+        spice::vtmv(A, M, B),
+        spice::vdot(A, spice::mxv(M, B)),
+        epsilon = 1e-12
+    );
+    assert_relative_eq!(spice::vtmv(A, M, B), 210.0, epsilon = 1e-12);
+
+    // Transposing a 6x6 twice is the identity on it.
+    let mut big = [[0.0; 6]; 6];
+    for (row, line) in big.iter_mut().enumerate() {
+        for (col, cell) in line.iter_mut().enumerate() {
+            *cell = (row * 6 + col) as f64;
+        }
+    }
+    assert_eq!(spice::xpose6(spice::xpose6(big)), big);
+    assert_eq!(spice::xpose6(big)[1][4], big[4][1]);
+}
