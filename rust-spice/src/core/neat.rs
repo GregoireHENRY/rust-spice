@@ -170,6 +170,87 @@ pub fn gcpool(name: &str, start: usize, room: usize) -> Vec<String> {
 }
 
 /**
+Fetch the `nth` string of a kernel pool variable, re-joining continuation lines.
+
+See [`raw::stpool`] for the raw interface.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn stpool(item: &str, nth: i32, contin: &str) -> (String, i32, bool) {
+    raw::stpool(item, nth, contin, MAX_LEN_OUT)
+}
+
+/**
+Determine the architecture and type of a SPICE kernel file.
+
+See [`raw::getfat`] for the raw interface.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn getfat(file: &str) -> (String, String) {
+    raw::getfat(file, MAX_LEN_OUT, MAX_LEN_OUT)
+}
+
+/**
+Return the field of view of an instrument given its name.
+
+See [`raw::getfvn`] for the raw interface.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn getfvn(inst: &str, room: usize) -> (String, String, [f64; 3], Vec<[f64; 3]>) {
+    raw::getfvn(inst, room, MAX_LEN_OUT, MAX_LEN_OUT)
+}
+
+/**
+The local solar time at a longitude on a body.
+
+See [`raw::et2lst`] for the raw interface.
+*/
+#[allow(clippy::type_complexity)]
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn et2lst(et: f64, body: i32, lon: f64, kind: &str) -> (i32, i32, i32, String, String) {
+    raw::et2lst(et, body, lon, kind, MAX_LEN_OUT, MAX_LEN_OUT)
+}
+
+/**
+Build a time format picture from a sample time string.
+
+See [`raw::tpictr`] for the raw interface.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn tpictr(sample: &str) -> (String, bool, String) {
+    raw::tpictr(sample, MAX_LEN_OUT, MAX_LEN_OUT)
+}
+
+/**
+Set or retrieve a default used by the time routines.
+
+See [`raw::timdef`] for the raw interface.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn timdef(action: &str, item: &str, value: &str) -> String {
+    raw::timdef(action, item, value, MAX_LEN_OUT)
+}
+
+/**
+The name of the routine at a given depth in the traceback.
+
+See [`raw::trcnam`] for the raw interface.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn trcnam(index: i32) -> String {
+    raw::trcnam(index, MAX_LEN_OUT as i32)
+}
+
+/**
+Replace a marker in a string with the cardinal text of an integer.
+
+See [`raw::repmct`] for the raw interface.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn repmct(input: &str, marker: &str, value: i32, strcase: char) -> String {
+    raw::repmct(input, marker, value, strcase, MAX_LEN_OUT as i32)
+}
+
+/**
 Search for the segment of an SPK that covers a body at an epoch.
 
 See [`raw::spksfs`] for the raw interface.

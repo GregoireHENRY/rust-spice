@@ -90,7 +90,8 @@ pub const STEP: f64 = 3600.0;
 /// An epoch comfortably inside the coverage, used by most tests.
 pub const EPOCH: f64 = 86400.0;
 
-const LSK: &str = r#"
+const LSK: &str = r#"KPL/LSK
+
 \begindata
 DELTET/DELTA_T_A = 32.184
 DELTET/K         = 1.657D-3
@@ -127,7 +128,8 @@ DELTET/DELTA_AT  = ( 10, @1972-JAN-1
 \begintext
 "#;
 
-const PCK: &str = r#"
+const PCK: &str = r#"KPL/PCK
+
 \begindata
 BODY399_RADII    = ( 6378.1366 6378.1366 6356.7519 )
 BODY399_POLE_RA  = (    0.      -0.641        0.   )
@@ -152,7 +154,8 @@ NAIF_SURFACE_BODY += ( 399 )
 \begintext
 "#;
 
-const FK: &str = r#"
+const FK: &str = r#"KPL/FK
+
 \begindata
 NAIF_BODY_NAME += ( 'TEST_SPACECRAFT' )
 NAIF_BODY_CODE += ( -999 )
@@ -180,7 +183,8 @@ TKFRAME_-999001_UNITS     = 'DEGREES'
 \begintext
 "#;
 
-const SCLK: &str = r#"
+const SCLK: &str = r#"KPL/SCLK
+
 \begindata
 SCLK_KERNEL_ID             = ( @2000-01-01/00:00:00 )
 SCLK_DATA_TYPE_999         = ( 1 )
@@ -197,7 +201,8 @@ SCLK01_COEFFICIENTS_999    = ( 0.0000000000000E+00
 \begintext
 "#;
 
-const IK: &str = r#"
+const IK: &str = r#"KPL/IK
+
 \begindata
 INS-999000_FOV_CLASS_SPEC  = 'ANGLES'
 INS-999000_FOV_SHAPE       = 'RECTANGLE'
@@ -414,7 +419,7 @@ fn build() {
     write(
         "test.tm",
         &format!(
-            "\\begindata\n\
+            "KPL/MK\n\n\\begindata\n\
              PATH_VALUES     = (\n    {}\n)\n\
              PATH_SYMBOLS    = ( 'TESTS' )\n\
              KERNELS_TO_LOAD = (\n{})\n\

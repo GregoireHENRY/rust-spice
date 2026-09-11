@@ -33,6 +33,7 @@ pub(crate) use crate::core::*;
 // These items need to be exposed regardless of whether 'lock' is enabled or not
 pub use crate::core::cell::{Cell, CellItem, CELL_MAXID, CELL_MAX_LEN};
 pub use crate::core::raw::{dsk02, ELLIPSE, PLANE};
+// GENERATED: the constants of `raw`, which `lock` would otherwise put out of reach.
 pub use crate::core::raw::{
     DAF_MAXSUM, DSK02_SPADSZ, DSKXSI_DCSIZE, DSKXSI_ICSIZE, DSK_KEYAMG, DSK_KEYLAL, DSK_KEYPTM,
     DSK_KEYSGR, DSK_KEYSPM, DSK_KEYXFR, DSK_NSYPAR, SPK_DSCSIZ, TLE_NELTS, TLE_NGEOPHS,

@@ -6262,6 +6262,803 @@ pub fn scpart(sc: i32, maxparts: usize) -> (Vec<f64>, Vec<f64>) {
 }
 
 /* -------------------------------------------------------------------------------------------- */
+/* Interpolation and polynomials                                                                  */
+/* -------------------------------------------------------------------------------------------- */
+
+/**
+Evaluate a Chebyshev expansion at `x`, returning the value and its derivative.
+
+`x2s` holds the midpoint and radius of the interval the expansion is defined on.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn chbint(cp: &[f64], degp: i32, x2s: [f64; 2], x: f64) -> (f64, f64) {
+    let (mut p, mut dpdx) = (0.0, 0.0);
+    unsafe {
+        crate::c::chbint_c(
+            cp.as_ptr() as *mut SpiceDouble,
+            degp,
+            x2s.as_ptr() as *mut SpiceDouble,
+            x,
+            &mut p,
+            &mut dpdx,
+        )
+    };
+    (p, dpdx)
+}
+
+/**
+Evaluate a Chebyshev expansion at `x`.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn chbval(cp: &[f64], degp: i32, x2s: [f64; 2], x: f64) -> f64 {
+    let mut p = 0.0;
+    unsafe {
+        crate::c::chbval_c(
+            cp.as_ptr() as *mut SpiceDouble,
+            degp,
+            x2s.as_ptr() as *mut SpiceDouble,
+            x,
+            &mut p,
+        )
+    };
+    p
+}
+
+/**
+Evaluate a Chebyshev expansion at `x`, returning the value and its indefinite integral.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn chbigr(degp: i32, cp: &[f64], x2s: [f64; 2], x: f64) -> (f64, f64) {
+    let (mut p, mut itgrlp) = (0.0, 0.0);
+    unsafe {
+        crate::c::chbigr_c(
+            degp,
+            cp.as_ptr() as *mut SpiceDouble,
+            x2s.as_ptr() as *mut SpiceDouble,
+            x,
+            &mut p,
+            &mut itgrlp,
+        )
+    };
+    (p, itgrlp)
+}
+
+/**
+Evaluate a Chebyshev expansion and its first `nderiv` derivatives at `x`.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn chbder(cp: &[f64], degp: i32, x2s: [f64; 2], x: f64, nderiv: i32) -> Vec<f64> {
+    let count = nderiv.max(0) as usize + 1;
+    let mut partdp = vec![0.0; 3 * count.max(1)];
+    let mut dpdxs = vec![0.0; count.max(1)];
+    let mut x2s = x2s;
+    unsafe {
+        crate::c::chbder_c(
+            cp.as_ptr() as *mut SpiceDouble,
+            degp,
+            x2s.as_mut_ptr(),
+            x,
+            nderiv,
+            partdp.as_mut_ptr(),
+            dpdxs.as_mut_ptr(),
+        )
+    };
+    dpdxs
+}
+
+/**
+Evaluate a polynomial and its first `nderiv` derivatives at `t`.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn polyds(coeffs: &[f64], deg: i32, nderiv: i32, t: f64) -> Vec<f64> {
+    let mut p = vec![0.0; nderiv.max(0) as usize + 1];
+    unsafe {
+        crate::c::polyds_c(
+            coeffs.as_ptr() as *mut SpiceDouble,
+            deg,
+            nderiv,
+            t,
+            p.as_mut_ptr(),
+        )
+    };
+    p
+}
+
+/**
+Hermite interpolate a function and its derivative at evenly spaced points.
+
+`yvals` holds the value and derivative at each point, in pairs.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn hrmesp(first: f64, step: f64, yvals: &[f64], x: f64) -> (f64, f64) {
+    let n = (yvals.len() / 2) as SpiceInt;
+    let (mut f, mut df) = (0.0, 0.0);
+    unsafe {
+        crate::c::hrmesp_c(
+            n,
+            first,
+            step,
+            yvals.as_ptr() as *mut SpiceDouble,
+            x,
+            &mut f,
+            &mut df,
+        )
+    };
+    (f, df)
+}
+
+/**
+Hermite interpolate a function and its derivative at unevenly spaced points.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn hrmint(xvals: &[f64], yvals: &[f64], x: f64) -> (f64, f64) {
+    let n = xvals.len() as SpiceInt;
+    let mut work = vec![0.0; (4 * xvals.len() + 4).max(1)];
+    let (mut f, mut df) = (0.0, 0.0);
+    unsafe {
+        crate::c::hrmint_c(
+            n,
+            xvals.as_ptr() as *mut SpiceDouble,
+            yvals.as_ptr() as *mut SpiceDouble,
+            x,
+            work.as_mut_ptr(),
+            &mut f,
+            &mut df,
+        )
+    };
+    (f, df)
+}
+
+/**
+Lagrange interpolate a function at evenly spaced points.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn lgresp(first: f64, step: f64, yvals: &[f64], x: f64) -> f64 {
+    unsafe {
+        crate::c::lgresp_c(
+            yvals.len() as SpiceInt,
+            first,
+            step,
+            yvals.as_ptr() as *mut SpiceDouble,
+            x,
+        )
+    }
+}
+
+/**
+Lagrange interpolate a function at unevenly spaced points.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn lgrint(xvals: &[f64], yvals: &[f64], x: f64) -> f64 {
+    unsafe {
+        crate::c::lgrint_c(
+            xvals.len() as SpiceInt,
+            xvals.as_ptr() as *mut SpiceDouble,
+            yvals.as_ptr() as *mut SpiceDouble,
+            x,
+        )
+    }
+}
+
+/**
+Lagrange interpolate a function and its derivative at unevenly spaced points.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn lgrind(xvals: &[f64], yvals: &[f64], x: f64) -> (f64, f64) {
+    let mut work = vec![0.0; (2 * xvals.len() + 2).max(1)];
+    let (mut p, mut dp) = (0.0, 0.0);
+    unsafe {
+        crate::c::lgrind_c(
+            xvals.len() as SpiceInt,
+            xvals.as_ptr() as *mut SpiceDouble,
+            yvals.as_ptr() as *mut SpiceDouble,
+            work.as_mut_ptr(),
+            x,
+            &mut p,
+            &mut dp,
+        )
+    };
+    (p, dp)
+}
+
+/**
+Estimate a derivative by the central difference of a function sampled either side of a point.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn qderiv(f0: &[f64], f2: &[f64], delta: f64) -> Vec<f64> {
+    let ndim = f0.len().min(f2.len());
+    let mut dfdt = vec![0.0; ndim.max(1)];
+    unsafe {
+        crate::c::qderiv_c(
+            ndim as SpiceInt,
+            f0.as_ptr() as *mut SpiceDouble,
+            f2.as_ptr() as *mut SpiceDouble,
+            delta,
+            dfdt.as_mut_ptr(),
+        )
+    };
+    dfdt.truncate(ndim);
+    dfdt
+}
+
+/* -------------------------------------------------------------------------------------------- */
+/* Plates                                                                                         */
+/* -------------------------------------------------------------------------------------------- */
+
+/**
+The total area of a set of triangular plates.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn pltar(vrtces: &[[f64; 3]], plates: &[[i32; 3]]) -> f64 {
+    unsafe {
+        crate::c::pltar_c(
+            vrtces.len() as SpiceInt,
+            vrtces.as_ptr() as *mut [f64; 3],
+            plates.len() as SpiceInt,
+            plates.as_ptr() as *mut [SpiceInt; 3],
+        )
+    }
+}
+
+/**
+The volume enclosed by a set of triangular plates.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn pltvol(vrtces: &[[f64; 3]], plates: &[[i32; 3]]) -> f64 {
+    unsafe {
+        crate::c::pltvol_c(
+            vrtces.len() as SpiceInt,
+            vrtces.as_ptr() as *mut [f64; 3],
+            plates.len() as SpiceInt,
+            plates.as_ptr() as *mut [SpiceInt; 3],
+        )
+    }
+}
+
+cspice_proc! {
+    /**
+    The outward normal of a triangular plate, scaled by twice its area.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn pltnrm(v1: [f64; 3], v2: [f64; 3], v3: [f64; 3]) -> [f64; 3] {}
+}
+
+cspice_proc! {
+    /**
+    The point of a triangular plate nearest a given point, and the distance between them.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn pltnp(
+        point: [f64; 3],
+        v1: [f64; 3],
+        v2: [f64; 3],
+        v3: [f64; 3]
+    ) -> ([f64; 3], f64) {
+    }
+}
+
+cspice_proc! {
+    /**
+    Diagonalize a symmetric 2x2 matrix, returning the diagonal and the rotation that produces it.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn diags2(symmat: [[f64; 2]; 2]) -> ([[f64; 2]; 2], [[f64; 2]; 2]) {}
+}
+
+/* -------------------------------------------------------------------------------------------- */
+/* More searches, sets and the kernel pool                                                        */
+/* -------------------------------------------------------------------------------------------- */
+
+/// Linear search of an unordered array, for the three element types.
+macro_rules! linear_search {
+    ($($name:ident($ty:ty) => $cname:ident, $doc:expr);* $(;)?) => {$(
+        #[doc = $doc]
+        ///
+        /// Returns the index found, or `-1`.
+        #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+        pub fn $name(value: $ty, array: &[$ty]) -> i32 {
+            unsafe { crate::c::$cname(value, array.len() as SpiceInt, array.as_ptr() as *mut _) }
+        }
+    )*};
+}
+
+linear_search! {
+    isrchd(f64) => isrchd_c, "Search an unordered array of doubles.";
+    isrchi(i32) => isrchi_c, "Search an unordered array of integers.";
+}
+
+/**
+Search an unordered array of strings.
+
+Returns the index found, or `-1`.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn isrchc<S: AsRef<str>>(value: &str, array: &[S]) -> i32 {
+    let value = to_cstring(value);
+    let (buffer, stride) = to_strided(array);
+    unsafe {
+        crate::c::isrchc_c(
+            value.as_ptr() as *mut SpiceChar,
+            array.len() as SpiceInt,
+            stride as SpiceInt,
+            buffer.as_ptr().cast(),
+        )
+    }
+}
+
+/// The ordinal position of an item within a set, for the three element types.
+macro_rules! ordinal {
+    ($($name:ident($ty:ty, $cell:ty) => $cname:ident, $doc:expr);* $(;)?) => {$(
+        #[doc = $doc]
+        ///
+        /// Positions run from zero; the result is `-1` when the item is not in the set.
+        #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+        pub fn $name(item: $ty, set: &mut Cell<$cell>) -> i32 {
+            let raw = set.as_mut_ptr();
+            unsafe { crate::c::$cname(item, raw) }
+        }
+    )*};
+}
+
+ordinal! {
+    ordd(f64, f64) => ordd_c, "The ordinal position of a double precision number in a set.";
+    ordi(i32, i32) => ordi_c, "The ordinal position of an integer in a set.";
+}
+
+/**
+The ordinal position of a string in a set, counting from zero, or `-1` when it is absent.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn ordc(item: &str, set: &mut Cell<String>) -> i32 {
+    let item = to_cstring(item);
+    let raw = set.as_mut_ptr();
+    unsafe { crate::c::ordc_c(item.as_ptr() as *mut SpiceChar, raw) }
+}
+
+cspice_proc! {
+    /**
+    Place the symmetric difference of two sets into `c`.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn sdiff<T: CellItem>(a: &mut Cell<T>, b: &mut Cell<T>, c: &mut Cell<T>) {}
+}
+
+cspice_proc! {
+    /**
+    Compare two sets; `op` is one of `"="`, `"<>"`, `"<="`, `"<"`, `">="` or `">"`.
+    */
+    #[return_output]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn set<T: CellItem>(a: &mut Cell<T>, op: &str, b: &mut Cell<T>) -> bool {}
+}
+
+cspice_proc! {
+    /**
+    Parse a list on any of a set of delimiters, into a set of unique items.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn lparss(list: &str, delims: &str, set: &mut Cell<String>) {}
+}
+
+cspice_proc! {
+    /**
+    Find the frame ID codes of all reference frames of a given class in the kernel pool.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn kplfrm(frmcls: i32, idset: &mut Cell<i32>) {}
+}
+
+/**
+Load the variables of a text kernel held in memory, rather than in a file.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn lmpool<S: AsRef<str>>(cvals: &[S]) {
+    let (buffer, lenvals) = to_strided(cvals);
+    unsafe {
+        crate::c::lmpool_c(
+            buffer.as_ptr().cast(),
+            lenvals as SpiceInt,
+            cvals.len() as SpiceInt,
+        )
+    }
+}
+
+cspice_proc! {
+    /**
+    The value of a kernel pool parameter, such as `"MAXVAR"`, `"MAXLEN"` or `"MAXVAL"`.
+
+    This is about the pool's own limits, not about any variable in it; [`dtpool`] reports how many
+    values a variable holds.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn szpool(name: &str) -> (i32, bool) {}
+}
+
+/**
+Fetch the `nth` string of a kernel pool variable, re-joining any continuation lines.
+
+Returns the string, its length, and whether it was found.
+
+This function has a [neat version][crate::neat::stpool].
+*/
+pub fn stpool(item: &str, nth: i32, contin: &str, lenout: usize) -> (String, i32, bool) {
+    let item = to_cstring(item);
+    let contin = to_cstring(contin);
+    let mut string = vec![0 as SpiceChar; lenout.max(1)];
+    let (mut size, mut found) = (0, 0);
+    unsafe {
+        crate::c::stpool_c(
+            item.as_ptr() as *mut SpiceChar,
+            nth,
+            contin.as_ptr() as *mut SpiceChar,
+            lenout as SpiceInt,
+            string.as_mut_ptr(),
+            &mut size,
+            &mut found,
+        )
+    };
+    (from_cbuf(&string), size, found != 0)
+}
+
+/* -------------------------------------------------------------------------------------------- */
+/* Files, frames and time, the remainder                                                          */
+/* -------------------------------------------------------------------------------------------- */
+
+cspice_proc! {
+    /**
+    Whether a file exists.
+    */
+    #[return_output]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn exists(name: &str) -> bool {}
+}
+
+/**
+Determine the architecture and type of a SPICE kernel file.
+
+This function has a [neat version][crate::neat::getfat].
+*/
+pub fn getfat(file: &str, arclen: usize, typlen: usize) -> (String, String) {
+    let file = to_cstring(file);
+    let mut arch = vec![0 as SpiceChar; arclen.max(1)];
+    let mut kind = vec![0 as SpiceChar; typlen.max(1)];
+    unsafe {
+        crate::c::getfat_c(
+            file.as_ptr() as *mut SpiceChar,
+            arclen as SpiceInt,
+            typlen as SpiceInt,
+            arch.as_mut_ptr(),
+            kind.as_mut_ptr(),
+        )
+    };
+    (from_cbuf(&arch), from_cbuf(&kind))
+}
+
+/**
+Read the next line of a text file, opening it if it is not already open.
+
+Returns the line and whether the end of the file has been reached.
+
+The file stays open until it has been read to the end, and CSPICE refuses to load a file it already
+has open, so an abandoned partial read makes that file unloadable. The C API has no counterpart to
+Fortran's `CLTEXT` to close one early.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn rdtext(file: &str, lenout: usize) -> (String, bool) {
+    let file = to_cstring(file);
+    let mut line = vec![0 as SpiceChar; lenout.max(1)];
+    let mut eof = 0;
+    unsafe {
+        crate::c::rdtext_c(
+            file.as_ptr() as *mut SpiceChar,
+            lenout as SpiceInt,
+            line.as_mut_ptr(),
+            &mut eof,
+        )
+    };
+    (from_cbuf(&line), eof != 0)
+}
+
+cspice_proc! {
+    /**
+    The centre, class and class ID of a reference frame.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn frinfo(frcode: i32) -> (i32, i32, i32, bool) {}
+}
+
+/**
+Build a right handed orthonormal frame from a vector, which is normalised in place.
+
+Returns the normalised input and the two vectors completing the frame.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn frame(x: [f64; 3]) -> ([f64; 3], [f64; 3], [f64; 3]) {
+    let mut x = x;
+    let (mut y, mut z) = ([0.0; 3], [0.0; 3]);
+    unsafe { crate::c::frame_c(x.as_mut_ptr(), y.as_mut_ptr(), z.as_mut_ptr()) };
+    (x, y, z)
+}
+
+/*
+These two take their epoch through a `SpiceDouble *` rather than by value, so they cannot go
+through the macro.
+*/
+
+/**
+Whether a ray is in the field of view of an instrument at a given epoch.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn fovray(
+    inst: &str,
+    raydir: [f64; 3],
+    rframe: &str,
+    abcorr: &str,
+    obsrvr: &str,
+    et: f64,
+) -> bool {
+    let inst = to_cstring(inst);
+    let rframe = to_cstring(rframe);
+    let abcorr = to_cstring(abcorr);
+    let obsrvr = to_cstring(obsrvr);
+    let mut raydir = raydir;
+    let mut et = et;
+    let mut visible = 0;
+    unsafe {
+        crate::c::fovray_c(
+            inst.as_ptr() as *mut SpiceChar,
+            raydir.as_mut_ptr(),
+            rframe.as_ptr() as *mut SpiceChar,
+            abcorr.as_ptr() as *mut SpiceChar,
+            obsrvr.as_ptr() as *mut SpiceChar,
+            &mut et,
+            &mut visible,
+        )
+    };
+    visible != 0
+}
+
+/**
+Whether a target is in the field of view of an instrument at a given epoch.
+*/
+#[allow(clippy::too_many_arguments)]
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn fovtrg(
+    inst: &str,
+    target: &str,
+    tshape: &str,
+    tframe: &str,
+    abcorr: &str,
+    obsrvr: &str,
+    et: f64,
+) -> bool {
+    let inst = to_cstring(inst);
+    let target = to_cstring(target);
+    let tshape = to_cstring(tshape);
+    let tframe = to_cstring(tframe);
+    let abcorr = to_cstring(abcorr);
+    let obsrvr = to_cstring(obsrvr);
+    let mut et = et;
+    let mut visible = 0;
+    unsafe {
+        crate::c::fovtrg_c(
+            inst.as_ptr() as *mut SpiceChar,
+            target.as_ptr() as *mut SpiceChar,
+            tshape.as_ptr() as *mut SpiceChar,
+            tframe.as_ptr() as *mut SpiceChar,
+            abcorr.as_ptr() as *mut SpiceChar,
+            obsrvr.as_ptr() as *mut SpiceChar,
+            &mut et,
+            &mut visible,
+        )
+    };
+    visible != 0
+}
+
+cspice_proc! {
+    /**
+    Find the illumination angles at a surface point, with the illumination source named separately.
+    */
+    #[allow(clippy::too_many_arguments)]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn illumg(
+        method: &str,
+        target: &str,
+        ilusrc: &str,
+        et: f64,
+        fixref: &str,
+        abcorr: &str,
+        obsrvr: &str,
+        spoint: [f64; 3]
+    ) -> (f64, [f64; 3], f64, f64, f64) {
+    }
+}
+
+/**
+Return the field of view of an instrument, given its name, with the boundary vectors in the
+instrument frame.
+
+This function has a [neat version][crate::neat::getfvn].
+*/
+pub fn getfvn(
+    inst: &str,
+    room: usize,
+    shalen: usize,
+    fralen: usize,
+) -> (String, String, [f64; 3], Vec<[f64; 3]>) {
+    let inst = to_cstring(inst);
+    let mut shape = vec![0 as SpiceChar; shalen.max(1)];
+    let mut frame = vec![0 as SpiceChar; fralen.max(1)];
+    let mut bsight = [0.0; 3];
+    let mut n = 0;
+    let mut bounds = vec![[0.0; 3]; room.max(1)];
+    unsafe {
+        crate::c::getfvn_c(
+            inst.as_ptr() as *mut SpiceChar,
+            room as SpiceInt,
+            shalen as SpiceInt,
+            fralen as SpiceInt,
+            shape.as_mut_ptr(),
+            frame.as_mut_ptr(),
+            bsight.as_mut_ptr(),
+            &mut n,
+            bounds.as_mut_ptr(),
+        )
+    };
+    bounds.truncate(n.max(0) as usize);
+    (from_cbuf(&shape), from_cbuf(&frame), bsight, bounds)
+}
+
+/**
+The local solar time at a longitude on a body.
+
+Returns the hour, minute and second, then the time string and the AM/PM form.
+*/
+#[allow(clippy::type_complexity)]
+pub fn et2lst(
+    et: f64,
+    body: i32,
+    lon: f64,
+    kind: &str,
+    timlen: usize,
+    ampmlen: usize,
+) -> (i32, i32, i32, String, String) {
+    let kind = to_cstring(kind);
+    let mut time = vec![0 as SpiceChar; timlen.max(1)];
+    let mut ampm = vec![0 as SpiceChar; ampmlen.max(1)];
+    let (mut hr, mut mn, mut sc) = (0, 0, 0);
+    unsafe {
+        crate::c::et2lst_c(
+            et,
+            body,
+            lon,
+            kind.as_ptr() as *mut SpiceChar,
+            timlen as SpiceInt,
+            ampmlen as SpiceInt,
+            &mut hr,
+            &mut mn,
+            &mut sc,
+            time.as_mut_ptr(),
+            ampm.as_mut_ptr(),
+        )
+    };
+    (hr, mn, sc, from_cbuf(&time), from_cbuf(&ampm))
+}
+
+/**
+Build a time format picture from a sample time string.
+
+Returns the picture, whether the sample was understood, and the error if it was not.
+*/
+pub fn tpictr(sample: &str, lenpictur: usize, lenerror: usize) -> (String, bool, String) {
+    let sample = to_cstring(sample);
+    let mut pictur = vec![0 as SpiceChar; lenpictur.max(1)];
+    let mut errmsg = vec![0 as SpiceChar; lenerror.max(1)];
+    let mut ok = 0;
+    unsafe {
+        crate::c::tpictr_c(
+            sample.as_ptr() as *mut SpiceChar,
+            lenpictur as SpiceInt,
+            lenerror as SpiceInt,
+            pictur.as_mut_ptr(),
+            &mut ok,
+            errmsg.as_mut_ptr(),
+        )
+    };
+    (from_cbuf(&pictur), ok != 0, from_cbuf(&errmsg))
+}
+
+/**
+Set or retrieve a default used by the time routines.
+
+`action` is `"SET"` or `"GET"`; the current value is returned either way.
+*/
+pub fn timdef(action: &str, item: &str, value: &str, lenout: usize) -> String {
+    let action = to_cstring(action);
+    let item = to_cstring(item);
+    let mut buffer = vec![0 as SpiceChar; lenout.max(value.len() + 1)];
+    for (target, byte) in buffer.iter_mut().zip(value.as_bytes()) {
+        *target = *byte as SpiceChar;
+    }
+    unsafe {
+        crate::c::timdef_c(
+            action.as_ptr() as *mut SpiceChar,
+            item.as_ptr() as *mut SpiceChar,
+            buffer.len() as SpiceInt,
+            buffer.as_mut_ptr(),
+        )
+    };
+    from_cbuf(&buffer)
+}
+
+cspice_proc! {
+    /**
+    The name of the routine at a given depth in the traceback.
+    */
+    pub fn trcnam(index: i32, #[lenout] namelen: i32) -> String {}
+}
+
+cspice_proc! {
+    /**
+    Disable the traceback, which cannot be turned back on.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn trcoff() {}
+}
+
+cspice_proc! {
+    /**
+    Replace a marker in a string with the cardinal text of an integer.
+    */
+    pub fn repmct(
+        input: &str,
+        marker: &str,
+        value: i32,
+        strcase: char,
+        #[lenout] lenout: i32
+    ) -> String {
+    }
+}
+
+/**
+Extract the substring of a word that follows a keyword, from a list of terminating keywords.
+
+Returns the remaining string, whether the keyword was found, and the substring.
+*/
+#[allow(clippy::type_complexity)]
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn kxtrct<S: AsRef<str>>(
+    keywd: &str,
+    terms: &[S],
+    string: &str,
+    stringlen: usize,
+    substrlen: usize,
+) -> (String, bool, String) {
+    let keywd = to_cstring(keywd);
+    let (packed, termlen) = to_strided(terms);
+    let mut buffer = vec![0 as SpiceChar; stringlen.max(string.len() + 1)];
+    for (target, byte) in buffer.iter_mut().zip(string.as_bytes()) {
+        *target = *byte as SpiceChar;
+    }
+    let mut substr = vec![0 as SpiceChar; substrlen.max(1)];
+    let mut found = 0;
+    unsafe {
+        crate::c::kxtrct_c(
+            keywd.as_ptr() as *mut SpiceChar,
+            termlen as SpiceInt,
+            packed.as_ptr().cast(),
+            terms.len() as SpiceInt,
+            buffer.len() as SpiceInt,
+            substrlen as SpiceInt,
+            buffer.as_mut_ptr(),
+            &mut found,
+            substr.as_mut_ptr(),
+        )
+    };
+    (from_cbuf(&buffer), found != 0, from_cbuf(&substr))
+}
+
+/* -------------------------------------------------------------------------------------------- */
 /* Constants                                                                                      */
 /* -------------------------------------------------------------------------------------------- */
 
