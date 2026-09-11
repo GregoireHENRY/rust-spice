@@ -602,6 +602,48 @@ cspice_proc! {
     pub fn dskstl(keywrd: i32, dpval: f64) {}
 }
 
+/// Type 2 DSK keywords for [`dskd02`] and [`dski02`]; each belongs to one of the two.
+pub mod dsk02 {
+    /// Number of vertices in the model, an integer item.
+    pub const KWNV: i32 = 1;
+    /// Number of plates in the model, an integer item.
+    pub const KWNP: i32 = 2;
+    /// Total number of voxels in the fine grid, an integer item.
+    pub const KWNVXT: i32 = 3;
+    /// Voxel grid extent, an integer item.
+    pub const KWVGRX: i32 = 4;
+    /// Coarse voxel grid scale, an integer item.
+    pub const KWCGSC: i32 = 5;
+    /// Size of the voxel to plate pointer array, an integer item.
+    pub const KWVXPS: i32 = 6;
+    /// Voxel-plate correspondence list size, an integer item.
+    pub const KWVXLS: i32 = 7;
+    /// Vertex-plate correspondence list size, an integer item.
+    pub const KWVTLS: i32 = 8;
+    /// Plate array, an integer item.
+    pub const KWPLAT: i32 = 9;
+    /// Voxel-plate pointer list, an integer item.
+    pub const KWVXPT: i32 = 10;
+    /// Voxel-plate correspondence list, an integer item.
+    pub const KWVXPL: i32 = 11;
+    /// Vertex-plate pointer list, an integer item.
+    pub const KWVTPT: i32 = 12;
+    /// Vertex-plate correspondence list, an integer item.
+    pub const KWVTPL: i32 = 13;
+    /// Coarse voxel grid pointers, an integer item.
+    pub const KWCGPT: i32 = 14;
+    /// The segment descriptor, a double precision item.
+    pub const KWDSC: i32 = 15;
+    /// Vertex bounds, a double precision item.
+    pub const KWVTBD: i32 = 16;
+    /// Voxel grid origin, a double precision item.
+    pub const KWVXOR: i32 = 17;
+    /// Voxel size, a double precision item.
+    pub const KWVXSZ: i32 = 18;
+    /// Vertex coordinates, a double precision item.
+    pub const KWVERT: i32 = 19;
+}
+
 /// Size of the double precision component of a type 2 DSK spatial index.
 pub const DSK02_SPADSZ: usize = 10;
 
@@ -5389,6 +5431,834 @@ cspice_proc! {
     */
     #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
     pub fn dlafps(handle: i32, descr: DLADSC) -> (DLADSC, bool) {}
+}
+
+/* ---------------------------------------------------------------------------------------------- */
+/* Kernel readers and writers                                                                     */
+/* ---------------------------------------------------------------------------------------------- */
+
+cspice_proc! {
+    /**
+    Begin a type 14 SPK segment in the SPK file associated with `handle'.
+    */
+    #[allow(clippy::too_many_arguments)]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn spk14b(handle: i32, segid: &str, body: i32, center: i32, frame: &str, first: f64, last: f64, chbdeg: i32) {}
+}
+
+cspice_proc! {
+    /**
+    End the type 14 SPK segment currently being written to the SPK file associated with `handle'.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn spk14e(handle: i32) {}
+}
+
+cspice_proc! {
+    /**
+    Return the state (position and velocity) of a target body relative to an observer, optionally corrected for light time and stellar aberration, expressed relative to an inertial reference frame.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn spkacs(targ: i32, et: f64, frame: &str, abcorr: &str, obs: i32) -> ([f64; 6], f64, f64) {}
+}
+
+cspice_proc! {
+    /**
+    Return the position of a target body relative to an observer, optionally corrected for light time and stellar aberration.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn spkapo(targ: i32, et: f64, frame: &str, sobs: [f64; 6], abcorr: &str) -> ([f64; 3], f64) {}
+}
+
+cspice_proc! {
+    /**
+    Deprecated: This routine has been superseded by the CSPICE routine spkaps_c. This routine is supported for purposes of backward compatibility only.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn spkapp(targ: i32, et: f64, frame: &str, sobs: [f64; 6], abcorr: &str) -> ([f64; 6], f64) {}
+}
+
+cspice_proc! {
+    /**
+    Return the state (position and velocity) of a target body relative to an observer specified by its state and acceleration relative to the solar system barycenter. The returned state may be optionally corrected for light time and stellar aberration. All input and output vectors are expressed relative to an inertial reference frame.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn spkaps(targ: i32, et: f64, frame: &str, abcorr: &str, stobs: [f64; 6], accobs: [f64; 3]) -> ([f64; 6], f64, f64) {}
+}
+
+cspice_proc! {
+    /**
+    Compute the geometric position of a target body relative to an observing body.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn spkgps(targ: i32, et: f64, frame: &str, obs: i32) -> ([f64; 3], f64) {}
+}
+
+cspice_proc! {
+    /**
+    Return the state (position and velocity) of a target body relative to an observer, optionally corrected for light time, expressed relative to an inertial reference frame.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn spkltc(targ: i32, et: f64, frame: &str, abcorr: &str, stobs: [f64; 6]) -> ([f64; 6], f64, f64) {}
+}
+
+cspice_proc! {
+    /**
+    Perform routine error checks and if all check pass, pack the descriptor for an SPK segment
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn spkpds(body: i32, center: i32, frame: &str, kind: i32, first: f64, last: f64) -> [f64; 5] {}
+}
+
+cspice_proc! {
+    /**
+    Return, for a specified SPK segment and time, the state (position and velocity) of the segment's target body relative to its center of motion.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn spkpvn(handle: i32, descr: [f64; 5], et: f64) -> (i32, [f64; 6], i32) {}
+}
+
+cspice_proc! {
+    /**
+    Return the state (position and velocity) of a target body relative to the solar system barycenter.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn spkssb(targ: i32, et: f64, frame: &str) -> [f64; 6] {}
+}
+
+cspice_proc! {
+    /**
+    Unload an ephemeris file so that it will no longer be searched by the readers.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn spkuef(handle: i32) {}
+}
+
+cspice_proc! {
+    /**
+    Write an SPK segment of type 15 given a type 15 data record.
+    */
+    #[allow(clippy::too_many_arguments)]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn spkw15(handle: i32, body: i32, center: i32, frame: &str, first: f64, last: f64, segid: &str, epoch: f64, tp: [f64; 3], pa: [f64; 3], p: f64, ecc: f64, j2flg: f64, pv: [f64; 3], gm: f64, j2: f64, radius: f64) {}
+}
+
+cspice_proc! {
+    /**
+    Write an SPK segment of type 17 given a type 17 data record.
+    */
+    #[allow(clippy::too_many_arguments)]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn spkw17(handle: i32, body: i32, center: i32, frame: &str, first: f64, last: f64, segid: &str, epoch: f64, eqel: [f64; 9], rapol: f64, decpol: f64) {}
+}
+
+/* -------------------------------------------------------------------------------------------- */
+/* Kernel writers and low level readers                                                           */
+/* -------------------------------------------------------------------------------------------- */
+
+/// Largest SPK or PCK segment descriptor, in double precision words.
+pub const SPK_DSCSIZ: usize = 5;
+
+/// Write a segment whose data is one flat run of Chebyshev coefficients.
+macro_rules! spk_chebyshev {
+    ($($name:ident => $cname:ident, $doc:expr);* $(;)?) => {$(
+        #[doc = $doc]
+        #[allow(clippy::too_many_arguments)]
+        #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+        pub fn $name(
+            handle: i32,
+            body: i32,
+            center: i32,
+            frame: &str,
+            first: f64,
+            last: f64,
+            segid: &str,
+            intlen: f64,
+            n: i32,
+            polydg: i32,
+            cdata: &[f64],
+            btime: f64,
+        ) {
+            let frame = to_cstring(frame);
+            let segid = to_cstring(segid);
+            unsafe {
+                crate::c::$cname(
+                    handle, body, center,
+                    frame.as_ptr() as *mut SpiceChar,
+                    first, last,
+                    segid.as_ptr() as *mut SpiceChar,
+                    intlen, n, polydg,
+                    cdata.as_ptr() as *mut SpiceDouble,
+                    btime,
+                );
+            }
+        }
+    )*};
+}
+
+spk_chebyshev! {
+    spkw02 => spkw02_c, "Write a type 2 segment: Chebyshev polynomials for position.";
+    spkw03 => spkw03_c, "Write a type 3 segment: Chebyshev polynomials for position and velocity.";
+}
+
+/// Write a segment whose data is a run of states at given epochs.
+macro_rules! spk_states_at_epochs {
+    ($($name:ident($mid:ident: $midty:ty) => $cname:ident, $doc:expr);* $(;)?) => {$(
+        #[doc = $doc]
+        ///
+        /// # Panics
+        ///
+        /// Panics if `n` is larger than `states` or `epochs`.
+        #[allow(clippy::too_many_arguments)]
+        #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+        pub fn $name(
+            handle: i32,
+            body: i32,
+            center: i32,
+            frame: &str,
+            first: f64,
+            last: f64,
+            segid: &str,
+            $mid: $midty,
+            n: i32,
+            states: &[[f64; 6]],
+            epochs: &[f64],
+        ) {
+            let count = usize::try_from(n).expect("the record count cannot be negative");
+            assert!(
+                count <= states.len() && count <= epochs.len(),
+                "asked for {count} records but got {} states and {} epochs",
+                states.len(),
+                epochs.len()
+            );
+            let frame = to_cstring(frame);
+            let segid = to_cstring(segid);
+            unsafe {
+                crate::c::$cname(
+                    handle, body, center,
+                    frame.as_ptr() as *mut SpiceChar,
+                    first, last,
+                    segid.as_ptr() as *mut SpiceChar,
+                    $mid, n,
+                    states.as_ptr() as *mut [SpiceDouble; 6],
+                    epochs.as_ptr() as *mut SpiceDouble,
+                );
+            }
+        }
+    )*};
+}
+
+spk_states_at_epochs! {
+    spkw05(gm: f64) => spkw05_c,
+        "Write a type 5 segment: discrete states propagated with two body dynamics.";
+    spkw13(degree: i32) => spkw13_c,
+        "Write a type 13 segment: Hermite interpolation of unequally spaced states.";
+}
+
+/// Write a segment whose states are evenly spaced in time.
+macro_rules! spk_states_evenly_spaced {
+    ($($name:ident => $cname:ident, $doc:expr);* $(;)?) => {$(
+        #[doc = $doc]
+        ///
+        /// # Panics
+        ///
+        /// Panics if `n` is larger than `states`.
+        #[allow(clippy::too_many_arguments)]
+        #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+        pub fn $name(
+            handle: i32,
+            body: i32,
+            center: i32,
+            frame: &str,
+            first: f64,
+            last: f64,
+            segid: &str,
+            degree: i32,
+            n: i32,
+            states: &[[f64; 6]],
+            epoch0: f64,
+            step: f64,
+        ) {
+            let count = usize::try_from(n).expect("the record count cannot be negative");
+            assert!(count <= states.len(), "asked for {count} states but got {}", states.len());
+            let frame = to_cstring(frame);
+            let segid = to_cstring(segid);
+            unsafe {
+                crate::c::$cname(
+                    handle, body, center,
+                    frame.as_ptr() as *mut SpiceChar,
+                    first, last,
+                    segid.as_ptr() as *mut SpiceChar,
+                    degree, n,
+                    states.as_ptr() as *mut [SpiceDouble; 6],
+                    epoch0, step,
+                );
+            }
+        }
+    )*};
+}
+
+spk_states_evenly_spaced! {
+    spkw08 => spkw08_c, "Write a type 8 segment: Lagrange interpolation of evenly spaced states.";
+    spkw12 => spkw12_c, "Write a type 12 segment: Hermite interpolation of evenly spaced states.";
+}
+
+/**
+Write a type 10 segment: two-line element sets.
+*/
+#[allow(clippy::too_many_arguments)]
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn spkw10(
+    handle: i32,
+    body: i32,
+    center: i32,
+    frame: &str,
+    first: f64,
+    last: f64,
+    segid: &str,
+    consts: &[f64],
+    n: i32,
+    elems: &[f64],
+    epochs: &[f64],
+) {
+    let frame = to_cstring(frame);
+    let segid = to_cstring(segid);
+    unsafe {
+        crate::c::spkw10_c(
+            handle,
+            body,
+            center,
+            frame.as_ptr() as *mut SpiceChar,
+            first,
+            last,
+            segid.as_ptr() as *mut SpiceChar,
+            consts.as_ptr() as *mut SpiceDouble,
+            n,
+            elems.as_ptr() as *mut SpiceDouble,
+            epochs.as_ptr() as *mut SpiceDouble,
+        );
+    }
+}
+
+/**
+Write a type 18 segment: Hermite or Lagrange interpolation of packets of state data.
+
+`packts` holds one packet per epoch, laid out row by row.
+*/
+#[allow(clippy::too_many_arguments)]
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn spkw18(
+    handle: i32,
+    subtyp: i32,
+    body: i32,
+    center: i32,
+    frame: &str,
+    first: f64,
+    last: f64,
+    segid: &str,
+    degree: i32,
+    n: i32,
+    packts: &[f64],
+    epochs: &[f64],
+) {
+    let frame = to_cstring(frame);
+    let segid = to_cstring(segid);
+    unsafe {
+        crate::c::spkw18_c(
+            handle,
+            subtyp as crate::c::SpiceSPK18Subtype,
+            body,
+            center,
+            frame.as_ptr() as *mut SpiceChar,
+            first,
+            last,
+            segid.as_ptr() as *mut SpiceChar,
+            degree,
+            n,
+            packts.as_ptr().cast(),
+            epochs.as_ptr() as *mut SpiceDouble,
+        );
+    }
+}
+
+/**
+Write a type 20 segment: Chebyshev polynomials for velocity, with the position at the interval
+start.
+*/
+#[allow(clippy::too_many_arguments)]
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn spkw20(
+    handle: i32,
+    body: i32,
+    center: i32,
+    frame: &str,
+    first: f64,
+    last: f64,
+    segid: &str,
+    intlen: f64,
+    n: i32,
+    polydg: i32,
+    cdata: &[f64],
+    dscale: f64,
+    tscale: f64,
+    initjd: f64,
+    initfr: f64,
+) {
+    let frame = to_cstring(frame);
+    let segid = to_cstring(segid);
+    unsafe {
+        crate::c::spkw20_c(
+            handle,
+            body,
+            center,
+            frame.as_ptr() as *mut SpiceChar,
+            first,
+            last,
+            segid.as_ptr() as *mut SpiceChar,
+            intlen,
+            n,
+            polydg,
+            cdata.as_ptr() as *mut SpiceDouble,
+            dscale,
+            tscale,
+            initjd,
+            initfr,
+        );
+    }
+}
+
+/**
+Add Chebyshev coefficient sets to a type 14 segment opened with [`spk14b`].
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn spk14a(handle: i32, ncsets: i32, coeffs: &[f64], epochs: &[f64]) {
+    unsafe {
+        crate::c::spk14a_c(
+            handle,
+            ncsets,
+            coeffs.as_ptr() as *mut SpiceDouble,
+            epochs.as_ptr() as *mut SpiceDouble,
+        )
+    }
+}
+
+/**
+Search for the segment of an SPK that covers a body at an epoch.
+
+This function has a [neat version][crate::neat::spksfs].
+*/
+pub fn spksfs(body: i32, et: f64, idlen: usize) -> (i32, [f64; SPK_DSCSIZ], String, bool) {
+    let mut descr = [0.0; SPK_DSCSIZ];
+    let mut ident = vec![0 as SpiceChar; idlen.max(1)];
+    let (mut handle, mut found) = (0, 0);
+    unsafe {
+        crate::c::spksfs_c(
+            body,
+            et,
+            idlen as SpiceInt,
+            &mut handle,
+            descr.as_mut_ptr(),
+            ident.as_mut_ptr(),
+            &mut found,
+        )
+    };
+    (handle, descr, from_cbuf(&ident), found != 0)
+}
+
+cspice_proc! {
+    /**
+    Load an SPK for use by the low level readers, outside the KEEPER subsystem.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn spklef(filename: &str) -> i32 {}
+}
+
+/**
+Unpack an SPK segment descriptor.
+*/
+#[allow(clippy::type_complexity)]
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn spkuds(descr: &[f64]) -> (i32, i32, i32, i32, f64, f64, i32, i32) {
+    let (mut body, mut center, mut frame, mut kind) = (0, 0, 0, 0);
+    let (mut first, mut last) = (0.0, 0.0);
+    let (mut begin, mut end) = (0, 0);
+    unsafe {
+        crate::c::spkuds_c(
+            descr.as_ptr() as *mut SpiceDouble,
+            &mut body,
+            &mut center,
+            &mut frame,
+            &mut kind,
+            &mut first,
+            &mut last,
+            &mut begin,
+            &mut end,
+        )
+    };
+    (body, center, frame, kind, first, last, begin, end)
+}
+
+/**
+Copy a subset of the data in an SPK segment into another file.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn spksub(handle: i32, descr: &mut [f64], ident: &str, begin: f64, end: f64, newh: i32) {
+    let ident = to_cstring(ident);
+    unsafe {
+        crate::c::spksub_c(
+            handle,
+            descr.as_mut_ptr(),
+            ident.as_ptr() as *mut SpiceChar,
+            begin,
+            end,
+            newh,
+        )
+    }
+}
+
+/**
+Write a type 1 segment to a CK file: discrete pointing with angular velocity.
+*/
+#[allow(clippy::too_many_arguments)]
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn ckw01(
+    handle: i32,
+    begtime: f64,
+    endtime: f64,
+    inst: i32,
+    frame: &str,
+    avflag: bool,
+    segid: &str,
+    nrec: i32,
+    sclkdp: &[f64],
+    quats: &[[f64; 4]],
+    avvs: &[[f64; 3]],
+) {
+    let frame = to_cstring(frame);
+    let segid = to_cstring(segid);
+    unsafe {
+        crate::c::ckw01_c(
+            handle,
+            begtime,
+            endtime,
+            inst,
+            frame.as_ptr() as *mut SpiceChar,
+            avflag as crate::c::SpiceBoolean,
+            segid.as_ptr() as *mut SpiceChar,
+            nrec,
+            sclkdp.as_ptr() as *mut SpiceDouble,
+            quats.as_ptr() as *mut [SpiceDouble; 4],
+            avvs.as_ptr() as *mut [SpiceDouble; 3],
+        );
+    }
+}
+
+/**
+Write a type 2 segment to a CK file: constant angular velocity over each interval.
+*/
+#[allow(clippy::too_many_arguments)]
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn ckw02(
+    handle: i32,
+    begtim: f64,
+    endtim: f64,
+    inst: i32,
+    frame: &str,
+    segid: &str,
+    nrec: i32,
+    start: &[f64],
+    stop: &[f64],
+    quats: &[[f64; 4]],
+    avvs: &[[f64; 3]],
+    rates: &[f64],
+) {
+    let frame = to_cstring(frame);
+    let segid = to_cstring(segid);
+    unsafe {
+        crate::c::ckw02_c(
+            handle,
+            begtim,
+            endtim,
+            inst,
+            frame.as_ptr() as *mut SpiceChar,
+            segid.as_ptr() as *mut SpiceChar,
+            nrec,
+            start.as_ptr() as *mut SpiceDouble,
+            stop.as_ptr() as *mut SpiceDouble,
+            quats.as_ptr() as *mut [SpiceDouble; 4],
+            avvs.as_ptr() as *mut [SpiceDouble; 3],
+            rates.as_ptr() as *mut SpiceDouble,
+        );
+    }
+}
+
+/**
+Write a type 5 segment to a CK file: interpolated quaternion packets.
+*/
+#[allow(clippy::too_many_arguments)]
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn ckw05(
+    handle: i32,
+    subtyp: i32,
+    degree: i32,
+    begtim: f64,
+    endtim: f64,
+    inst: i32,
+    frame: &str,
+    avflag: bool,
+    segid: &str,
+    n: i32,
+    sclkdp: &[f64],
+    packets: &[f64],
+    rate: f64,
+    nints: i32,
+    starts: &[f64],
+) {
+    let frame = to_cstring(frame);
+    let segid = to_cstring(segid);
+    unsafe {
+        crate::c::ckw05_c(
+            handle,
+            subtyp as crate::c::SpiceCK05Subtype,
+            degree,
+            begtim,
+            endtim,
+            inst,
+            frame.as_ptr() as *mut SpiceChar,
+            avflag as crate::c::SpiceBoolean,
+            segid.as_ptr() as *mut SpiceChar,
+            n,
+            sclkdp.as_ptr() as *mut SpiceDouble,
+            packets.as_ptr().cast(),
+            rate,
+            nints,
+            starts.as_ptr() as *mut SpiceDouble,
+        );
+    }
+}
+
+/// Read a pointing record from a CK segment, for the two segment types that have them.
+macro_rules! ck_record {
+    ($($name:ident => $cname:ident, $doc:expr);* $(;)?) => {$(
+        #[doc = $doc]
+        ///
+        /// `room` is how many double precision words to make space for.
+        #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+        pub fn $name(handle: i32, descr: &[f64], recno: i32, room: usize) -> Vec<f64> {
+            let mut record = vec![0.0; room.max(1)];
+            unsafe {
+                crate::c::$cname(
+                    handle,
+                    descr.as_ptr() as *mut SpiceDouble,
+                    recno,
+                    record.as_mut_ptr(),
+                )
+            };
+            record
+        }
+    )*};
+}
+
+ck_record! {
+    ckgr02 => ckgr02_c, "Read a pointing record from a type 2 CK segment.";
+    ckgr03 => ckgr03_c, "Read a pointing record from a type 3 CK segment.";
+}
+
+/// Count the pointing records of a CK segment, for the two segment types that have them.
+macro_rules! ck_record_count {
+    ($($name:ident => $cname:ident, $doc:expr);* $(;)?) => {$(
+        #[doc = $doc]
+        #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+        pub fn $name(handle: i32, descr: &[f64]) -> i32 {
+            let mut nrec = 0;
+            unsafe {
+                crate::c::$cname(handle, descr.as_ptr() as *mut SpiceDouble, &mut nrec)
+            };
+            nrec
+        }
+    )*};
+}
+
+ck_record_count! {
+    cknr02 => cknr02_c, "Number of pointing records in a type 2 CK segment.";
+    cknr03 => cknr03_c, "Number of pointing records in a type 3 CK segment.";
+}
+
+/**
+Write a type 2 segment to a binary PCK file: Chebyshev polynomials for the Euler angles.
+*/
+#[allow(clippy::too_many_arguments)]
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn pckw02(
+    handle: i32,
+    clssid: i32,
+    frame: &str,
+    first: f64,
+    last: f64,
+    segid: &str,
+    intlen: f64,
+    n: i32,
+    polydg: i32,
+    cdata: &[f64],
+    btime: f64,
+) {
+    let frame = to_cstring(frame);
+    let segid = to_cstring(segid);
+    unsafe {
+        crate::c::pckw02_c(
+            handle,
+            clssid,
+            frame.as_ptr() as *mut SpiceChar,
+            first,
+            last,
+            segid.as_ptr() as *mut SpiceChar,
+            intlen,
+            n,
+            polydg,
+            cdata.as_ptr() as *mut SpiceDouble,
+            btime,
+        );
+    }
+}
+
+/**
+Return the bookkeeping parameters of a type 2 DSK segment.
+*/
+#[allow(clippy::type_complexity)]
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn dskb02(
+    handle: i32,
+    dladsc: DLADSC,
+) -> (
+    i32,
+    i32,
+    i32,
+    [[f64; 2]; 3],
+    f64,
+    [f64; 3],
+    [i32; 3],
+    i32,
+    i32,
+    i32,
+    i32,
+) {
+    let mut dladsc = dladsc;
+    let (mut nv, mut np, mut nvxtot) = (0, 0, 0);
+    let mut vtxbds = [[0.0; 2]; 3];
+    let mut voxsiz = 0.0;
+    let mut voxori = [0.0; 3];
+    let mut vgrext = [0; 3];
+    let (mut cgscal, mut vtxnpl, mut voxnpt, mut voxnpl) = (0, 0, 0, 0);
+    unsafe {
+        crate::c::dskb02_c(
+            handle,
+            &mut dladsc,
+            &mut nv,
+            &mut np,
+            &mut nvxtot,
+            vtxbds.as_mut_ptr(),
+            &mut voxsiz,
+            voxori.as_mut_ptr(),
+            vgrext.as_mut_ptr(),
+            &mut cgscal,
+            &mut vtxnpl,
+            &mut voxnpt,
+            &mut voxnpl,
+        )
+    };
+    (
+        nv, np, nvxtot, vtxbds, voxsiz, voxori, vgrext, cgscal, vtxnpl, voxnpt, voxnpl,
+    )
+}
+
+/// Fetch a run of items from a type 2 DSK segment, for the double precision and integer cases.
+macro_rules! dsk_fetch {
+    ($($name:ident($ty:ty) => $cname:ident, $doc:expr);* $(;)?) => {$(
+        #[doc = $doc]
+        ///
+        /// `item` is one of the [`dsk02`] keywords and at most `room` values are returned.
+        ///
+        /// `start` counts from **zero**, unlike most of the toolkit: the vertex indices of the
+        /// first plate are at `start` 0, even though plate IDs themselves start at 1.
+        #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+        pub fn $name(
+            handle: i32,
+            dladsc: DLADSC,
+            item: i32,
+            start: i32,
+            room: usize,
+        ) -> Vec<$ty> {
+            let mut dladsc = dladsc;
+            let mut values = vec![<$ty>::default(); room.max(1)];
+            let mut n = 0;
+            unsafe {
+                crate::c::$cname(
+                    handle,
+                    &mut dladsc,
+                    item,
+                    start,
+                    room as SpiceInt,
+                    &mut n,
+                    values.as_mut_ptr(),
+                )
+            };
+            values.truncate(n.max(0) as usize);
+            values
+        }
+    )*};
+}
+
+dsk_fetch! {
+    dskd02(f64) => dskd02_c, "Fetch double precision data from a type 2 DSK segment.";
+    dski02(i32) => dski02_c, "Fetch integer data from a type 2 DSK segment.";
+}
+
+/**
+Determine the vertical extent of a plate set in a given coordinate system.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn dskrb2(vrtces: &[[f64; 3]], plates: &[[i32; 3]], corsys: i32, corpar: &[f64]) -> (f64, f64) {
+    assert!(
+        corpar.len() >= DSK_NSYPAR,
+        "dskrb2 needs {DSK_NSYPAR} coordinate parameters but got {}",
+        corpar.len()
+    );
+    let (mut mncor3, mut mxcor3) = (0.0, 0.0);
+    unsafe {
+        crate::c::dskrb2_c(
+            vrtces.len() as SpiceInt,
+            vrtces.as_ptr() as *mut [f64; 3],
+            plates.len() as SpiceInt,
+            plates.as_ptr() as *mut [SpiceInt; 3],
+            corsys,
+            corpar.as_ptr() as *mut SpiceDouble,
+            &mut mncor3,
+            &mut mxcor3,
+        )
+    };
+    (mncor3, mxcor3)
+}
+
+cspice_proc! {
+    /**
+    Convert encoded spacecraft clock ticks to a clock string.
+    */
+    pub fn scfmt(sc: i32, ticks: f64, #[lenout] clkstrlen: i32) -> String {}
+}
+
+/**
+Return the partition start and stop times of a spacecraft clock.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn scpart(sc: i32, maxparts: usize) -> (Vec<f64>, Vec<f64>) {
+    let mut pstart = vec![0.0; maxparts.max(1)];
+    let mut pstop = vec![0.0; maxparts.max(1)];
+    let mut nparts = 0;
+    unsafe { crate::c::scpart_c(sc, &mut nparts, pstart.as_mut_ptr(), pstop.as_mut_ptr()) };
+    let count = nparts.max(0) as usize;
+    pstart.truncate(count);
+    pstop.truncate(count);
+    (pstart, pstop)
 }
 
 /* -------------------------------------------------------------------------------------------- */

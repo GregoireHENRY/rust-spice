@@ -32,11 +32,11 @@ pub(crate) use crate::core::*;
 
 // These items need to be exposed regardless of whether 'lock' is enabled or not
 pub use crate::core::cell::{Cell, CellItem, CELL_MAXID, CELL_MAX_LEN};
+pub use crate::core::raw::{dsk02, ELLIPSE, PLANE};
 pub use crate::core::raw::{
     DAF_MAXSUM, DSK02_SPADSZ, DSKXSI_DCSIZE, DSKXSI_ICSIZE, DSK_KEYAMG, DSK_KEYLAL, DSK_KEYPTM,
-    DSK_KEYSGR, DSK_KEYSPM, DSK_KEYXFR, DSK_NSYPAR, TLE_NELTS, TLE_NGEOPHS,
+    DSK_KEYSGR, DSK_KEYSPM, DSK_KEYXFR, DSK_NSYPAR, SPK_DSCSIZ, TLE_NELTS, TLE_NGEOPHS,
 };
-pub use crate::core::raw::{ELLIPSE, PLANE};
 pub use crate::core::{DLADSC, DSKDSC, MAX_LEN_OUT, TIME_FORMAT, TIME_FORMAT_SIZE};
 
 #[cfg(any(feature = "lock", doc))]

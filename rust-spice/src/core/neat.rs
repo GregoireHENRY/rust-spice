@@ -170,6 +170,16 @@ pub fn gcpool(name: &str, start: usize, room: usize) -> Vec<String> {
 }
 
 /**
+Search for the segment of an SPK that covers a body at an epoch.
+
+See [`raw::spksfs`] for the raw interface.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn spksfs(body: i32, et: f64) -> (i32, [f64; raw::SPK_DSCSIZ], String, bool) {
+    raw::spksfs(body, et, MAX_LEN_OUT)
+}
+
+/**
 Read the whole comment area of a DAF.
 
 See [`raw::dafec`] for the raw interface.

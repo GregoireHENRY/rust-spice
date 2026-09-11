@@ -67,6 +67,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 + 54 more, taking the total to 475: the DAF, DAS and DLA layers the kernels are built on, including
   the segment searches, the summary packing, the raw word reads and writes and the comment areas,
   plus the CK and binary PCK load and unload entry points.
++ 42 more, taking the total to 517: the SPK segment writers for types 2, 3, 5, 8, 10, 12, 13, 14,
+  18 and 20, the CK writers for types 1, 2 and 5, the binary PCK writer, the low level SPK readers
+  and segment descriptors, the type 2 DSK readers with the `dsk02` keywords they take, and the
+  spacecraft clock formatting and partitions.
 + `Cell<T>` is generic over its element type, owns its backing storage, and gained `len`,
   `capacity`, `get`, `iter`, `to_vec`, `push`, `clear` and a deep `Clone`.
 + A self contained test suite: the SPK, CK, DSK, PCK and text kernels it needs are generated in a

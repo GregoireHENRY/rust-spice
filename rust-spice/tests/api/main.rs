@@ -30,6 +30,7 @@ mod files;
 mod frames;
 mod geometry;
 mod gf;
+mod kernels;
 mod orbits;
 mod planes;
 mod pool;
