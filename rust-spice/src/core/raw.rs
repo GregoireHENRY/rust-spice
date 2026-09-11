@@ -25,6 +25,14 @@ pub type DLADSC = crate::c::SpiceDLADescr;
 #[allow(clippy::upper_case_acronyms)]
 pub type DSKDSC = crate::c::SpiceDSKDescr;
 
+/// A plane, as a unit normal and the constant of the plane equation.
+#[allow(clippy::upper_case_acronyms)]
+pub type PLANE = crate::c::SpicePlane;
+
+/// An ellipse, as a centre and two generating vectors.
+#[allow(clippy::upper_case_acronyms)]
+pub type ELLIPSE = crate::c::SpiceEllipse;
+
 /// The raw CSPICE cell descriptor; see [`Cell`] for the owning Rust type.
 #[allow(clippy::upper_case_acronyms, dead_code)]
 pub type CELL = crate::c::SpiceCell;
@@ -2559,6 +2567,192 @@ pub fn getfov(
 
     bounds.truncate(n.max(0) as usize);
     (from_cbuf(&shape), from_cbuf(&frame), bsight, bounds)
+}
+
+/* -------------------------------------------------------------------------------------------- */
+/* Planes and ellipses                                                                            */
+/* -------------------------------------------------------------------------------------------- */
+
+cspice_proc! {
+    /**
+    Build a plane from a normal vector and a constant.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn nvc2pl(normal: [f64; 3], constant: f64) -> PLANE {}
+}
+
+cspice_proc! {
+    /**
+    Build a plane from a normal vector and a point.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn nvp2pl(normal: [f64; 3], point: [f64; 3]) -> PLANE {}
+}
+
+cspice_proc! {
+    /**
+    Build a plane from a point and two spanning vectors.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn psv2pl(point: [f64; 3], span1: [f64; 3], span2: [f64; 3]) -> PLANE {}
+}
+
+cspice_proc! {
+    /**
+    Take a plane apart into a unit normal vector and a constant.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn pl2nvc(plane: PLANE) -> ([f64; 3], f64) {}
+}
+
+cspice_proc! {
+    /**
+    Take a plane apart into a unit normal vector and a point.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn pl2nvp(plane: PLANE) -> ([f64; 3], [f64; 3]) {}
+}
+
+cspice_proc! {
+    /**
+    Take a plane apart into a point and two spanning vectors.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn pl2psv(plane: PLANE) -> ([f64; 3], [f64; 3], [f64; 3]) {}
+}
+
+cspice_proc! {
+    /**
+    Build an ellipse from a centre and two generating vectors.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn cgv2el(center: [f64; 3], vec1: [f64; 3], vec2: [f64; 3]) -> ELLIPSE {}
+}
+
+cspice_proc! {
+    /**
+    Take an ellipse apart into its centre and its semi-major and semi-minor axes.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn el2cgv(ellipse: ELLIPSE) -> ([f64; 3], [f64; 3], [f64; 3]) {}
+}
+
+cspice_proc! {
+    /**
+    Find the semi-axes of the ellipse two vectors generate.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn saelgv(vec1: [f64; 3], vec2: [f64; 3]) -> ([f64; 3], [f64; 3]) {}
+}
+
+cspice_proc! {
+    /**
+    Find the intersection of an ellipsoid and a plane, when there is one.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn inedpl(a: f64, b: f64, c: f64, plane: PLANE) -> (ELLIPSE, bool) {}
+}
+
+cspice_proc! {
+    /**
+    Find the intersection of an ellipse and a plane: how many points there are, and the points.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn inelpl(ellips: ELLIPSE, plane: PLANE) -> (i32, [f64; 3], [f64; 3]) {}
+}
+
+cspice_proc! {
+    /**
+    Find the intersection of a ray and a plane: how many points there are, and the point.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn inrypl(vertex: [f64; 3], dir: [f64; 3], plane: PLANE) -> (i32, [f64; 3]) {}
+}
+
+cspice_proc! {
+    /**
+    Find the limb of an ellipsoid as seen from a viewing point.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn edlimb(a: f64, b: f64, c: f64, viewpt: [f64; 3]) -> ELLIPSE {}
+}
+
+cspice_proc! {
+    /**
+    Project an ellipse orthogonally onto a plane.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn pjelpl(elin: ELLIPSE, plane: PLANE) -> ELLIPSE {}
+}
+
+cspice_proc! {
+    /**
+    Project a vector orthogonally onto a plane.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn vprjp(vin: [f64; 3], plane: PLANE) -> [f64; 3] {}
+}
+
+cspice_proc! {
+    /**
+    Invert an orthogonal projection: find the vector of `invpl` that projects onto `vin`.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn vprjpi(vin: [f64; 3], projpl: PLANE, invpl: PLANE) -> ([f64; 3], bool) {}
+}
+
+cspice_proc! {
+    /**
+    Find the point of an ellipse nearest a specified point, and the distance between them.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn npelpt(point: [f64; 3], ellips: ELLIPSE) -> ([f64; 3], f64) {}
+}
+
+cspice_proc! {
+    /**
+    Find the point of an ellipsoid nearest a line, and the distance between them.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn npedln(
+        a: f64,
+        b: f64,
+        c: f64,
+        linept: [f64; 3],
+        linedr: [f64; 3]
+    ) -> ([f64; 3], f64) {
+    }
+}
+
+cspice_proc! {
+    /**
+    Find the point of a line nearest a specified point, and the distance between them.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn nplnpt(linpt: [f64; 3], lindir: [f64; 3], point: [f64; 3]) -> ([f64; 3], f64) {}
+}
+
+cspice_proc! {
+    /**
+    The outward normal of an ellipsoid at a point on its surface.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn surfnm(a: f64, b: f64, c: f64, point: [f64; 3]) -> [f64; 3] {}
+}
+
+cspice_proc! {
+    /**
+    Find the state of the intersection of a ray with an ellipsoid, given the state of the ray.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn surfpv(
+        stvrtx: [f64; 6],
+        stdir: [f64; 6],
+        a: f64,
+        b: f64,
+        c: f64
+    ) -> ([f64; 6], bool) {
+    }
 }
 
 /* -------------------------------------------------------------------------------------------- */

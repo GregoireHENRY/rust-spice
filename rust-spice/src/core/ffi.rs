@@ -20,7 +20,8 @@ without writing its outputs.
 */
 
 use crate::c::{
-    SpiceBoolean, SpiceCell, SpiceChar, SpiceDLADescr, SpiceDSKDescr, SpiceDouble, SpiceInt,
+    SpiceBoolean, SpiceCell, SpiceChar, SpiceDLADescr, SpiceDSKDescr, SpiceDouble, SpiceEllipse,
+    SpiceInt, SpicePlane,
 };
 use crate::MAX_LEN_OUT;
 use std::ffi::{CStr, CString};
@@ -324,7 +325,7 @@ impl SpiceArg for String {
     }
 }
 
-/// The DLA and DSK descriptors are plain C structs CSPICE reads through a pointer.
+/// The descriptors, planes and ellipses are plain C structs CSPICE reads through a pointer.
 macro_rules! struct_arg {
     ($($ty:ty),* $(,)?) => {$(
         impl SpiceArg for $ty {
@@ -344,7 +345,7 @@ macro_rules! struct_arg {
     )*};
 }
 
-struct_arg!(SpiceDLADescr, SpiceDSKDescr);
+struct_arg!(SpiceDLADescr, SpiceDSKDescr, SpicePlane, SpiceEllipse);
 
 /* -------------------------------------------------------------------------------------------- */
 /* Outputs                                                                                        */
@@ -524,7 +525,7 @@ impl SpiceRet for String {
     }
 }
 
-/// The descriptors are plain old data, so a zeroed struct is a valid, readable, starting point.
+/// These are all plain old data, so a zeroed struct is a valid, readable, starting point.
 macro_rules! struct_ret {
     ($($ty:ty),* $(,)?) => {$(
         impl SpiceRet for $ty {
@@ -550,7 +551,7 @@ macro_rules! struct_ret {
     )*};
 }
 
-struct_ret!(SpiceDLADescr, SpiceDSKDescr);
+struct_ret!(SpiceDLADescr, SpiceDSKDescr, SpicePlane, SpiceEllipse);
 
 /* -------------------------------------------------------------------------------------------- */
 /* Direct returns                                                                                 */

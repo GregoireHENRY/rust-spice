@@ -43,6 +43,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Jacobians relating them to rectangular coordinates, `xfmsta` to move a state between systems, and
   `vpack`, `vupack`, `vzero`, `vperp`, `vproj`, `vrotv`, `vlcom`, `vlcom3`, `vtmv`, `ident`, `mequ`
   and `xpose6`.
++ 21 more, taking the total to 279: planes and ellipses, as the `PLANE` and `ELLIPSE` types and the
+  routines that build, take apart, intersect and project them (`nvc2pl`, `nvp2pl`, `psv2pl`,
+  `pl2nvc`, `pl2nvp`, `pl2psv`, `cgv2el`, `el2cgv`, `saelgv`, `inedpl`, `inelpl`, `inrypl`,
+  `edlimb`, `pjelpl`, `vprjp`, `vprjpi`, `npelpt`, `npedln`, `nplnpt`, `surfnm`, `surfpv`).
 + `Cell<T>` is generic over its element type, owns its backing storage, and gained `len`,
   `capacity`, `get`, `iter`, `to_vec`, `push`, `clear` and a deep `Clone`.
 + A self contained test suite: the SPK, CK, DSK, PCK and text kernels it needs are generated in a

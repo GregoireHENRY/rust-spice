@@ -36,6 +36,7 @@ pub use crate::core::raw::{
     DSK02_SPADSZ, DSKXSI_DCSIZE, DSKXSI_ICSIZE, DSK_KEYAMG, DSK_KEYLAL, DSK_KEYPTM, DSK_KEYSGR,
     DSK_KEYSPM, DSK_KEYXFR, DSK_NSYPAR, TLE_NELTS, TLE_NGEOPHS,
 };
+pub use crate::core::raw::{ELLIPSE, PLANE};
 pub use crate::core::{DLADSC, DSKDSC, MAX_LEN_OUT, TIME_FORMAT, TIME_FORMAT_SIZE};
 
 #[cfg(any(feature = "lock", doc))]
