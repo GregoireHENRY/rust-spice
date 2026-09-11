@@ -16,7 +16,7 @@ jobs:
     name: format
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt
@@ -31,7 +31,7 @@ jobs:
         # The NAIF toolkit is published for Windows too, but the build has not been tried there.
         os: [ubuntu-latest, macos-latest]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: dtolnay/rust-toolchain@stable
         with:
@@ -46,7 +46,7 @@ jobs:
 
       - name: Cache the CSPICE toolkit
         id: cspice
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/cspice
           key: cspice-${{ env.CSPICE_VERSION }}-${{ runner.os }}-${{ runner.arch }}
