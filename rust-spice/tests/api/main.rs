@@ -30,6 +30,7 @@ mod geometry;
 mod gf;
 mod orbits;
 mod pool;
+mod rotations;
 mod spk;
 mod time;
 mod tle;

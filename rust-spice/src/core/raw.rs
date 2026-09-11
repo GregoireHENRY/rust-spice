@@ -1481,6 +1481,128 @@ cspice_proc! {
 }
 
 /* -------------------------------------------------------------------------------------------- */
+/* Rotations                                                                                      */
+/* -------------------------------------------------------------------------------------------- */
+
+cspice_proc! {
+    /**
+    Find the unit quaternion corresponding to a specified rotation matrix.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn m2q(r: [[f64; 3]; 3]) -> [f64; 4] {}
+}
+
+cspice_proc! {
+    /**
+    Find the rotation matrix corresponding to a specified unit quaternion.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn q2m(q: [f64; 4]) -> [[f64; 3]; 3] {}
+}
+
+cspice_proc! {
+    /**
+    Multiply two quaternions.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn qxq(q1: [f64; 4], q2: [f64; 4]) -> [f64; 4] {}
+}
+
+cspice_proc! {
+    /**
+    Construct a rotation matrix that rotates vectors by a specified angle about a specified axis.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn axisar(axis: [f64; 3], angle: f64) -> [[f64; 3]; 3] {}
+}
+
+cspice_proc! {
+    /**
+    Compute the axis of the rotation a matrix represents, and the angle about that axis.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn raxisa(matrix: [[f64; 3]; 3]) -> ([f64; 3], f64) {}
+}
+
+cspice_proc! {
+    /**
+    Construct a rotation matrix from a set of Euler angles.
+    */
+    #[allow(clippy::too_many_arguments)]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn eul2m(
+        angle3: f64,
+        angle2: f64,
+        angle1: f64,
+        axis3: i32,
+        axis2: i32,
+        axis1: i32
+    ) -> [[f64; 3]; 3] {
+    }
+}
+
+cspice_proc! {
+    /**
+    Factor a rotation matrix as a product of three rotations about specified coordinate axes,
+    returning the three angles in the order `angle3, angle2, angle1`.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn m2eul(r: [[f64; 3]; 3], axis3: i32, axis2: i32, axis1: i32) -> (f64, f64, f64) {}
+}
+
+cspice_proc! {
+    /**
+    Construct a state transformation matrix from a set of Euler angles and their derivatives.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn eul2xf(eulang: [f64; 6], axisa: i32, axisb: i32, axisc: i32) -> [[f64; 6]; 6] {}
+}
+
+cspice_proc! {
+    /**
+    Factor a state transformation matrix into Euler angles and their derivatives.
+
+    The boolean says whether the factorisation is unique.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn xf2eul(xform: [[f64; 6]; 6], axisa: i32, axisb: i32, axisc: i32) -> ([f64; 6], bool) {}
+}
+
+cspice_proc! {
+    /**
+    Split a state transformation matrix into a rotation and the angular velocity of that rotation.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn xf2rav(xform: [[f64; 6]; 6]) -> ([[f64; 3]; 3], [f64; 3]) {}
+}
+
+cspice_proc! {
+    /**
+    Build a state transformation matrix from a rotation and an angular velocity.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn rav2xf(rot: [[f64; 3]; 3], av: [f64; 3]) -> [[f64; 6]; 6] {}
+}
+
+cspice_proc! {
+    /**
+    Compute the inverse of a 3x3 matrix whose rows are orthogonal but not necessarily unit length.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn invort(m: [[f64; 3]; 3]) -> [[f64; 3]; 3] {}
+}
+
+cspice_proc! {
+    /**
+    Decide whether a matrix is a rotation matrix, to within the given norm and determinant
+    tolerances.
+    */
+    #[return_output]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn isrot(m: [[f64; 3]; 3], ntol: f64, dtol: f64) -> bool {}
+}
+
+/* -------------------------------------------------------------------------------------------- */
 /* SPK                                                                                            */
 /* -------------------------------------------------------------------------------------------- */
 

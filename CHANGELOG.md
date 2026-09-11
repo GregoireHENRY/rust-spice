@@ -29,6 +29,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   limb and terminator points, `getelm` and `evsgp4` read and propagate a two-line element set, and
   `gfoclt` searches for occultations, with `wninsd`, `wnfetd` and `wncard` to build the confinement
   window it takes and read the window it returns.
++ 13 more, taking the total to 190: `axisar`, `eul2m`, `eul2xf`, `invort`, `isrot`, `m2eul`, `m2q`,
+  `q2m`, `qxq`, `rav2xf`, `raxisa`, `xf2eul` and `xf2rav` cover rotations, quaternions, Euler angles
+  and state transformations.
 + `Cell<T>` is generic over its element type, owns its backing storage, and gained `len`,
   `capacity`, `get`, `iter`, `to_vec`, `push`, `clear` and a deep `Clone`.
 + A self contained test suite: the SPK, CK, DSK, PCK and text kernels it needs are generated in a
