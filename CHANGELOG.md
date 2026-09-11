@@ -18,12 +18,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `getmsg`, `qcktrc`, `erract`, `errdev` and `errprt`.
 + `ffi` module: the `SpiceArg`/`SpiceRet`/`SpiceReturn` traits describing how each Rust type is
   handed to, and read back from, a C routine.
-+ 116 more wrapped functions, bringing the total to 167, including the whole of the previous *TODO*
-  list: `ckcov`, `ckgp`, `ckgpav`, `ckobj`, `ckopn`, `ckcls`, `ckw03`, `dsksrf`, `dskopn`, `dskcls`,
-  `dskmi2`, `dskw02`, `dskgtl`, `dskstl`, `gcpool`, `gipool`, `latsrf`, `pckcov`, `pckfrm`, `sce2c`,
-  `sce2s`, `scencd`, `scdecd`, `scs2e`, `sct2e`, `spkcov`, `spkcpo`, `spkcpt`, `spkcvo`, `spkcvt`,
-  `spkobj`, `srfc2s`, `srfcss`, `srfnrm`, `srfs2c`, `srfscc` and `sxform`, plus the coordinate,
-  vector, matrix, two-body, kernel pool, surface geometry and toolkit constant families.
++ 120 more wrapped functions, taking the total from 47 to 167 of the 649 CSPICE exposes. Every
+  entry of the previous *TODO* list is now wrapped: `ckcov`, `ckgp`, `ckgpav`, `ckobj`, `dsksrf`,
+  `gcpool`, `gipool`, `latsrf`, `pckcov`, `scdecd`, `sce2c`, `sce2s`, `scencd`, `scs2e`, `sct2e`,
+  `spkcov`, `spkcpo`, `spkcpt`, `spkcvo`, `spkcvt`, `spkobj`, `srfc2s`, `srfcss`, `srfnrm`,
+  `srfs2c`, `srfscc` and `sxform`, along with the CK, DSK and SPK writers and the coordinate,
+  vector, matrix, two-body, kernel pool, surface geometry and toolkit constant families. Seven new
+  entries are listed as *TODO*: `dskxsi`, `dskxv`, `evsgp4`, `getelm`, `gfoclt`, `limbpt`, `termpt`.
 + `Cell<T>` is generic over its element type, owns its backing storage, and gained `len`,
   `capacity`, `get`, `iter`, `to_vec`, `push`, `clear` and a deep `Clone`.
 + A self contained test suite: the SPK, CK, DSK, PCK and text kernels it needs are generated in a
