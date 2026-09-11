@@ -261,6 +261,24 @@ impl<'a, T> SpiceArg for &'a mut [T] {
     }
 }
 
+/// A single character, for the few routines that take one rather than a string.
+///
+/// Only the low byte is passed, which is all CSPICE can represent.
+impl SpiceArg for char {
+    type Owned = char;
+    type Raw = SpiceChar;
+
+    #[inline]
+    fn own(self) -> Self::Owned {
+        self
+    }
+
+    #[inline]
+    fn raw(owned: &mut Self::Owned) -> Self::Raw {
+        *owned as u32 as SpiceChar
+    }
+}
+
 impl SpiceArg for &str {
     type Owned = Buffer<INLINE_IN>;
     type Raw = *mut SpiceChar;

@@ -111,3 +111,122 @@ fn cspice_fills_a_caller_allocated_cell() {
 
     common::unload();
 }
+
+#[test]
+#[serial]
+fn set_operations() {
+    common::reset();
+
+    let mut a = spice::Cell::<i32>::new(16);
+    let mut b = spice::Cell::<i32>::new(16);
+    for item in [1, 3, 5, 7] {
+        spice::insrti(item, &mut a);
+    }
+    for item in [3, 4, 5, 6] {
+        spice::insrti(item, &mut b);
+    }
+    common::assert_ok("building the sets");
+
+    // Insertion keeps a set sorted and free of duplicates.
+    spice::insrti(3, &mut a);
+    assert_eq!(a.to_vec(), vec![1, 3, 5, 7]);
+
+    let mut result = spice::Cell::<i32>::new(16);
+    spice::union(&mut a, &mut b, &mut result);
+    assert_eq!(result.to_vec(), vec![1, 3, 4, 5, 6, 7]);
+
+    spice::inter(&mut a, &mut b, &mut result);
+    assert_eq!(result.to_vec(), vec![3, 5]);
+
+    spice::diff(&mut a, &mut b, &mut result);
+    assert_eq!(result.to_vec(), vec![1, 7]);
+    common::assert_ok("set operations");
+
+    // Membership and removal.
+    assert!(spice::elemi(5, &mut a));
+    assert!(!spice::elemi(4, &mut a));
+    spice::removi(5, &mut a);
+    assert!(!spice::elemi(5, &mut a));
+    assert_eq!(a.to_vec(), vec![1, 3, 7]);
+
+    common::unload();
+}
+
+#[test]
+#[serial]
+fn sets_of_doubles_and_strings() {
+    common::reset();
+
+    let mut numbers = spice::Cell::<f64>::new(16);
+    for item in [2.5, -1.0, 2.5] {
+        spice::insrtd(item, &mut numbers);
+    }
+    assert_eq!(numbers.to_vec(), vec![-1.0, 2.5]);
+    assert!(spice::elemd(2.5, &mut numbers));
+    spice::removd(2.5, &mut numbers);
+    assert!(!spice::elemd(2.5, &mut numbers));
+
+    let mut names = spice::Cell::<String>::with_length(16, 32);
+    for item in ["beta", "alpha", "beta"] {
+        spice::insrtc(item, &mut names);
+    }
+    common::assert_ok("string set");
+    assert_eq!(
+        names.to_vec(),
+        vec!["alpha".to_string(), "beta".to_string()]
+    );
+    assert!(spice::elemc("alpha", &mut names));
+    spice::removc("alpha", &mut names);
+    assert!(!spice::elemc("alpha", &mut names));
+    assert_eq!(names.to_vec(), vec!["beta".to_string()]);
+
+    common::unload();
+}
+
+#[test]
+#[serial]
+fn cardinality_and_size() {
+    common::reset();
+
+    let mut cell = spice::Cell::<i32>::new(16);
+    for item in [4, 2, 4, 9] {
+        spice::appndi(item, &mut cell);
+    }
+    common::assert_ok("appending");
+
+    // Appending keeps duplicates and the insertion order; it is a cell, not yet a set.
+    assert_eq!(cell.to_vec(), vec![4, 2, 4, 9]);
+    assert_eq!(spice::card(&mut cell), 4);
+    assert_eq!(spice::card(&mut cell), cell.len() as i32);
+    assert_eq!(spice::size(&mut cell), 16);
+    assert_eq!(spice::size(&mut cell), cell.capacity() as i32);
+
+    // Validating turns it into a set.
+    spice::valid(16, 4, &mut cell);
+    assert_eq!(cell.to_vec(), vec![2, 4, 9]);
+
+    // Truncating and copying.
+    spice::scard(2, &mut cell);
+    assert_eq!(cell.to_vec(), vec![2, 4]);
+
+    let mut copy = spice::Cell::<i32>::new(16);
+    spice::copy(&mut cell, &mut copy);
+    assert_eq!(copy.to_vec(), cell.to_vec());
+    common::assert_ok("copying");
+
+    // `ssize` resizes and empties.
+    spice::ssize(8, &mut copy);
+    assert_eq!(spice::size(&mut copy), 8);
+    assert!(copy.is_empty());
+
+    // And the double and character forms of append.
+    let mut numbers = spice::Cell::<f64>::new(4);
+    spice::appndd(1.5, &mut numbers);
+    assert_eq!(numbers.to_vec(), vec![1.5]);
+
+    let mut names = spice::Cell::<String>::with_length(4, 32);
+    spice::appndc("delta", &mut names);
+    assert_eq!(names.to_vec(), vec!["delta".to_string()]);
+
+    common::unload();
+}

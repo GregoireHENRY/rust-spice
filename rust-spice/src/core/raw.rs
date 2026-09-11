@@ -10,7 +10,7 @@ declares them. Wrappers that need an explicit buffer size, or a caller allocated
 */
 
 use crate::c::{SpiceChar, SpiceDouble, SpiceInt};
-use crate::core::cell::Cell;
+use crate::core::cell::{Cell, CellItem};
 use crate::core::ffi::{from_cbuf, to_cstring};
 use spice_derive::cspice_proc;
 
@@ -2393,6 +2393,303 @@ cspice_proc! {
     #[return_output]
     #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
     pub fn wncard(window: &mut Cell<f64>) -> i32 {}
+}
+
+cspice_proc! {
+    /**
+    Place the complement of a window, relative to the interval `[left, right]`, into `result`.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn wncomd(left: f64, right: f64, window: &mut Cell<f64>, result: &mut Cell<f64>) {}
+}
+
+cspice_proc! {
+    /**
+    Contract each interval of a window by `left` at its start and `right` at its end.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn wncond(left: f64, right: f64, window: &mut Cell<f64>) {}
+}
+
+cspice_proc! {
+    /**
+    Expand each interval of a window by `left` at its start and `right` at its end.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn wnexpd(left: f64, right: f64, window: &mut Cell<f64>) {}
+}
+
+cspice_proc! {
+    /**
+    Place the difference of two windows into `c`.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn wndifd(a: &mut Cell<f64>, b: &mut Cell<f64>, c: &mut Cell<f64>) {}
+}
+
+cspice_proc! {
+    /**
+    Place the intersection of two windows into `c`.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn wnintd(a: &mut Cell<f64>, b: &mut Cell<f64>, c: &mut Cell<f64>) {}
+}
+
+cspice_proc! {
+    /**
+    Place the union of two windows into `c`.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn wnunid(a: &mut Cell<f64>, b: &mut Cell<f64>, c: &mut Cell<f64>) {}
+}
+
+cspice_proc! {
+    /**
+    Whether a point belongs to a window.
+    */
+    #[return_output]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn wnelmd(point: f64, window: &mut Cell<f64>) -> bool {}
+}
+
+cspice_proc! {
+    /**
+    Whether an interval is included in a window.
+    */
+    #[return_output]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn wnincd(left: f64, right: f64, window: &mut Cell<f64>) -> bool {}
+}
+
+cspice_proc! {
+    /**
+    Compare two windows; `op` is one of `"="`, `"<>"`, `"<="`, `"<"`, `">="` or `">"`.
+    */
+    #[return_output]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn wnreld(a: &mut Cell<f64>, op: &str, b: &mut Cell<f64>) -> bool {}
+}
+
+cspice_proc! {
+    /**
+    Replace each interval of a window by one of its endpoints; `side` is `'L'` or `'R'`.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn wnextd(side: char, window: &mut Cell<f64>) {}
+}
+
+cspice_proc! {
+    /**
+    Fill the gaps shorter than `sml` between adjacent intervals of a window.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn wnfild(sml: f64, window: &mut Cell<f64>) {}
+}
+
+cspice_proc! {
+    /**
+    Drop the intervals of a window shorter than `sml`.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn wnfltd(sml: f64, window: &mut Cell<f64>) {}
+}
+
+cspice_proc! {
+    /**
+    Summarize a window: total measure, average and standard deviation of the interval lengths, and
+    the indices of the shortest and longest intervals.
+
+    The two indices point at the *left endpoints* in the flat endpoint array, so they run
+    `0, 2, 4, ...` rather than `0, 1, 2, ...`; the `n`th interval is reported as `2 * n`. Ties go
+    to the first interval of that length.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn wnsumd(window: &mut Cell<f64>) -> (f64, f64, f64, i32, i32) {}
+}
+
+cspice_proc! {
+    /**
+    Validate a double precision window built by writing into a cell directly.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn wnvald(size: i32, n: i32, window: &mut Cell<f64>) {}
+}
+
+/* -------------------------------------------------------------------------------------------- */
+/* Sets and cells                                                                                 */
+/* -------------------------------------------------------------------------------------------- */
+
+cspice_proc! {
+    /**
+    Place the union of two sets into `c`.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn union<T: CellItem>(a: &mut Cell<T>, b: &mut Cell<T>, c: &mut Cell<T>) {}
+}
+
+cspice_proc! {
+    /**
+    Place the intersection of two sets into `c`.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn inter<T: CellItem>(a: &mut Cell<T>, b: &mut Cell<T>, c: &mut Cell<T>) {}
+}
+
+cspice_proc! {
+    /**
+    Place the difference of two sets into `c`.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn diff<T: CellItem>(a: &mut Cell<T>, b: &mut Cell<T>, c: &mut Cell<T>) {}
+}
+
+cspice_proc! {
+    /**
+    Copy the contents of one cell into another.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn copy<T: CellItem>(a: &mut Cell<T>, b: &mut Cell<T>) {}
+}
+
+cspice_proc! {
+    /**
+    The cardinality of a cell; [`Cell::len`] reports the same number without a CSPICE call.
+    */
+    #[return_output]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn card<T: CellItem>(cell: &mut Cell<T>) -> i32 {}
+}
+
+cspice_proc! {
+    /**
+    Set the cardinality of a cell.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn scard<T: CellItem>(card: i32, cell: &mut Cell<T>) {}
+}
+
+cspice_proc! {
+    /**
+    The size of a cell; [`Cell::capacity`] reports the same number without a CSPICE call.
+    */
+    #[return_output]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn size<T: CellItem>(cell: &mut Cell<T>) -> i32 {}
+}
+
+cspice_proc! {
+    /**
+    Set the size of a cell.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn ssize<T: CellItem>(size: i32, cell: &mut Cell<T>) {}
+}
+
+cspice_proc! {
+    /**
+    Turn a cell holding `n` items into a set, by sorting it and removing the duplicates.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn valid<T: CellItem>(size: i32, n: i32, a: &mut Cell<T>) {}
+}
+
+cspice_proc! {
+    /**
+    Whether an integer belongs to a set.
+    */
+    #[return_output]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn elemi(item: i32, set: &mut Cell<i32>) -> bool {}
+}
+
+cspice_proc! {
+    /**
+    Whether a double precision number belongs to a set.
+    */
+    #[return_output]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn elemd(item: f64, set: &mut Cell<f64>) -> bool {}
+}
+
+cspice_proc! {
+    /**
+    Whether a string belongs to a set.
+    */
+    #[return_output]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn elemc(item: &str, set: &mut Cell<String>) -> bool {}
+}
+
+cspice_proc! {
+    /**
+    Insert an integer into a set.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn insrti(item: i32, set: &mut Cell<i32>) {}
+}
+
+cspice_proc! {
+    /**
+    Insert a double precision number into a set.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn insrtd(item: f64, set: &mut Cell<f64>) {}
+}
+
+cspice_proc! {
+    /**
+    Insert a string into a set.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn insrtc(item: &str, set: &mut Cell<String>) {}
+}
+
+cspice_proc! {
+    /**
+    Remove an integer from a set.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn removi(item: i32, set: &mut Cell<i32>) {}
+}
+
+cspice_proc! {
+    /**
+    Remove a double precision number from a set.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn removd(item: f64, set: &mut Cell<f64>) {}
+}
+
+cspice_proc! {
+    /**
+    Remove a string from a set.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn removc(item: &str, set: &mut Cell<String>) {}
+}
+
+cspice_proc! {
+    /**
+    Append an integer to a cell; [`Cell::push`] is the idiomatic form.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn appndi(item: i32, cell: &mut Cell<i32>) {}
+}
+
+cspice_proc! {
+    /**
+    Append a double precision number to a cell; [`Cell::push`] is the idiomatic form.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn appndd(item: f64, cell: &mut Cell<f64>) {}
+}
+
+cspice_proc! {
+    /**
+    Append a string to a cell; [`Cell::push`] is the idiomatic form.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn appndc(item: &str, cell: &mut Cell<String>) {}
 }
 
 /* -------------------------------------------------------------------------------------------- */
