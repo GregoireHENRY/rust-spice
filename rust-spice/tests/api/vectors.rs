@@ -245,3 +245,127 @@ fn quadratic_form_and_identity() {
     assert_eq!(spice::xpose6(spice::xpose6(big)), big);
     assert_eq!(spice::xpose6(big)[1][4], big[4][1]);
 }
+
+/// A four dimensional pair, so the general routines cannot silently be doing 3-vector work.
+const G1: [f64; 4] = [1.0, 2.0, 3.0, 4.0];
+const G2: [f64; 4] = [-2.0, 1.0, 0.0, 5.0];
+
+#[test]
+#[serial]
+fn general_dimension_vectors() {
+    crate::common::reset();
+
+    assert_eq!(spice::vaddg(&G1, &G2), vec![-1.0, 3.0, 3.0, 9.0]);
+    assert_eq!(spice::vsubg(&G1, &G2), vec![3.0, 1.0, 3.0, -1.0]);
+    assert_eq!(spice::vsclg(2.0, &G1), vec![2.0, 4.0, 6.0, 8.0]);
+    assert_eq!(spice::vequg(&G1), G1.to_vec());
+    assert_eq!(spice::vminug(&G1), vec![-1.0, -2.0, -3.0, -4.0]);
+    assert_eq!(spice::moved(&G1), G1.to_vec());
+
+    assert_relative_eq!(spice::vdotg(&G1, &G2), 20.0, epsilon = 1e-14);
+    assert_relative_eq!(spice::vnormg(&G1), 30f64.sqrt(), epsilon = 1e-14);
+    assert_relative_eq!(
+        spice::vdistg(&G1, &G2),
+        spice::vnormg(&spice::vsubg(&G1, &G2)),
+        epsilon = 1e-14
+    );
+    assert!(spice::vzerog(&[0.0; 4]));
+    assert!(!spice::vzerog(&G1));
+
+    // The unit vector and the magnitude, both ways of asking.
+    let (unit, magnitude) = spice::unormg(&G1);
+    assert_relative_eq!(magnitude, spice::vnormg(&G1), epsilon = 1e-14);
+    assert_eq!(unit, spice::vhatg(&G1));
+    assert_relative_eq!(spice::vnormg(&unit), 1.0, epsilon = 1e-14);
+
+    // Separation and relative difference, checked against their definitions.
+    let cosine = spice::vdotg(&G1, &G2) / (spice::vnormg(&G1) * spice::vnormg(&G2));
+    assert_relative_eq!(spice::vsepg(&G1, &G2), cosine.acos(), epsilon = 1e-12);
+    assert_relative_eq!(
+        spice::vrelg(&G1, &G2),
+        spice::vdistg(&G1, &G2) / spice::vnormg(&G1).max(spice::vnormg(&G2)),
+        epsilon = 1e-14
+    );
+
+    // Projection, and the linear combination.
+    let along = spice::vprojg(&G1, &G2);
+    let across = spice::vsubg(&G1, &along);
+    assert_relative_eq!(spice::vdotg(&along, &across), 0.0, epsilon = 1e-13);
+    assert_eq!(
+        spice::vlcomg(2.0, &G1, 3.0, &G2),
+        spice::vaddg(&spice::vsclg(2.0, &G1), &spice::vsclg(3.0, &G2))
+    );
+
+    // In three dimensions they agree with the fixed size forms.
+    assert_eq!(spice::vaddg(&A, &B), spice::vadd(A, B).to_vec());
+    assert_relative_eq!(spice::vdotg(&A, &B), spice::vdot(A, B), epsilon = 0.0);
+    assert_relative_eq!(spice::vsepg(&A, &B), spice::vsep(A, B), epsilon = 1e-15);
+
+    crate::common::assert_ok("the general dimension vector routines");
+}
+
+#[test]
+#[serial]
+#[should_panic(expected = "must all have the same length")]
+fn general_dimension_vectors_reject_a_length_mismatch() {
+    crate::common::reset();
+    spice::vaddg(&G1, &A);
+}
+
+#[test]
+#[serial]
+fn general_dimension_matrices() {
+    crate::common::reset();
+
+    // A 2x3 matrix and a 3x2 one, stored row by row.
+    let a = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0];
+    let b = [7.0, 8.0, 9.0, 10.0, 11.0, 12.0];
+
+    // (2x3)(3x2) = 2x2.
+    assert_eq!(spice::mxmg(&a, &b, 2, 3, 2), vec![58.0, 64.0, 139.0, 154.0]);
+    // The transpose of the 2x3, times the 2x2 identity, is 3x2. The dimensions are named after
+    // what they mean, not after their position: `nc1`, then the shared row count, then `nc2`.
+    let square = [1.0, 0.0, 0.0, 1.0];
+    assert_eq!(
+        spice::mtxmg(&a, &square, 3, 2, 2),
+        vec![1.0, 4.0, 2.0, 5.0, 3.0, 6.0]
+    );
+    // (2x3)(2x3)^T = 2x2.
+    assert_eq!(spice::mxmtg(&a, &a, 2, 3, 2), vec![14.0, 32.0, 32.0, 77.0]);
+
+    // Matrix times vector, and the transpose form.
+    assert_eq!(spice::mxvg(&a, &[1.0, 1.0, 1.0], 2, 3), vec![6.0, 15.0]);
+    assert_eq!(spice::mtxvg(&a, &[1.0, 1.0], 3, 2), vec![5.0, 7.0, 9.0]);
+
+    // Transposing and copying.
+    assert_eq!(spice::xposeg(&a, 2, 3), vec![1.0, 4.0, 2.0, 5.0, 3.0, 6.0]);
+    assert_eq!(spice::xposeg(&spice::xposeg(&a, 2, 3), 3, 2), a.to_vec());
+    assert_eq!(spice::mequg(&a, 2, 3), a.to_vec());
+
+    // The quadratic form, against the same computation done in two steps.
+    let (v1, v2) = ([1.0, 2.0], [3.0, 4.0, 5.0]);
+    let expected = spice::vdotg(&v1, &spice::mxvg(&a, &v2, 2, 3));
+    assert_relative_eq!(spice::vtmvg(&v1, &a, &v2, 2, 3), expected, epsilon = 1e-13);
+
+    // In three dimensions they agree with the fixed size forms.
+    let flat = M.iter().flatten().copied().collect::<Vec<f64>>();
+    assert_eq!(spice::mxvg(&flat, &A, 3, 3), spice::mxv(M, A).to_vec());
+    assert_eq!(
+        spice::xposeg(&flat, 3, 3),
+        spice::xpose(M)
+            .iter()
+            .flatten()
+            .copied()
+            .collect::<Vec<f64>>()
+    );
+
+    crate::common::assert_ok("the general dimension matrix routines");
+}
+
+#[test]
+#[serial]
+#[should_panic(expected = "needs 6 elements")]
+fn general_dimension_matrices_reject_a_wrong_shape() {
+    crate::common::reset();
+    spice::xposeg(&[1.0, 2.0, 3.0], 2, 3);
+}

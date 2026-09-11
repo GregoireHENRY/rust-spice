@@ -1385,6 +1385,380 @@ cspice_proc! {
 }
 
 /* -------------------------------------------------------------------------------------------- */
+/* Vectors and matrices of arbitrary dimension                                                    */
+/* -------------------------------------------------------------------------------------------- */
+
+/*
+CSPICE takes the dimensions as separate arguments and writes the result through a bare pointer, so
+these cannot go through the macro: the length of the output is only known at run time. Each wrapper
+takes the dimensions from the slices it is given and sizes the result itself.
+*/
+
+/// Generate the wrappers of the `v*g` routines that map one or two vectors to another.
+macro_rules! vector_g {
+    ($($name:ident($($arg:ident),*) => $cname:ident, $doc:expr);* $(;)?) => {$(
+        #[doc = $doc]
+        ///
+        /// # Panics
+        ///
+        /// Panics if the vectors have different lengths.
+        #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+        pub fn $name($($arg: &[f64]),*) -> Vec<f64> {
+            let ndim = same_length(&[$($arg),*]);
+            let mut vout = vec![0.0; ndim];
+            unsafe {
+                crate::c::$cname(
+                    $($arg.as_ptr() as *mut SpiceDouble,)*
+                    ndim as SpiceInt,
+                    vout.as_mut_ptr(),
+                );
+            }
+            vout
+        }
+    )*};
+}
+
+/// Generate the wrappers of the `v*g` routines that reduce one or two vectors to a scalar.
+macro_rules! scalar_g {
+    ($($name:ident($($arg:ident),*) -> $ret:ty => $cname:ident, $conv:expr, $doc:expr);* $(;)?) => {$(
+        #[doc = $doc]
+        ///
+        /// # Panics
+        ///
+        /// Panics if the vectors have different lengths.
+        #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+        pub fn $name($($arg: &[f64]),*) -> $ret {
+            let ndim = same_length(&[$($arg),*]);
+            let returned = unsafe {
+                crate::c::$cname($($arg.as_ptr() as *mut SpiceDouble,)* ndim as SpiceInt)
+            };
+            #[allow(clippy::redundant_closure_call)]
+            ($conv)(returned)
+        }
+    )*};
+}
+
+/// The common length of a set of slices.
+fn same_length(slices: &[&[f64]]) -> usize {
+    let ndim = slices[0].len();
+    assert!(
+        slices.iter().all(|slice| slice.len() == ndim),
+        "the vectors must all have the same length, got {:?}",
+        slices.iter().map(|slice| slice.len()).collect::<Vec<_>>()
+    );
+    ndim
+}
+
+vector_g! {
+    vaddg(v1, v2) => vaddg_c, "Add two vectors of arbitrary dimension.";
+    vsubg(v1, v2) => vsubg_c, "Subtract one vector of arbitrary dimension from another.";
+    vhatg(v1) => vhatg_c, "The unit vector along a vector of arbitrary dimension.";
+    vequg(vin) => vequg_c, "Copy a vector of arbitrary dimension.";
+    vminug(vin) => vminug_c, "Negate a vector of arbitrary dimension.";
+    vprojg(a, b) => vprojg_c, "The projection of one vector onto another, in arbitrary dimension.";
+}
+
+scalar_g! {
+    vdotg(v1, v2) -> f64 => vdotg_c, |value| value,
+        "The dot product of two vectors of arbitrary dimension.";
+    vnormg(v1) -> f64 => vnormg_c, |value| value,
+        "The magnitude of a vector of arbitrary dimension.";
+    vdistg(v1, v2) -> f64 => vdistg_c, |value| value,
+        "The distance between two vectors of arbitrary dimension.";
+    vrelg(v1, v2) -> f64 => vrelg_c, |value| value,
+        "The relative difference between two vectors of arbitrary dimension.";
+    vsepg(v1, v2) -> f64 => vsepg_c, |value| value,
+        "The angular separation of two vectors of arbitrary dimension.";
+    vzerog(v) -> bool => vzerog_c, |value: crate::c::SpiceBoolean| value != 0,
+        "Whether a vector of arbitrary dimension is the zero vector.";
+}
+
+/**
+Scale a vector of arbitrary dimension.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn vsclg(s: f64, v1: &[f64]) -> Vec<f64> {
+    let mut vout = vec![0.0; v1.len()];
+    unsafe {
+        crate::c::vsclg_c(
+            s,
+            v1.as_ptr() as *mut SpiceDouble,
+            v1.len() as SpiceInt,
+            vout.as_mut_ptr(),
+        )
+    };
+    vout
+}
+
+/**
+Normalize a vector of arbitrary dimension, returning the unit vector and the original magnitude.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn unormg(v1: &[f64]) -> (Vec<f64>, f64) {
+    let mut vout = vec![0.0; v1.len()];
+    let mut vmag = 0.0;
+    unsafe {
+        crate::c::unormg_c(
+            v1.as_ptr() as *mut SpiceDouble,
+            v1.len() as SpiceInt,
+            vout.as_mut_ptr(),
+            &mut vmag,
+        )
+    };
+    (vout, vmag)
+}
+
+/**
+The linear combination `a * v1 + b * v2`, in arbitrary dimension.
+
+# Panics
+
+Panics if the vectors have different lengths.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn vlcomg(a: f64, v1: &[f64], b: f64, v2: &[f64]) -> Vec<f64> {
+    let ndim = same_length(&[v1, v2]);
+    let mut sum = vec![0.0; ndim];
+    unsafe {
+        crate::c::vlcomg_c(
+            ndim as SpiceInt,
+            a,
+            v1.as_ptr() as *mut SpiceDouble,
+            b,
+            v2.as_ptr() as *mut SpiceDouble,
+            sum.as_mut_ptr(),
+        )
+    };
+    sum
+}
+
+/**
+Copy `ndim` elements of an array.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn moved(arrfrm: &[f64]) -> Vec<f64> {
+    let mut arrto = vec![0.0; arrfrm.len()];
+    unsafe {
+        crate::c::moved_c(
+            arrfrm.as_ptr() as *mut SpiceDouble,
+            arrfrm.len() as SpiceInt,
+            arrto.as_mut_ptr(),
+        )
+    };
+    arrto
+}
+
+/**
+The quadratic form `v1 * matrix * v2`, in arbitrary dimension.
+
+`matrix` is `nrow` by `ncol`, stored row by row.
+
+# Panics
+
+Panics if the lengths do not match the dimensions.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn vtmvg(v1: &[f64], matrix: &[f64], v2: &[f64], nrow: usize, ncol: usize) -> f64 {
+    assert_matrix(matrix, nrow, ncol);
+    assert!(
+        v1.len() == nrow && v2.len() == ncol,
+        "vtmvg needs a vector of {nrow} and one of {ncol}, got {} and {}",
+        v1.len(),
+        v2.len()
+    );
+
+    unsafe {
+        crate::c::vtmvg_c(
+            v1.as_ptr().cast(),
+            matrix.as_ptr().cast(),
+            v2.as_ptr().cast(),
+            nrow as SpiceInt,
+            ncol as SpiceInt,
+        )
+    }
+}
+
+/// Check that a slice holds a `rows` by `cols` matrix, stored row by row.
+fn assert_matrix(matrix: &[f64], rows: usize, cols: usize) {
+    assert!(
+        matrix.len() == rows * cols,
+        "a {rows}x{cols} matrix needs {} elements, got {}",
+        rows * cols,
+        matrix.len()
+    );
+}
+
+/*
+CSPICE names the dimensions of these after what they mean rather than after their position, and
+the meaning differs between the three. Spelling them out, and asserting the shapes, is the only way
+a caller can tell what to pass: getting `mtxmg` wrong the other way round produces a plausible
+looking matrix rather than an error.
+*/
+
+/**
+Multiply a `nr1` by `nc1r2` matrix with a `nc1r2` by `nc2` one, giving `nr1` by `nc2`.
+
+The matrices are stored row by row.
+
+# Panics
+
+Panics if the slice lengths do not match the dimensions.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn mxmg(m1: &[f64], m2: &[f64], nr1: usize, nc1r2: usize, nc2: usize) -> Vec<f64> {
+    assert_matrix(m1, nr1, nc1r2);
+    assert_matrix(m2, nc1r2, nc2);
+    let mut mout = vec![0.0; nr1 * nc2];
+    unsafe {
+        crate::c::mxmg_c(
+            m1.as_ptr().cast(),
+            m2.as_ptr().cast(),
+            nr1 as SpiceInt,
+            nc1r2 as SpiceInt,
+            nc2 as SpiceInt,
+            mout.as_mut_ptr().cast(),
+        )
+    };
+    mout
+}
+
+/**
+Multiply the transpose of a `nr1r2` by `nc1` matrix with a `nr1r2` by `nc2` one, giving `nc1` by
+`nc2`.
+
+The matrices are stored row by row.
+
+# Panics
+
+Panics if the slice lengths do not match the dimensions.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn mtxmg(m1: &[f64], m2: &[f64], nc1: usize, nr1r2: usize, nc2: usize) -> Vec<f64> {
+    assert_matrix(m1, nr1r2, nc1);
+    assert_matrix(m2, nr1r2, nc2);
+    let mut mout = vec![0.0; nc1 * nc2];
+    unsafe {
+        crate::c::mtxmg_c(
+            m1.as_ptr().cast(),
+            m2.as_ptr().cast(),
+            nc1 as SpiceInt,
+            nr1r2 as SpiceInt,
+            nc2 as SpiceInt,
+            mout.as_mut_ptr().cast(),
+        )
+    };
+    mout
+}
+
+/**
+Multiply a `nr1` by `nc1c2` matrix with the transpose of a `nr2` by `nc1c2` one, giving `nr1` by
+`nr2`.
+
+The matrices are stored row by row.
+
+# Panics
+
+Panics if the slice lengths do not match the dimensions.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn mxmtg(m1: &[f64], m2: &[f64], nr1: usize, nc1c2: usize, nr2: usize) -> Vec<f64> {
+    assert_matrix(m1, nr1, nc1c2);
+    assert_matrix(m2, nr2, nc1c2);
+    let mut mout = vec![0.0; nr1 * nr2];
+    unsafe {
+        crate::c::mxmtg_c(
+            m1.as_ptr().cast(),
+            m2.as_ptr().cast(),
+            nr1 as SpiceInt,
+            nc1c2 as SpiceInt,
+            nr2 as SpiceInt,
+            mout.as_mut_ptr().cast(),
+        )
+    };
+    mout
+}
+
+/**
+Multiply a matrix by a vector, in arbitrary dimension.
+
+`m1` is `nrow1` by `nc1r2`, stored row by row.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn mxvg(m1: &[f64], v2: &[f64], nrow1: usize, nc1r2: usize) -> Vec<f64> {
+    assert_matrix(m1, nrow1, nc1r2);
+    assert_matrix(v2, nc1r2, 1);
+    let mut vout = vec![0.0; nrow1];
+    unsafe {
+        crate::c::mxvg_c(
+            m1.as_ptr().cast(),
+            v2.as_ptr().cast(),
+            nrow1 as SpiceInt,
+            nc1r2 as SpiceInt,
+            vout.as_mut_ptr().cast(),
+        )
+    };
+    vout
+}
+
+/**
+Multiply the transpose of a matrix by a vector, in arbitrary dimension.
+
+`m1` is `nr1r2` by `ncol1`, stored row by row.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn mtxvg(m1: &[f64], v2: &[f64], ncol1: usize, nr1r2: usize) -> Vec<f64> {
+    assert_matrix(m1, nr1r2, ncol1);
+    assert_matrix(v2, nr1r2, 1);
+    let mut vout = vec![0.0; ncol1];
+    unsafe {
+        crate::c::mtxvg_c(
+            m1.as_ptr().cast(),
+            v2.as_ptr().cast(),
+            ncol1 as SpiceInt,
+            nr1r2 as SpiceInt,
+            vout.as_mut_ptr().cast(),
+        )
+    };
+    vout
+}
+
+/**
+Transpose a matrix of arbitrary dimension, stored row by row.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn xposeg(matrix: &[f64], nrow: usize, ncol: usize) -> Vec<f64> {
+    assert_matrix(matrix, nrow, ncol);
+    let mut xposem = vec![0.0; nrow * ncol];
+    unsafe {
+        crate::c::xposeg_c(
+            matrix.as_ptr().cast(),
+            nrow as SpiceInt,
+            ncol as SpiceInt,
+            xposem.as_mut_ptr().cast(),
+        )
+    };
+    xposem
+}
+
+/**
+Copy a matrix of arbitrary dimension, stored row by row.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn mequg(m1: &[f64], nr: usize, nc: usize) -> Vec<f64> {
+    assert_matrix(m1, nr, nc);
+    let mut mout = vec![0.0; nr * nc];
+    unsafe {
+        crate::c::mequg_c(
+            m1.as_ptr().cast(),
+            nr as SpiceInt,
+            nc as SpiceInt,
+            mout.as_mut_ptr().cast(),
+        )
+    };
+    mout
+}
+
+/* -------------------------------------------------------------------------------------------- */
 /* Coordinate conversions between non-rectangular systems                                         */
 /* -------------------------------------------------------------------------------------------- */
 
