@@ -25,6 +25,7 @@ mod ck;
 mod constants;
 mod coords;
 mod dsk;
+mod ek;
 mod errors;
 mod files;
 mod frames;

@@ -20,8 +20,8 @@ without writing its outputs.
 */
 
 use crate::c::{
-    SpiceBoolean, SpiceCell, SpiceChar, SpiceDLADescr, SpiceDSKDescr, SpiceDouble, SpiceEllipse,
-    SpiceInt, SpicePlane,
+    SpiceBoolean, SpiceCell, SpiceChar, SpiceDLADescr, SpiceDSKDescr, SpiceDouble, SpiceEKAttDsc,
+    SpiceEKSegSum, SpiceEllipse, SpiceInt, SpicePlane,
 };
 use crate::MAX_LEN_OUT;
 use std::ffi::{CStr, CString};
@@ -597,7 +597,14 @@ macro_rules! struct_ret {
     )*};
 }
 
-struct_ret!(SpiceDLADescr, SpiceDSKDescr, SpicePlane, SpiceEllipse);
+struct_ret!(
+    SpiceDLADescr,
+    SpiceDSKDescr,
+    SpicePlane,
+    SpiceEllipse,
+    SpiceEKAttDsc,
+    SpiceEKSegSum,
+);
 
 /* -------------------------------------------------------------------------------------------- */
 /* Direct returns                                                                                 */

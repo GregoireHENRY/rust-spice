@@ -5336,10 +5336,74 @@ Append characters to a DAS, taking the substring `bpos ..= epos` of each line.
 #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
 pub fn dasadc<S: AsRef<str>>(handle: i32, bpos: i32, epos: i32, data: &[S]) {
     let (packed, datlen) = to_strided(data);
+    // The count CSPICE wants is of characters, not of lines.
+    let sublen = (epos - bpos + 1).max(0) as usize;
     unsafe {
         crate::c::dasadc_c(
             handle,
-            data.len() as SpiceInt,
+            (data.len() * sublen) as SpiceInt,
+            bpos,
+            epos,
+            datlen as SpiceInt,
+            packed.as_ptr().cast(),
+        )
+    }
+}
+
+/**
+Read characters from a DAS, into the substring `bpos ..= epos` of each line.
+
+Returns one line per substring the range covers, each `epos + 1` characters long, of which only
+`bpos ..= epos` come from the file.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn dasrdc(handle: i32, first: i32, last: i32, bpos: i32, epos: i32) -> Vec<String> {
+    let sublen = (epos - bpos + 1).max(1) as usize;
+    let datlen = (epos + 1).max(1) as usize;
+    let lines = ((last - first + 1).max(0) as usize + sublen - 1) / sublen;
+    // The routine reads the file as a stream of characters and leaves the rest of each line alone,
+    // so the lines start out blank rather than empty.
+    let mut data = vec![b' ' as SpiceChar; lines.max(1) * datlen];
+    unsafe {
+        crate::c::dasrdc_c(
+            handle,
+            first,
+            last,
+            bpos,
+            epos,
+            datlen as SpiceInt,
+            data.as_mut_ptr().cast(),
+        )
+    };
+    (0..lines)
+        .map(|line| {
+            data[line * datlen..(line + 1) * datlen]
+                .iter()
+                .map(|&byte| byte as u8 as char)
+                .collect()
+        })
+        .collect()
+}
+
+/**
+Update characters in a DAS, taking the substring `bpos ..= epos` of each line.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn dasudc<S: AsRef<str>>(handle: i32, first: i32, last: i32, bpos: i32, epos: i32, data: &[S]) {
+    // Only `bpos ..= epos` of each line is read, so every line has to reach at least that far.
+    let datlen = (epos + 1).max(1) as usize;
+    let mut packed = vec![b' ' as SpiceChar; data.len().max(1) * datlen];
+    for (line, value) in data.iter().enumerate() {
+        let slot = &mut packed[line * datlen..(line + 1) * datlen];
+        for (target, byte) in slot.iter_mut().zip(value.as_ref().as_bytes()) {
+            *target = *byte as SpiceChar;
+        }
+    }
+    unsafe {
+        crate::c::dasudc_c(
+            handle,
+            first,
+            last,
             bpos,
             epos,
             datlen as SpiceInt,
@@ -7629,4 +7693,816 @@ cspice_proc! {
     #[return_output]
     #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
     pub fn tkvrsn(item: &str) -> String {}
+}
+
+/* -------------------------------------------------------------------------------------------- */
+/* Events kernels                                                                                 */
+/* -------------------------------------------------------------------------------------------- */
+
+/// Attributes of one column of a table of an events kernel.
+#[allow(clippy::upper_case_acronyms)]
+pub type EKATTDSC = crate::c::SpiceEKAttDsc;
+
+/// Summary of one segment of an events kernel: its table, its shape and its columns.
+#[allow(clippy::upper_case_acronyms)]
+pub type EKSEGSUM = crate::c::SpiceEKSegSum;
+
+/// Greatest number of columns a segment of an events kernel may have.
+pub const EK_MXCLSG: usize = 100;
+
+/// Greatest number of items the `SELECT` clause of a query may name.
+pub const EK_MAXQSEL: usize = 50;
+
+/// Length of the name of a column, with room for the terminator.
+pub const EK_CSTRLN: usize = 33;
+
+/// Length of the name of a table, with room for the terminator.
+pub const EK_TSTRLN: usize = 65;
+
+/// The size a column declares when the number of values in its entries varies from row to row.
+pub const EK_VARSIZ: i32 = -1;
+
+/// The data type of a column of character strings.
+pub const EK_CHR: crate::c::SpiceEKDataType = crate::c::_SpiceDataType_SPICE_CHR;
+
+/// The data type of a column of double precision numbers.
+pub const EK_DP: crate::c::SpiceEKDataType = crate::c::_SpiceDataType_SPICE_DP;
+
+/// The data type of a column of integers.
+pub const EK_INT: crate::c::SpiceEKDataType = crate::c::_SpiceDataType_SPICE_INT;
+
+/// The data type of a column of epochs, which are read as double precision numbers.
+pub const EK_TIME: crate::c::SpiceEKDataType = crate::c::_SpiceDataType_SPICE_TIME;
+
+/// A selected item that is a column.
+pub const EK_EXP_COL: crate::c::SpiceEKExprClass = crate::c::_SpiceEKExprClass_SPICE_EK_EXP_COL;
+
+/// A selected item that is a function applied to a column.
+pub const EK_EXP_FUNC: crate::c::SpiceEKExprClass = crate::c::_SpiceEKExprClass_SPICE_EK_EXP_FUNC;
+
+/// A selected item that is neither a column nor a function of one.
+pub const EK_EXP_EXPR: crate::c::SpiceEKExprClass = crate::c::_SpiceEKExprClass_SPICE_EK_EXP_EXPR;
+
+cspice_proc! {
+    /**
+    Open a new events kernel and prepare it for writing, returning the handle of the open file.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn ekopn(fname: &str, ifname: &str, ncomch: i32) -> i32 {}
+}
+
+cspice_proc! {
+    /**
+    Open an existing events kernel for reading, returning the handle of the open file.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn ekopr(fname: &str) -> i32 {}
+}
+
+cspice_proc! {
+    /**
+    Open an existing events kernel for writing, returning the handle of the open file.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn ekopw(fname: &str) -> i32 {}
+}
+
+cspice_proc! {
+    /**
+    Open a scratch events kernel and prepare it for writing, returning the handle of the open file.
+
+    The file is deleted when it is closed.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn ekops() -> i32 {}
+}
+
+cspice_proc! {
+    /**
+    Close an open events kernel.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn ekcls(handle: i32) {}
+}
+
+cspice_proc! {
+    /**
+    Load an events kernel, making it readable by the query routines, and return its handle.
+
+    [`furnsh`] loads one too; this is the form that hands back the handle.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn eklef(fname: &str) -> i32 {}
+}
+
+cspice_proc! {
+    /**
+    Unload an events kernel, making its contents unreadable and its room available again.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn ekuef(handle: i32) {}
+}
+
+cspice_proc! {
+    /**
+    Return the number of tables the loaded events kernels hold between them.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn ekntab() -> i32 {}
+}
+
+cspice_proc! {
+    /**
+    Return the name of the `n`th loaded table, counting from zero.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn ektnam(n: i32, #[lenout] lenout: i32) -> String {}
+}
+
+cspice_proc! {
+    /**
+    Return the number of distinct columns of a loaded table.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn ekccnt(table: &str) -> i32 {}
+}
+
+cspice_proc! {
+    /**
+    Return the name and the attributes of the `cindex`th column of a loaded table, counting from
+    zero.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn ekcii(table: &str, cindex: i32, #[lenout] lenout: i32) -> (String, EKATTDSC) {}
+}
+
+cspice_proc! {
+    /**
+    Return the number of segments of an open events kernel.
+    */
+    #[return_output]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn eknseg(handle: i32) -> i32 {}
+}
+
+cspice_proc! {
+    /**
+    Return the summary of a segment of an open events kernel, counting segments from zero.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn ekssum(handle: i32, segno: i32) -> EKSEGSUM {}
+}
+
+cspice_proc! {
+    /**
+    Run a query, returning the number of rows it matched, whether it could not be parsed, and the
+    message saying why it could not.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn ekfind(query: &str, #[lenout] lenout: i32) -> (i32, bool, String) {}
+}
+
+cspice_proc! {
+    /**
+    Return the number of values in the entry of the `selidx`th selected item in a row of the result
+    of the last [`ekfind`], counting both from zero.
+    */
+    #[return_output]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn eknelt(selidx: i32, row: i32) -> i32 {}
+}
+
+cspice_proc! {
+    /**
+    Return one value of a character entry from the result of the last [`ekfind`], and whether it is
+    null and whether it was found.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn ekgc(
+        selidx: i32,
+        row: i32,
+        elment: i32,
+        #[lenout] lenout: i32
+    ) -> (String, bool, bool) {
+    }
+}
+
+cspice_proc! {
+    /**
+    Return one value of a double precision entry from the result of the last [`ekfind`], and
+    whether it is null and whether it was found.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn ekgd(selidx: i32, row: i32, elment: i32) -> (f64, bool, bool) {}
+}
+
+cspice_proc! {
+    /**
+    Return one value of an integer entry from the result of the last [`ekfind`], and whether it is
+    null and whether it was found.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn ekgi(selidx: i32, row: i32, elment: i32) -> (i32, bool, bool) {}
+}
+
+cspice_proc! {
+    /**
+    Append an empty record to a segment of an open events kernel, returning its number.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn ekappr(handle: i32, segno: i32) -> i32 {}
+}
+
+cspice_proc! {
+    /**
+    Insert an empty record into a segment of an open events kernel, at the given index.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn ekinsr(handle: i32, segno: i32, recno: i32) {}
+}
+
+cspice_proc! {
+    /**
+    Delete a record from a segment of an open events kernel.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn ekdelr(handle: i32, segno: i32, recno: i32) {}
+}
+
+/**
+Start a segment of an open events kernel, returning its number.
+
+`cnames` names the columns and `decls` declares them, so the two have the same length.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn ekbseg<S: AsRef<str>, T: AsRef<str>>(
+    handle: i32,
+    tabnam: &str,
+    cnames: &[S],
+    decls: &[T],
+) -> i32 {
+    let tabnam = to_cstring(tabnam);
+    let (names, cnmlen) = to_strided(cnames);
+    let (declarations, declen) = to_strided(decls);
+    let mut segno = 0;
+    unsafe {
+        crate::c::ekbseg_c(
+            handle,
+            tabnam.as_ptr() as *mut SpiceChar,
+            cnames.len() as SpiceInt,
+            cnmlen as SpiceInt,
+            names.as_ptr().cast(),
+            declen as SpiceInt,
+            declarations.as_ptr().cast(),
+            &mut segno,
+        );
+    }
+    segno
+}
+
+/**
+Start a segment of an open events kernel that is to be written a column at a time.
+
+Returns the number of the segment and the record pointers, which every later call writing the
+segment is handed in turn: the column additions [`ekaclc`], [`ekacld`] and [`ekacli`], and finally
+[`ekffld`].
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn ekifld<S: AsRef<str>, T: AsRef<str>>(
+    handle: i32,
+    tabnam: &str,
+    nrows: i32,
+    cnames: &[S],
+    decls: &[T],
+) -> (i32, Vec<i32>) {
+    let tabnam = to_cstring(tabnam);
+    let (names, cnmlen) = to_strided(cnames);
+    let (declarations, declen) = to_strided(decls);
+    let mut segno = 0;
+    let mut rcptrs = vec![0; (nrows.max(0) as usize).max(1)];
+    unsafe {
+        crate::c::ekifld_c(
+            handle,
+            tabnam.as_ptr() as *mut SpiceChar,
+            cnames.len() as SpiceInt,
+            nrows,
+            cnmlen as SpiceInt,
+            names.as_ptr().cast(),
+            declen as SpiceInt,
+            declarations.as_ptr().cast(),
+            &mut segno,
+            rcptrs.as_mut_ptr(),
+        );
+    }
+    rcptrs.truncate(nrows.max(0) as usize);
+    (segno, rcptrs)
+}
+
+/**
+Finish writing a segment started by [`ekifld`], given the record pointers it returned.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn ekffld(handle: i32, segno: i32, rcptrs: &mut [i32]) {
+    unsafe { crate::c::ekffld_c(handle, segno, rcptrs.as_mut_ptr()) };
+}
+
+/// The three column additions differ only in the type of the values they are handed.
+macro_rules! ek_add_column {
+    ($name:ident, $cname:ident, $ty:ty, $values:ident, $doc:expr) => {
+        #[doc = $doc]
+        ///
+        /// `entszs` gives the number of values in each row's entry and `nlflgs` says which entries
+        /// are null, so both have one element per row. `rcptrs` is what [`ekifld`] returned.
+        #[allow(clippy::too_many_arguments)]
+        #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+        pub fn $name(
+            handle: i32,
+            segno: i32,
+            column: &str,
+            $values: &[$ty],
+            entszs: &[i32],
+            nlflgs: &[bool],
+            rcptrs: &[i32],
+        ) {
+            let column = to_cstring(column);
+            let flags = nlflgs
+                .iter()
+                .map(|&flag| flag as crate::c::SpiceBoolean)
+                .collect::<Vec<_>>();
+            // The index is only read when the column is indexed, and then it needs one slot a row.
+            let mut wkindx = vec![0 as SpiceInt; rcptrs.len().max(1)];
+            unsafe {
+                crate::c::$cname(
+                    handle,
+                    segno,
+                    column.as_ptr() as *mut SpiceChar,
+                    $values.as_ptr() as *mut _,
+                    entszs.as_ptr() as *mut SpiceInt,
+                    flags.as_ptr() as *mut crate::c::SpiceBoolean,
+                    rcptrs.as_ptr() as *mut SpiceInt,
+                    wkindx.as_mut_ptr(),
+                );
+            }
+        }
+    };
+}
+
+ek_add_column!(
+    ekacld,
+    ekacld_c,
+    f64,
+    dvals,
+    "Write a whole double precision column of a segment started by [`ekifld`]."
+);
+ek_add_column!(
+    ekacli,
+    ekacli_c,
+    i32,
+    ivals,
+    "Write a whole integer column of a segment started by [`ekifld`]."
+);
+
+/**
+Write a whole character column of a segment started by [`ekifld`].
+
+`entszs` gives the number of values in each row's entry and `nlflgs` says which entries are null,
+so both have one element per row. `rcptrs` is what [`ekifld`] returned.
+*/
+#[allow(clippy::too_many_arguments)]
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn ekaclc<S: AsRef<str>>(
+    handle: i32,
+    segno: i32,
+    column: &str,
+    cvals: &[S],
+    entszs: &[i32],
+    nlflgs: &[bool],
+    rcptrs: &[i32],
+) {
+    let column = to_cstring(column);
+    let (values, vallen) = to_strided(cvals);
+    let flags = nlflgs
+        .iter()
+        .map(|&flag| flag as crate::c::SpiceBoolean)
+        .collect::<Vec<_>>();
+    let mut wkindx = vec![0 as SpiceInt; rcptrs.len().max(1)];
+    unsafe {
+        crate::c::ekaclc_c(
+            handle,
+            segno,
+            column.as_ptr() as *mut SpiceChar,
+            vallen as SpiceInt,
+            values.as_ptr().cast(),
+            entszs.as_ptr() as *mut SpiceInt,
+            flags.as_ptr() as *mut crate::c::SpiceBoolean,
+            rcptrs.as_ptr() as *mut SpiceInt,
+            wkindx.as_mut_ptr(),
+        );
+    }
+}
+
+/// Adding an entry to a record and updating one take the same arguments.
+macro_rules! ek_record_write {
+    ($name:ident, $cname:ident, $ty:ty, $values:ident, $doc:expr) => {
+        #[doc = $doc]
+        #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+        pub fn $name(
+            handle: i32,
+            segno: i32,
+            recno: i32,
+            column: &str,
+            $values: &[$ty],
+            isnull: bool,
+        ) {
+            let column = to_cstring(column);
+            unsafe {
+                crate::c::$cname(
+                    handle,
+                    segno,
+                    recno,
+                    column.as_ptr() as *mut SpiceChar,
+                    $values.len() as SpiceInt,
+                    $values.as_ptr() as *mut _,
+                    isnull as crate::c::SpiceBoolean,
+                );
+            }
+        }
+    };
+}
+
+ek_record_write!(
+    ekaced,
+    ekaced_c,
+    f64,
+    dvals,
+    "Write a double precision entry into a record of a segment of an open events kernel."
+);
+ek_record_write!(
+    ekacei,
+    ekacei_c,
+    i32,
+    ivals,
+    "Write an integer entry into a record of a segment of an open events kernel."
+);
+ek_record_write!(
+    ekuced,
+    ekuced_c,
+    f64,
+    dvals,
+    "Replace a double precision entry of a record of a segment of an open events kernel."
+);
+ek_record_write!(
+    ekucei,
+    ekucei_c,
+    i32,
+    ivals,
+    "Replace an integer entry of a record of a segment of an open events kernel."
+);
+
+/// The two character record writers differ only in the routine they call.
+macro_rules! ek_record_write_c {
+    ($name:ident, $cname:ident, $doc:expr) => {
+        #[doc = $doc]
+        #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+        pub fn $name<S: AsRef<str>>(
+            handle: i32,
+            segno: i32,
+            recno: i32,
+            column: &str,
+            cvals: &[S],
+            isnull: bool,
+        ) {
+            let column = to_cstring(column);
+            let (values, vallen) = to_strided(cvals);
+            unsafe {
+                crate::c::$cname(
+                    handle,
+                    segno,
+                    recno,
+                    column.as_ptr() as *mut SpiceChar,
+                    cvals.len() as SpiceInt,
+                    vallen as SpiceInt,
+                    values.as_ptr().cast(),
+                    isnull as crate::c::SpiceBoolean,
+                );
+            }
+        }
+    };
+}
+
+ek_record_write_c!(
+    ekacec,
+    ekacec_c,
+    "Write a character entry into a record of a segment of an open events kernel."
+);
+ek_record_write_c!(
+    ekucec,
+    ekucec_c,
+    "Replace a character entry of a record of a segment of an open events kernel."
+);
+
+/// The two numeric record readers differ only in the type of the values they report.
+macro_rules! ek_record_read {
+    ($name:ident, $cname:ident, $ty:ty, $zero:expr, $doc:expr) => {
+        #[doc = $doc]
+        ///
+        /// `maxvals` is the room to make for the entry, in values; CSPICE writes as many as the
+        /// entry holds, which is at most the size the column declares.
+        #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+        pub fn $name(
+            handle: i32,
+            segno: i32,
+            recno: i32,
+            column: &str,
+            maxvals: usize,
+        ) -> (Vec<$ty>, bool) {
+            let column = to_cstring(column);
+            let mut values = vec![$zero; maxvals.max(1)];
+            let (mut nvals, mut isnull) = (0, 0);
+            unsafe {
+                crate::c::$cname(
+                    handle,
+                    segno,
+                    recno,
+                    column.as_ptr() as *mut SpiceChar,
+                    &mut nvals,
+                    values.as_mut_ptr(),
+                    &mut isnull,
+                );
+            }
+            values.truncate((nvals.max(0) as usize).min(maxvals));
+            (values, isnull != 0)
+        }
+    };
+}
+
+ek_record_read!(
+    ekrced,
+    ekrced_c,
+    f64,
+    0.0,
+    "Read a double precision entry of a record of a segment of an open events kernel."
+);
+ek_record_read!(
+    ekrcei,
+    ekrcei_c,
+    i32,
+    0,
+    "Read an integer entry of a record of a segment of an open events kernel."
+);
+
+/**
+Read a character entry of a record of a segment of an open events kernel.
+
+`maxvals` is the room to make for the entry, in values, and `lenout` the room for each of them.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn ekrcec(
+    handle: i32,
+    segno: i32,
+    recno: i32,
+    column: &str,
+    maxvals: usize,
+    lenout: usize,
+) -> (Vec<String>, bool) {
+    let column = to_cstring(column);
+    let stride = lenout.max(1);
+    let mut buffer = vec![0 as SpiceChar; maxvals.max(1) * stride];
+    let (mut nvals, mut isnull) = (0, 0);
+    unsafe {
+        crate::c::ekrcec_c(
+            handle,
+            segno,
+            recno,
+            column.as_ptr() as *mut SpiceChar,
+            stride as SpiceInt,
+            &mut nvals,
+            buffer.as_mut_ptr().cast(),
+            &mut isnull,
+        );
+    }
+    let count = (nvals.max(0) as usize).min(maxvals);
+    (from_strided(&buffer, stride, count), isnull != 0)
+}
+
+/**
+Parse the `SELECT` clause of a query, reporting in full on each item it selects.
+
+Returns, for each selected item, where its expression begins and ends in `query`, its data type,
+its class, the table it is taken from and the column it names; then whether the query could not be
+parsed, and the message saying why.
+*/
+#[allow(clippy::type_complexity)]
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn ekpsel(
+    query: &str,
+    msglen: usize,
+    tablen: usize,
+    collen: usize,
+) -> (
+    Vec<i32>,
+    Vec<i32>,
+    Vec<crate::c::SpiceEKDataType>,
+    Vec<crate::c::SpiceEKExprClass>,
+    Vec<String>,
+    Vec<String>,
+    bool,
+    String,
+) {
+    let query = to_cstring(query);
+    let (tablen, collen) = (tablen.max(1), collen.max(1));
+    let mut xbegs = vec![0 as SpiceInt; EK_MAXQSEL];
+    let mut xends = vec![0 as SpiceInt; EK_MAXQSEL];
+    let mut xtypes = vec![EK_CHR; EK_MAXQSEL];
+    let mut xclass = vec![EK_EXP_COL; EK_MAXQSEL];
+    let mut tabs = vec![0 as SpiceChar; EK_MAXQSEL * tablen];
+    let mut cols = vec![0 as SpiceChar; EK_MAXQSEL * collen];
+    let mut errmsg = vec![0 as SpiceChar; msglen.max(1)];
+    let (mut n, mut error) = (0, 0);
+    unsafe {
+        crate::c::ekpsel_c(
+            query.as_ptr() as *mut SpiceChar,
+            errmsg.len() as SpiceInt,
+            tablen as SpiceInt,
+            collen as SpiceInt,
+            &mut n,
+            xbegs.as_mut_ptr(),
+            xends.as_mut_ptr(),
+            xtypes.as_mut_ptr(),
+            xclass.as_mut_ptr(),
+            tabs.as_mut_ptr().cast(),
+            cols.as_mut_ptr().cast(),
+            &mut error,
+            errmsg.as_mut_ptr(),
+        );
+    }
+    let count = (n.max(0) as usize).min(EK_MAXQSEL);
+    xbegs.truncate(count);
+    xends.truncate(count);
+    xtypes.truncate(count);
+    xclass.truncate(count);
+    (
+        xbegs,
+        xends,
+        xtypes,
+        xclass,
+        from_strided(&tabs, tablen, count),
+        from_strided(&cols, collen, count),
+        error != 0,
+        from_cbuf(&errmsg),
+    )
+}
+
+/* -------------------------------------------------------------------------------------------- */
+/* The rest of the toolkit                                                                        */
+/* -------------------------------------------------------------------------------------------- */
+
+/// Building an array of a repeated value, for the cases CSPICE provides a routine for.
+macro_rules! fill_array {
+    ($($name:ident($ty:ty, $value:expr) => $cname:ident, $doc:expr);* $(;)?) => {$(
+        #[doc = $doc]
+        ///
+        /// `vec![]` does the same thing without leaving Rust; this is here for completeness.
+        #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+        pub fn $name(value: $ty, ndim: usize) -> Vec<$ty> {
+            let mut array = vec![$value; ndim.max(1)];
+            unsafe { crate::c::$cname(value, ndim as SpiceInt, array.as_mut_ptr()) };
+            array.truncate(ndim);
+            array
+        }
+    )*};
+}
+
+fill_array! {
+    filld(f64, 0.0) => filld_c, "Fill a double precision array with a value.";
+    filli(i32, 0) => filli_c, "Fill an integer array with a value.";
+}
+
+/// Building an array of zeros, for the cases CSPICE provides a routine for.
+macro_rules! clear_array {
+    ($($name:ident($ty:ty, $value:expr) => $cname:ident, $doc:expr);* $(;)?) => {$(
+        #[doc = $doc]
+        ///
+        /// `vec![]` does the same thing without leaving Rust; this is here for completeness.
+        #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+        pub fn $name(ndim: usize) -> Vec<$ty> {
+            let mut array = vec![$value; ndim.max(1)];
+            unsafe { crate::c::$cname(ndim as SpiceInt, array.as_mut_ptr()) };
+            array.truncate(ndim);
+            array
+        }
+    )*};
+}
+
+clear_array! {
+    cleard(f64, 1.0) => cleard_c, "Set every element of a double precision array to zero.";
+    cleari(i32, 1) => cleari_c, "Set every element of an integer array to zero.";
+}
+
+/**
+Set every string of an array to blank, returning `ndim` of them, each `arrlen` characters long.
+
+`vec![]` does the same thing without leaving Rust; this is here for completeness.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn clearc(ndim: usize, arrlen: usize) -> Vec<String> {
+    let arrlen = arrlen.max(1);
+    let mut array = vec![b'x' as SpiceChar; ndim.max(1) * arrlen];
+    unsafe {
+        crate::c::clearc_c(
+            ndim as SpiceInt,
+            arrlen as SpiceInt,
+            array.as_mut_ptr().cast(),
+        )
+    };
+    from_strided(&array, arrlen, ndim)
+}
+
+/// The extremes, which CSPICE takes as variadic arguments.
+macro_rules! extremum {
+    ($($name:ident($ty:ty) => $cname:ident, $doc:expr);* $(;)?) => {$(
+        #[doc = $doc]
+        ///
+        /// The C routine is variadic, which Rust cannot hand a list whose length is only known
+        /// while it runs; folding the two argument form over the slice gives the same answer for
+        /// any length. An empty slice gives zero, as the C routine does for a count of none.
+        #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+        pub fn $name(values: &[$ty]) -> $ty {
+            values
+                .iter()
+                .copied()
+                .reduce(|left, right| unsafe { crate::c::$cname(2, left, right) })
+                .unwrap_or_else(|| unsafe { crate::c::$cname(0) })
+        }
+    )*};
+}
+
+extremum! {
+    maxd(f64) => maxd_c, "The largest of a set of double precision numbers.";
+    maxi(i32) => maxi_c, "The largest of a set of integers.";
+    mind(f64) => mind_c, "The smallest of a set of double precision numbers.";
+    mini(i32) => mini_c, "The smallest of a set of integers.";
+}
+
+cspice_proc! {
+    /**
+    Return the `nth` word of a string, counting from zero, and where in the string it starts.
+
+    The location counts from zero too, and is -1 when the string has no such word.
+    */
+    pub fn nthwd(string: &str, nth: i32, #[lenout] worlen: i32) -> (String, i32) {}
+}
+
+/**
+Display a prompt and return the line the user types in reply.
+
+Reads from the standard input, so it blocks until there is a line to read.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn prompt(dspmsg: &str, buflen: usize) -> String {
+    let dspmsg = to_cstring(dspmsg);
+    let mut buffer = vec![0 as SpiceChar; buflen.max(1)];
+    unsafe {
+        crate::c::prompt_c(
+            dspmsg.as_ptr() as *mut SpiceChar,
+            buffer.len() as SpiceInt,
+            buffer.as_mut_ptr(),
+        )
+    };
+    from_cbuf(&buffer)
+}
+
+/**
+Store the command line arguments, so that [`getcml`] can hand them back.
+
+CSPICE keeps the pointers rather than the strings, so the copy this makes is leaked on purpose: it
+has to outlive every later call. The toolkit refuses a second call, for the same reason.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn putcml<S: AsRef<str>>(argv: &[S]) {
+    let pointers = argv
+        .iter()
+        .map(|value| to_cstring(value).into_raw())
+        .collect::<Vec<_>>();
+    let pointers = Box::leak(pointers.into_boxed_slice());
+    unsafe { crate::c::putcml_c(argv.len() as SpiceInt, pointers.as_mut_ptr()) }
+}
+
+/**
+Return the command line arguments [`putcml`] was given.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn getcml() -> Vec<String> {
+    let (mut argc, mut argv) = (0, std::ptr::null_mut());
+    unsafe { crate::c::getcml_c(&mut argc, &mut argv) };
+    if argv.is_null() {
+        return Vec::new();
+    }
+    (0..argc.max(0) as usize)
+        .map(|index| unsafe {
+            std::ffi::CStr::from_ptr(*argv.add(index))
+                .to_string_lossy()
+                .into_owned()
+        })
+        .collect()
 }

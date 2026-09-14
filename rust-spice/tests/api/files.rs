@@ -215,9 +215,12 @@ fn das_writing() {
     spice::dasac(handle, &["a comment"]);
     common::assert_ok("appending to the DAS");
 
-    // Update one of the words before closing.
+    // Update one of the words of each kind before closing. The characters are addressed one at a
+    // time, so the second five-character line runs from six to ten.
     spice::dasudd(handle, 2, 2, &[9.5]);
     spice::dasudi(handle, 3, 3, &[99]);
+    spice::dasudc(handle, 6, 10, 0, 4, &["gamma"]);
+    common::assert_ok("updating the DAS");
     spice::daswbr(handle);
     spice::dasllc(handle);
     common::assert_ok("closing the DAS");
@@ -226,6 +229,7 @@ fn das_writing() {
     let handle = spice::dasopr(&path);
     assert_eq!(spice::dasrdd(handle, 1, 3), vec![1.5, 9.5, 3.5]);
     assert_eq!(spice::dasrdi(handle, 1, 3), vec![10, 20, 99]);
+    assert_eq!(spice::dasrdc(handle, 1, 10, 0, 4), vec!["alpha", "gamma"]);
     assert_eq!(spice::dasec(handle), vec!["a comment".to_string()]);
     common::assert_ok("reading the DAS back");
     spice::dascls(handle);

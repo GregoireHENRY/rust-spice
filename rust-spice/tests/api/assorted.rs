@@ -459,3 +459,112 @@ fn ftncls() {
     spice::ftncls(99);
     common::assert_ok("ftncls");
 }
+
+#[test]
+#[serial]
+fn arrays_and_extremes() {
+    common::reset();
+
+    // The array builders, which Rust has its own forms of.
+    assert_eq!(spice::filld(2.5, 4), vec![2.5; 4]);
+    assert_eq!(spice::filli(-7, 3), vec![-7; 3]);
+    assert_eq!(spice::cleard(4), vec![0.0; 4]);
+    assert_eq!(spice::cleari(3), vec![0; 3]);
+    assert_eq!(spice::clearc(2, 8), vec![String::new(); 2]);
+    assert!(spice::cleard(0).is_empty());
+    common::assert_ok("the array builders");
+
+    // The extremes, over a slice of any length.
+    assert_eq!(spice::maxd(&[1.0, 9.0, -3.0]), 9.0);
+    assert_eq!(spice::mind(&[1.0, 9.0, -3.0]), -3.0);
+    assert_eq!(spice::maxi(&[1, 9, -3]), 9);
+    assert_eq!(spice::mini(&[1, 9, -3]), -3);
+    assert_eq!(spice::maxd(&[4.0]), 4.0, "one value is its own extreme");
+    assert_eq!(spice::maxd(&[]), 0.0, "and none is zero");
+    assert_eq!(spice::mini(&[]), 0);
+    common::assert_ok("the extremes");
+}
+
+#[test]
+#[serial]
+fn nth_word() {
+    common::reset();
+
+    // Both the index of the word and the place it is found count from zero.
+    let sentence = "  now is  the time";
+    let (word, at) = spice::nthwd(sentence, 2, spice::MAX_LEN_OUT as i32);
+    common::assert_ok("nthwd");
+    assert_eq!(word, "the");
+    assert_eq!(&sentence[at as usize..at as usize + word.len()], word);
+    assert_eq!(
+        spice::nthwd(sentence, 0, spice::MAX_LEN_OUT as i32).0,
+        "now"
+    );
+
+    // Asking past the end gives nothing, at nowhere.
+    assert_eq!(
+        spice::nthwd(sentence, 9, spice::MAX_LEN_OUT as i32),
+        (String::new(), -1)
+    );
+    common::assert_ok("nthwd past the end");
+}
+
+#[test]
+#[serial]
+fn command_line() {
+    common::reset();
+    spice::errors::quiet();
+
+    // The command line belongs to the process, so it can only be set once.
+    spice::putcml(&["rust-spice", "--flag", "value"]);
+    common::assert_ok("putcml");
+    assert_eq!(spice::getcml(), vec!["rust-spice", "--flag", "value"]);
+    common::assert_ok("getcml");
+
+    // A second attempt is refused rather than allowed to overwrite it.
+    spice::putcml(&["again"]);
+    let error = spice::errors::check().expect_err("putcml should refuse a second call");
+    assert_eq!(error.short, "SPICE(PUTCMLCALLEDTWICE)");
+    assert_eq!(spice::getcml(), vec!["rust-spice", "--flag", "value"]);
+
+    spice::errors::loud();
+    common::unload();
+}
+
+// `prompt` reads from the standard input, so the test has to give it something to read; these are
+// what point the descriptor at a file of its own.
+extern "C" {
+    fn open(path: *const std::os::raw::c_char, flags: i32) -> i32;
+    fn dup(fd: i32) -> i32;
+    fn dup2(from: i32, to: i32) -> i32;
+    fn close(fd: i32) -> i32;
+}
+
+#[test]
+#[serial]
+fn reading_a_reply() {
+    common::reset();
+
+    // The line has to end in a newline: CSPICE reads characters until it sees one.
+    let path = common::kernel("reply.txt");
+    std::fs::write(&path, "a typed reply\n").unwrap();
+    let path = crate::cs(&path);
+
+    let (saved, replaced) = unsafe {
+        let saved = dup(0);
+        let file = open(path.as_ptr(), 0);
+        assert!(file >= 0, "cannot open the reply");
+        let replaced = dup2(file, 0);
+        close(file);
+        (saved, replaced)
+    };
+    assert!(replaced >= 0, "cannot redirect the standard input");
+
+    let reply = spice::prompt("say something: ", 64);
+    unsafe {
+        dup2(saved, 0);
+        close(saved);
+    }
+    common::assert_ok("prompt");
+    assert_eq!(reply, "a typed reply");
+}
