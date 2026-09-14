@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-09-14
+
+The first release since 0.7.8: 0.8.0 was prepared in the repository but never published, so
+upgrading from 0.7.8 brings the changes listed under both headings.
+
 ### Added
 
 + The rest of the toolkit. All 644 routines of CSPICE N0067 that can be called now have an
@@ -33,6 +38,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the first substring and dropped the rest.
 + `nthwd` documented its index and the location it reports as counting from one. Both count from
   zero, and the location is -1 when there is no such word.
+
+### Changed
+
++ Version 1.0. The whole of the callable toolkit is wrapped, so there is no longer a part of
+  CSPICE the interface is waiting to grow into.
 
 ## [0.8.0] - 2026-09-11
 

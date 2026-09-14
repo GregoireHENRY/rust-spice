@@ -1,6 +1,6 @@
 [package]
 name = "rust-spice"
-version = "0.8.0"
+version = "1.0.0"
 authors = ["Grégoire Henry <greg.henry@mail.com>"]
 edition = "2021"
 rust-version = "1.70"
@@ -23,7 +23,7 @@ lock = []
 libc = "0.2"
 cspice-sys = { package = "cspice-sys", version = "1", optional = true }
 cspice-sys-no-clang = { package = "cspice-sys", version = "<=0.0.1", optional = true }
-rust-spice-derive = { version = "0.8", path = "../rust-spice-derive" }
+rust-spice-derive = { version = "1.0", path = "../rust-spice-derive" }
 
 [dev-dependencies]
 approx = "0.5"

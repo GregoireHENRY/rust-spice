@@ -11,6 +11,9 @@
 [![coverage test badge]][coverage test link]
 
 > **WOW! The complete NASA/NAIF Spice toolkit is actually usable on Rust**
+>
+> *The Rust wrapper now covers 100% of CSPICE N0067: all 644 routines that can be called,
+> every one of them tested.*
 
 ---
 
@@ -185,8 +188,6 @@ unsafe {
     spice::c::kclear_c();
 }
 ```
-
-Much less friendly.. yet it is available.
 
 ## Multi-threaded usage
 

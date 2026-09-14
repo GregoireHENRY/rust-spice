@@ -1,6 +1,6 @@
 # Where the coverage work stands
 
-Branch `coverage`, on top of `main` at 0.8.0 (PR #21, merged).
+Finished, and on `main` as of 1.0.0 (PR #22, merged).
 
 ## Position
 
