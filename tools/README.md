@@ -31,6 +31,11 @@ cargo fmt --all && cargo clippy --all --all-targets -- --deny warnings && cargo 
 
 `tools/spiceypy-coverage.json` lists the routines SpiceyPy 8.2.0 wraps, used as the target set.
 
+`tools/bindings.py` is separate from that workflow. It copies the bindings `cspice-sys` generates
+into `rust-spice/src/unlinked.rs`, which is what the `unlinked` feature puts behind `spice::c` so
+that the crate can be documented without the toolkit. Run it after a `cargo build`, and only when
+the toolkit version changes; CI fails if the copy has drifted.
+
 ## What `generate.py` refuses, and why
 
 Every one of these was a real bug first, found by step 4 rather than by the compiler:

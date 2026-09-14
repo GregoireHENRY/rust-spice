@@ -6,8 +6,11 @@
 #![cfg_attr(not(feature = "lock"), doc = include_str!("../README.md"))]
 #![cfg_attr(docsrs, feature(doc_cfg))]
 
-#[cfg(feature = "noclang")]
+#[cfg(all(feature = "noclang", not(feature = "unlinked")))]
 extern crate cspice_sys_no_clang as cspice_sys;
+
+#[cfg(feature = "unlinked")]
+mod unlinked;
 
 /// The string version of **rust-spice**.
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -16,7 +19,11 @@ pub mod c {
     /*!
     Complete NASA/NAIF C SPICE binded functions, very unsafe.
     */
+    #[cfg(not(feature = "unlinked"))]
     pub use cspice_sys::*;
+
+    #[cfg(feature = "unlinked")]
+    pub use crate::unlinked::*;
 }
 
 // The unguarded API should only be exposed if the lock is disabled

@@ -75,3 +75,28 @@ jobs:
         run: cargo doc --all --no-deps
         env:
           RUSTDOCFLAGS: --deny warnings
+
+      # `src/unlinked.rs` is a copy of what `cspice-sys` generates, so it can go stale silently.
+      # Only on Linux: it is a copy of one platform's bindings, and documentation is all it feeds.
+      - name: Check the bundled bindings against the generated ones
+        if: runner.os == 'Linux'
+        run: |
+          python3 tools/bindings.py
+          git diff --exit-code rust-spice/src/unlinked.rs
+
+  docs:
+    name: docs.rs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: dtolnay/rust-toolchain@nightly
+
+      - uses: Swatinem/rust-cache@v2
+
+      # Exactly what docs.rs runs, and the point of it is that no CSPICE is needed: the `unlinked`
+      # feature declares the API rather than generating it from an installed toolkit.
+      - name: Build the documentation the way docs.rs does
+        run: cargo doc --package rust-spice --no-default-features --features unlinked --no-deps
+        env:
+          RUSTDOCFLAGS: --cfg docsrs --deny warnings

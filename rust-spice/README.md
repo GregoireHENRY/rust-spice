@@ -77,6 +77,12 @@ To enable the `lock` feature (see [## Multi-threaded usage](#multi-threaded-usag
 rust-spice = {version = "*", features = ["lock"] }
 ```
 
+There is one more feature, `unlinked`. It declares the CSPICE API instead of
+generating it from the toolkit installed on the machine, and links nothing, so
+it is enough to document or type check the crate and never enough to run it. It
+is what [docs.rs][doc link] builds with, because the build script of
+[`cspice-sys`][cspice-sys link] cannot run there.
+
 ## In action
 
 A nice and idiomatic interface to Spice,

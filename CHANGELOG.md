@@ -9,6 +9,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-09-14
+
+### Added
+
++ The `unlinked` feature, which declares the CSPICE API from bindings kept in the crate instead of
+  generating them from the toolkit installed on the machine, and links nothing. It is enough to
+  document or type check the crate and never enough to run it.
+
+### Fixed
+
++ docs.rs could not build the crate, and never had: the build script of `cspice-sys` unpacks its
+  bundled headers by running `tar`, which cannot create files inside the docs.rs sandbox, and it
+  does that before it looks at a feature or an environment variable. docs.rs now builds with
+  `unlinked` and needs no toolkit at all.
++ docs.rs was also configured with `all-features`, which turns on `lock`; that hides `raw` and
+  `neat` behind the guard and drops the crate level documentation. It builds with default features
+  off now, and the whole API still shows because the crate marks it `cfg(doc)`.
++ `--all-features` did not compile, because `noclang` binds `cspice-sys-no-clang` to the name the
+  default feature already uses for `cspice-sys`. `--all-features` turns on `unlinked` too, which
+  binds neither, so it goes through.
+
 ## [1.0.0] - 2026-09-14
 
 The first release since 0.7.8: 0.8.0 was prepared in the repository but never published, so
