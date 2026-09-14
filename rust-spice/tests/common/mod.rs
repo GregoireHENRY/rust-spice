@@ -45,6 +45,13 @@ pub const SPACECRAFT: i32 = -999;
 /// NAIF ID of the test instrument, and of its CK frame.
 pub const INSTRUMENT: i32 = -999000;
 
+/// NAIF ID of `TEST_SUNWARD`, the dynamic frame whose +x axis points from [`TARGET`] at
+/// [`CENTER`], with +z out of the orbit plane.
+pub const SUNWARD_FRAME: i32 = -999003;
+
+/// NAIF ID of the test telescope, whose field of view is fixed in `IAU_EARTH`.
+pub const TELESCOPE: i32 = -999100;
+
 /// NAIF ID of the `TEST_FIXED` frame.
 pub const FIXED_FRAME: i32 = -999001;
 
@@ -90,7 +97,8 @@ pub const STEP: f64 = 3600.0;
 /// An epoch comfortably inside the coverage, used by most tests.
 pub const EPOCH: f64 = 86400.0;
 
-const LSK: &str = r#"
+const LSK: &str = r#"KPL/LSK
+
 \begindata
 DELTET/DELTA_T_A = 32.184
 DELTET/K         = 1.657D-3
@@ -127,7 +135,8 @@ DELTET/DELTA_AT  = ( 10, @1972-JAN-1
 \begintext
 "#;
 
-const PCK: &str = r#"
+const PCK: &str = r#"KPL/PCK
+
 \begindata
 BODY399_RADII    = ( 6378.1366 6378.1366 6356.7519 )
 BODY399_POLE_RA  = (    0.      -0.641        0.   )
@@ -152,12 +161,15 @@ NAIF_SURFACE_BODY += ( 399 )
 \begintext
 "#;
 
-const FK: &str = r#"
+const FK: &str = r#"KPL/FK
+
 \begindata
 NAIF_BODY_NAME += ( 'TEST_SPACECRAFT' )
 NAIF_BODY_CODE += ( -999 )
 NAIF_BODY_NAME += ( 'TEST_INSTRUMENT' )
 NAIF_BODY_CODE += ( -999000 )
+NAIF_BODY_NAME += ( 'TEST_TELESCOPE' )
+NAIF_BODY_CODE += ( -999100 )
 
 FRAME_TEST_INSTRUMENT     = -999000
 FRAME_-999000_NAME        = 'TEST_INSTRUMENT'
@@ -177,10 +189,30 @@ TKFRAME_-999001_RELATIVE  = 'J2000'
 TKFRAME_-999001_ANGLES    = ( 0.0, 0.0, 90.0 )
 TKFRAME_-999001_AXES      = ( 1,   2,   3    )
 TKFRAME_-999001_UNITS     = 'DEGREES'
+
+FRAME_TEST_SUNWARD            = -999003
+FRAME_-999003_NAME            = 'TEST_SUNWARD'
+FRAME_-999003_CLASS           = 5
+FRAME_-999003_CLASS_ID        = -999003
+FRAME_-999003_CENTER          = 399
+FRAME_-999003_RELATIVE        = 'J2000'
+FRAME_-999003_DEF_STYLE       = 'PARAMETERIZED'
+FRAME_-999003_FAMILY          = 'TWO-VECTOR'
+FRAME_-999003_PRI_AXIS        = 'X'
+FRAME_-999003_PRI_VECTOR_DEF  = 'OBSERVER_TARGET_POSITION'
+FRAME_-999003_PRI_OBSERVER    = 'EARTH'
+FRAME_-999003_PRI_TARGET      = 'SUN'
+FRAME_-999003_PRI_ABCORR      = 'NONE'
+FRAME_-999003_SEC_AXIS        = 'Z'
+FRAME_-999003_SEC_VECTOR_DEF  = 'CONSTANT'
+FRAME_-999003_SEC_FRAME       = 'J2000'
+FRAME_-999003_SEC_SPEC        = 'RECTANGULAR'
+FRAME_-999003_SEC_VECTOR      = ( 0.0, 0.0, 1.0 )
 \begintext
 "#;
 
-const SCLK: &str = r#"
+const SCLK: &str = r#"KPL/SCLK
+
 \begindata
 SCLK_KERNEL_ID             = ( @2000-01-01/00:00:00 )
 SCLK_DATA_TYPE_999         = ( 1 )
@@ -197,7 +229,8 @@ SCLK01_COEFFICIENTS_999    = ( 0.0000000000000E+00
 \begintext
 "#;
 
-const IK: &str = r#"
+const IK: &str = r#"KPL/IK
+
 \begindata
 INS-999000_FOV_CLASS_SPEC  = 'ANGLES'
 INS-999000_FOV_SHAPE       = 'RECTANGLE'
@@ -207,6 +240,14 @@ INS-999000_FOV_REF_VECTOR  = ( 1.0, 0.0, 0.0 )
 INS-999000_FOV_REF_ANGLE   = ( 5.0 )
 INS-999000_FOV_CROSS_ANGLE = ( 5.0 )
 INS-999000_FOV_ANGLE_UNITS = 'DEGREES'
+
+INS-999100_FOV_CLASS_SPEC  = 'ANGLES'
+INS-999100_FOV_SHAPE       = 'CIRCLE'
+INS-999100_FOV_FRAME       = 'IAU_EARTH'
+INS-999100_BORESIGHT       = ( 1.0, 0.0, 0.0 )
+INS-999100_FOV_REF_VECTOR  = ( 0.0, 0.0, 1.0 )
+INS-999100_FOV_REF_ANGLE   = ( 5.0 )
+INS-999100_FOV_ANGLE_UNITS = 'DEGREES'
 \begintext
 "#;
 
@@ -414,7 +455,7 @@ fn build() {
     write(
         "test.tm",
         &format!(
-            "\\begindata\n\
+            "KPL/MK\n\n\\begindata\n\
              PATH_VALUES     = (\n    {}\n)\n\
              PATH_SYMBOLS    = ( 'TESTS' )\n\
              KERNELS_TO_LOAD = (\n{})\n\

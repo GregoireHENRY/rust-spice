@@ -9,6 +9,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
++ The rest of the toolkit. All 644 routines of CSPICE N0067 that can be called now have an
+  idiomatic wrapper, and every one of them is exercised by a test. The families this release
+  finishes are the geometry finder (`gf*`, thirty routines including the eight scalar searches, the
+  two field of view searches and the five that take callbacks), the events kernel (all thirty seven
+  `ek*`), and the fifteen odds and ends left over: `clearc`, `cleard`, `cleari`, `dasrdc`,
+  `dasudc`, `filld`, `filli`, `getcml`, `maxd`, `maxi`, `mind`, `mini`, `nthwd`, `prompt` and
+  `putcml`.
++ `core::ffi` names the nine C callback signatures the geometry finder takes, and the crate
+  re-exports them as `UdFunc`, `UdFuns`, `UdFunb`, `UdStep`, `UdRefn`, `UdRepi`, `UdRepu`,
+  `UdRepf` and `UdBail`. They are plain `extern "C" fn` types rather than closures, which is what
+  CSPICE can actually accept.
++ `EKATTDSC` and `EKSEGSUM` for the column attributes and segment summaries of an events kernel,
+  and the `EK_*` constants for its data types, expression classes and limits.
+
+### Fixed
+
++ `gfocce` passed the observer where CSPICE expects the aberration correction. Its `-Brief_I/O`
+  section lists the two in the other order from its own prototype.
++ `dasadc` passed CSPICE the number of lines where it wants the number of characters, so it wrote
+  the first substring and dropped the rest.
++ `nthwd` documented its index and the location it reports as counting from one. Both count from
+  zero, and the location is -1 when there is no such word.
+
 ## [0.8.0] - 2026-09-11
 
 ### Added
@@ -51,6 +76,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   take slices and size the result themselves, and check that the lengths agree with the dimensions
   rather than letting CSPICE read past the end. The dimension arguments keep the names CSPICE gives
   them, which differ in meaning between `mxmg`, `mtxmg` and `mxmtg`.
++ 42 more, taking the total to 345 of the 648 CSPICE ships: the searching, sorting and ordering
+  routines (`bsrch*`, `bsch*`, `esrchc`, `lstle*`, `lstlt*`, `order*`, `reord*`, `shell*`, `sumad`,
+  `sumai`, `isordv`, `brcktd`, `brckti`) and the string utilities (`lcase`, `ucase`, `cmprss`,
+  `eqstr`, `matchi`, `matchw`, `nextwd`, `lparse`, `lparsm` and the `repm*` family).
++ 20 more, taking the total to 365: unit conversion, the numeric limits, the portable hexadecimal
+  form, the string position searches, `etcal`, `tparch`, `badkpv`, `bodvar`, the frame lookups
+  (`ccifrm`, `cidfrm`, `cnmfrm`, `bltfrm`) and the kernel pool watches (`swpool`, `cvpool`,
+  `gnpool`).
++ 56 more, taking the total to 421: the state derivative vectors, the ellipsoid helpers, the
+  lexers and parsers, the error stack (`chkin`, `chkout`, `trcdep`, `setmsg`, `errch`, `errdp`,
+  `errint`, `sigerr`, `return_c`), the observation geometry (`ltime`, `stelab`, `stlabx`, `trgsep`,
+  `azlcpo`, `tangpt`), the body orientation matrices (`tipbod`, `tisbod`, `tkfram`) and the
+  deprecated entry points `illum`, `subpt`, `subsol` and `srfxpt`.
++ 54 more, taking the total to 475: the DAF, DAS and DLA layers the kernels are built on, including
+  the segment searches, the summary packing, the raw word reads and writes and the comment areas,
+  plus the CK and binary PCK load and unload entry points.
++ 42 more, taking the total to 517: the SPK segment writers for types 2, 3, 5, 8, 10, 12, 13, 14,
+  18 and 20, the CK writers for types 1, 2 and 5, the binary PCK writer, the low level SPK readers
+  and segment descriptors, the type 2 DSK readers with the `dsk02` keywords they take, and the
+  spacecraft clock formatting and partitions.
++ 45 more, taking the total to 562: the Chebyshev and polynomial evaluators, the Lagrange and
+  Hermite interpolators, the plate area, volume, normal and nearest point routines, the linear
+  searches, the set ordinals and symmetric difference, the remaining kernel pool entry points
+  (`lmpool`, `stpool`, `szpool`, `kplfrm`), the file and frame information routines, the fields of
+  view by name, and the remaining time and text utilities.
 + `Cell<T>` is generic over its element type, owns its backing storage, and gained `len`,
   `capacity`, `get`, `iter`, `to_vec`, `push`, `clear` and a deep `Clone`.
 + A self contained test suite: the SPK, CK, DSK, PCK and text kernels it needs are generated in a
@@ -102,6 +152,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
++ `prefix_c` is not wrapped, and is absent from the index: NAIF declares it in `SpiceZpr.h` but does
+  not compile it into the library, so linking against it fails. That makes the toolkit 648 callable
+  routines rather than the 649 the headers advertise.
 + The declaration of the `rust-spice/hera` submodule, which was never registered and which the test
   suite no longer needs.
 + `Cell<bool>`: no CSPICE C routine operates on a boolean cell. `Cell::new_bool` still hands back an

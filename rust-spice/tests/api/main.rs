@@ -18,23 +18,30 @@ extern crate serial_test;
 mod common;
 
 mod against_c;
+mod assorted;
 mod bodies;
 mod cells;
 mod ck;
 mod constants;
 mod coords;
 mod dsk;
+mod ek;
 mod errors;
+mod files;
 mod frames;
 mod geometry;
 mod gf;
+mod interpolation;
+mod kernels;
 mod orbits;
 mod planes;
 mod pool;
 mod rotations;
 mod spk;
+mod strings;
 mod time;
 mod tle;
+mod units;
 mod vectors;
 
 /// Assert that two slices of floats agree to within `epsilon`.

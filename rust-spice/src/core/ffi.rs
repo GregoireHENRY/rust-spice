@@ -20,11 +20,57 @@ without writing its outputs.
 */
 
 use crate::c::{
-    SpiceBoolean, SpiceCell, SpiceChar, SpiceDLADescr, SpiceDSKDescr, SpiceDouble, SpiceEllipse,
-    SpiceInt, SpicePlane,
+    SpiceBoolean, SpiceCell, SpiceChar, SpiceDLADescr, SpiceDSKDescr, SpiceDouble, SpiceEKAttDsc,
+    SpiceEKSegSum, SpiceEllipse, SpiceInt, SpicePlane,
 };
 use crate::MAX_LEN_OUT;
 use std::ffi::{CStr, CString};
+
+/* -------------------------------------------------------------------------------------------- */
+/* Callbacks                                                                                      */
+/* -------------------------------------------------------------------------------------------- */
+
+/*
+The geometry finder calls back into the caller's code. A Rust function can be handed to C as a
+pointer only if it is `extern "C"` and captures nothing, so these are plain function pointer types
+rather than closures: a closure that captured anything could not be represented, and pretending
+otherwise would need a hidden global to smuggle the captures through.
+*/
+
+/// A scalar function of time, writing its value through the pointer.
+pub type UdFunc = unsafe extern "C" fn(x: SpiceDouble, value: *mut SpiceDouble);
+
+/// A scalar quantity the geometry finder searches over; the same shape as [`UdFunc`].
+pub type UdFuns = UdFunc;
+
+/// Whether the quantity computed by a [`UdFuns`] is decreasing at an epoch.
+pub type UdFunb =
+    unsafe extern "C" fn(udfuns: Option<UdFuns>, x: SpiceDouble, xbool: *mut SpiceBoolean);
+
+/// The step to take from an epoch while searching.
+pub type UdStep = unsafe extern "C" fn(et: SpiceDouble, step: *mut SpiceDouble);
+
+/// Refine a bracketing interval towards a root.
+pub type UdRefn = unsafe extern "C" fn(
+    t1: SpiceDouble,
+    t2: SpiceDouble,
+    s1: SpiceBoolean,
+    s2: SpiceBoolean,
+    t: *mut SpiceDouble,
+);
+
+/// Begin a progress report over a confinement window.
+pub type UdRepi =
+    unsafe extern "C" fn(cnfine: *mut SpiceCell, srcpre: *mut SpiceChar, srcsuf: *mut SpiceChar);
+
+/// Update a progress report.
+pub type UdRepu = unsafe extern "C" fn(ivbeg: SpiceDouble, ivend: SpiceDouble, et: SpiceDouble);
+
+/// Finish a progress report.
+pub type UdRepf = unsafe extern "C" fn();
+
+/// Whether an interrupt has been requested, which stops a search.
+pub type UdBail = unsafe extern "C" fn() -> SpiceBoolean;
 
 /* -------------------------------------------------------------------------------------------- */
 /* Buffers                                                                                        */
@@ -551,7 +597,14 @@ macro_rules! struct_ret {
     )*};
 }
 
-struct_ret!(SpiceDLADescr, SpiceDSKDescr, SpicePlane, SpiceEllipse);
+struct_ret!(
+    SpiceDLADescr,
+    SpiceDSKDescr,
+    SpicePlane,
+    SpiceEllipse,
+    SpiceEKAttDsc,
+    SpiceEKSegSum,
+);
 
 /* -------------------------------------------------------------------------------------------- */
 /* Direct returns                                                                                 */
@@ -650,6 +703,37 @@ pub fn from_cbuf(buf: &[SpiceChar]) -> String {
     String::from_utf8_lossy(&bytes[..end])
         .trim_end()
         .to_string()
+}
+
+/**
+Pack strings into the one contiguous, fixed stride, array CSPICE reads them out of.
+
+Returns the buffer and the stride, which is the length of the longest string plus its terminator.
+*/
+pub fn to_strided<S: AsRef<str>>(values: &[S]) -> (Vec<SpiceChar>, usize) {
+    let stride = values
+        .iter()
+        .map(|value| value.as_ref().len() + 1)
+        .max()
+        .unwrap_or(1);
+
+    let mut buffer = vec![0 as SpiceChar; values.len().max(1) * stride];
+    for (index, value) in values.iter().enumerate() {
+        let slot = &mut buffer[index * stride..(index + 1) * stride];
+        for (target, byte) in slot.iter_mut().zip(value.as_ref().as_bytes()) {
+            *target = *byte as SpiceChar;
+        }
+    }
+    (buffer, stride)
+}
+
+/**
+Read `count` strings back out of a buffer of `stride` byte slots.
+*/
+pub fn from_strided(buffer: &[SpiceChar], stride: usize, count: usize) -> Vec<String> {
+    (0..count)
+        .map(|index| from_cbuf(&buffer[index * stride..(index + 1) * stride]))
+        .collect()
 }
 
 /// The size, in elements, of the control area CSPICE keeps at the front of a cell.

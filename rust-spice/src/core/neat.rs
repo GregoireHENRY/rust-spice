@@ -18,6 +18,7 @@ version is exposed for the rest.
 */
 
 use crate::core::cell::{Cell, CELL_MAXID};
+use crate::core::ffi::{UdFunb, UdFuns};
 use crate::raw;
 use crate::MAX_LEN_OUT;
 
@@ -170,6 +171,141 @@ pub fn gcpool(name: &str, start: usize, room: usize) -> Vec<String> {
 }
 
 /**
+Fetch the `nth` string of a kernel pool variable, re-joining continuation lines.
+
+See [`raw::stpool`] for the raw interface.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn stpool(item: &str, nth: i32, contin: &str) -> (String, i32, bool) {
+    raw::stpool(item, nth, contin, MAX_LEN_OUT)
+}
+
+/**
+Determine the architecture and type of a SPICE kernel file.
+
+See [`raw::getfat`] for the raw interface.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn getfat(file: &str) -> (String, String) {
+    raw::getfat(file, MAX_LEN_OUT, MAX_LEN_OUT)
+}
+
+/**
+Return the field of view of an instrument given its name.
+
+See [`raw::getfvn`] for the raw interface.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn getfvn(inst: &str, room: usize) -> (String, String, [f64; 3], Vec<[f64; 3]>) {
+    raw::getfvn(inst, room, MAX_LEN_OUT, MAX_LEN_OUT)
+}
+
+/**
+The local solar time at a longitude on a body.
+
+See [`raw::et2lst`] for the raw interface.
+*/
+#[allow(clippy::type_complexity)]
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn et2lst(et: f64, body: i32, lon: f64, kind: &str) -> (i32, i32, i32, String, String) {
+    raw::et2lst(et, body, lon, kind, MAX_LEN_OUT, MAX_LEN_OUT)
+}
+
+/**
+Build a time format picture from a sample time string.
+
+See [`raw::tpictr`] for the raw interface.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn tpictr(sample: &str) -> (String, bool, String) {
+    raw::tpictr(sample, MAX_LEN_OUT, MAX_LEN_OUT)
+}
+
+/**
+Set or retrieve a default used by the time routines.
+
+See [`raw::timdef`] for the raw interface.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn timdef(action: &str, item: &str, value: &str) -> String {
+    raw::timdef(action, item, value, MAX_LEN_OUT)
+}
+
+/**
+The name of the routine at a given depth in the traceback.
+
+See [`raw::trcnam`] for the raw interface.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn trcnam(index: i32) -> String {
+    raw::trcnam(index, MAX_LEN_OUT as i32)
+}
+
+/**
+Replace a marker in a string with the cardinal text of an integer.
+
+See [`raw::repmct`] for the raw interface.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn repmct(input: &str, marker: &str, value: i32, strcase: char) -> String {
+    raw::repmct(input, marker, value, strcase, MAX_LEN_OUT as i32)
+}
+
+/**
+Search for the segment of an SPK that covers a body at an epoch.
+
+See [`raw::spksfs`] for the raw interface.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn spksfs(body: i32, et: f64) -> (i32, [f64; raw::SPK_DSCSIZ], String, bool) {
+    raw::spksfs(body, et, MAX_LEN_OUT)
+}
+
+/**
+Read the whole comment area of a DAF.
+
+See [`raw::dafec`] for the raw interface.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn dafec(handle: i32) -> Vec<String> {
+    let mut lines = Vec::new();
+    loop {
+        let (batch, done) = raw::dafec(handle, 64, MAX_LEN_OUT);
+        lines.extend(batch);
+        if done {
+            return lines;
+        }
+    }
+}
+
+/**
+Read the whole comment area of a DAS.
+
+See [`raw::dasec`] for the raw interface.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn dasec(handle: i32) -> Vec<String> {
+    let mut lines = Vec::new();
+    loop {
+        let (batch, done) = raw::dasec(handle, 64, MAX_LEN_OUT);
+        lines.extend(batch);
+        if done {
+            return lines;
+        }
+    }
+}
+
+/**
+Return the names of the kernel pool variables matching a template.
+
+See [`raw::gnpool`] for the raw interface.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn gnpool(name: &str, start: usize, room: usize) -> Vec<String> {
+    raw::gnpool(name, start, room, MAX_LEN_OUT)
+}
+
+/**
 Return the field-of-view parameters of an instrument, given its NAIF ID code.
 
 See [`raw::getfov`] for the raw interface.
@@ -208,6 +344,96 @@ pub fn dskv02(handle: i32, dladsc: raw::DLADSC) -> Vec<[f64; 3]> {
 /* -------------------------------------------------------------------------------------------- */
 /* Cells allocated on the caller's behalf                                                         */
 /* -------------------------------------------------------------------------------------------- */
+
+/**
+Split a list on a single delimiter, sizing the result for you.
+
+See [`raw::lparse`] for the raw interface.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn lparse(list: &str, delim: &str) -> Vec<String> {
+    raw::lparse(list, delim, list.len() + 1, list.len() + 1)
+}
+
+/**
+Split a list on any of a set of delimiters, sizing the result for you.
+
+See [`raw::lparsm`] for the raw interface.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn lparsm(list: &str, delims: &str) -> Vec<String> {
+    raw::lparsm(list, delims, list.len() + 1, list.len() + 1)
+}
+
+/**
+Convert a string to lower case.
+
+See [`raw::lcase`] for the raw interface.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn lcase(input: &str) -> String {
+    raw::lcase(input, input.len() as i32 + 1)
+}
+
+/**
+Convert a string to upper case.
+
+See [`raw::ucase`] for the raw interface.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn ucase(input: &str) -> String {
+    raw::ucase(input, input.len() as i32 + 1)
+}
+
+/**
+Compress runs of a delimiter down to `n` of them.
+
+See [`raw::cmprss`] for the raw interface.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn cmprss(delim: char, n: i32, input: &str) -> String {
+    raw::cmprss(delim, n, input, input.len() as i32 + 1)
+}
+
+/**
+Split a string at the first run of blanks, into the first word and the rest.
+
+See [`raw::nextwd`] for the raw interface.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn nextwd(string: &str) -> (String, String) {
+    raw::nextwd(string, string.len() + 1, string.len() + 1)
+}
+
+/**
+Replace a marker in a string with a string.
+
+See [`raw::repmc`] for the raw interface.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn repmc(input: &str, marker: &str, value: &str) -> String {
+    raw::repmc(input, marker, value, (input.len() + value.len() + 1) as i32)
+}
+
+/**
+Replace a marker in a string with a double precision number.
+
+See [`raw::repmd`] for the raw interface.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn repmd(input: &str, marker: &str, value: f64, sigdig: i32) -> String {
+    raw::repmd(input, marker, value, sigdig, MAX_LEN_OUT as i32)
+}
+
+/**
+Replace a marker in a string with an integer.
+
+See [`raw::repmi`] for the raw interface.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn repmi(input: &str, marker: &str, value: i32) -> String {
+    raw::repmi(input, marker, value, MAX_LEN_OUT as i32)
+}
 
 /**
 Find the set of body ID codes of all objects for which topographic data are provided in a specified
@@ -338,6 +564,170 @@ pub fn gfoclt(
         cnfine,
         &mut result,
     );
+    result
+}
+
+/// Generate the neat forms of the searches that compare a quantity against a reference value.
+macro_rules! gf_search {
+    ($($name:ident($($arg:ident: $ty:ty),*), $doc:expr);* $(;)?) => {$(
+        #[doc = $doc]
+        ///
+        #[doc = concat!("See [`raw::", stringify!($name), "`] for the raw interface.")]
+        #[allow(clippy::too_many_arguments)]
+        #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+        pub fn $name(
+            $($arg: $ty,)*
+            relate: &str,
+            refval: f64,
+            adjust: f64,
+            step: f64,
+            cnfine: &mut Cell<f64>,
+        ) -> Cell<f64> {
+            let mut result = Cell::new(CELL_MAXWIN);
+            raw::$name(
+                $($arg,)* relate, refval, adjust, step, (CELL_MAXWIN / 2) as i32, cnfine,
+                &mut result,
+            );
+            result
+        }
+    )*};
+}
+
+gf_search! {
+    gfdist(target: &str, abcorr: &str, obsrvr: &str),
+        "Search for times when the distance to a target meets a condition.";
+    gfrr(target: &str, abcorr: &str, obsrvr: &str),
+        "Search for times when the range rate of a target meets a condition.";
+    gfpa(target: &str, illmn: &str, abcorr: &str, obsrvr: &str),
+        "Search for times when the phase angle of a target meets a condition.";
+    gfposc(
+        target: &str, frame: &str, abcorr: &str, obsrvr: &str, crdsys: &str, coord: &str
+    ),
+        "Search for times when a coordinate of a target's position meets a condition.";
+    gfsubc(
+        target: &str, fixref: &str, method: &str, abcorr: &str, obsrvr: &str, crdsys: &str,
+        coord: &str
+    ),
+        "Search for times when a coordinate of the sub-observer point meets a condition.";
+    gfsntc(
+        target: &str, fixref: &str, method: &str, abcorr: &str, obsrvr: &str, dref: &str,
+        dvec: [f64; 3], crdsys: &str, coord: &str
+    ),
+        "Search for times when a coordinate of a ray-surface intercept meets a condition.";
+    gfsep(
+        targ1: &str, shape1: &str, frame1: &str, targ2: &str, shape2: &str, frame2: &str,
+        abcorr: &str, obsrvr: &str
+    ),
+        "Search for times when the angular separation of two targets meets a condition.";
+    gfilum(
+        method: &str, angtyp: &str, target: &str, illmn: &str, fixref: &str, abcorr: &str,
+        obsrvr: &str, spoint: [f64; 3]
+    ),
+        "Search for times when an illumination angle at a surface point meets a condition.";
+}
+
+/**
+Search for times when a ray is in the field of view of an instrument.
+
+See [`raw::gfrfov`] for the raw interface.
+*/
+#[allow(clippy::too_many_arguments)]
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn gfrfov(
+    inst: &str,
+    raydir: [f64; 3],
+    rframe: &str,
+    abcorr: &str,
+    obsrvr: &str,
+    step: f64,
+    cnfine: &mut Cell<f64>,
+) -> Cell<f64> {
+    let mut result = Cell::new(CELL_MAXWIN);
+    raw::gfrfov(
+        inst,
+        raydir,
+        rframe,
+        abcorr,
+        obsrvr,
+        step,
+        cnfine,
+        &mut result,
+    );
+    result
+}
+
+/**
+Search for times when a target is in the field of view of an instrument.
+
+See [`raw::gftfov`] for the raw interface.
+*/
+#[allow(clippy::too_many_arguments)]
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn gftfov(
+    inst: &str,
+    target: &str,
+    tshape: &str,
+    tframe: &str,
+    abcorr: &str,
+    obsrvr: &str,
+    step: f64,
+    cnfine: &mut Cell<f64>,
+) -> Cell<f64> {
+    let mut result = Cell::new(CELL_MAXWIN);
+    raw::gftfov(
+        inst,
+        target,
+        tshape,
+        tframe,
+        abcorr,
+        obsrvr,
+        step,
+        cnfine,
+        &mut result,
+    );
+    result
+}
+
+/**
+Search for times when a scalar function the caller supplies meets a condition.
+
+See [`raw::gfuds`] for the raw interface.
+*/
+#[allow(clippy::too_many_arguments)]
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn gfuds(
+    udfuns: UdFuns,
+    udfunb: UdFunb,
+    relate: &str,
+    refval: f64,
+    adjust: f64,
+    step: f64,
+    cnfine: &mut Cell<f64>,
+) -> Cell<f64> {
+    let mut result = Cell::new(CELL_MAXWIN);
+    raw::gfuds(
+        udfuns,
+        udfunb,
+        relate,
+        refval,
+        adjust,
+        step,
+        (CELL_MAXWIN / 2) as i32,
+        cnfine,
+        &mut result,
+    );
+    result
+}
+
+/**
+Search for times when a boolean function the caller supplies is true.
+
+See [`raw::gfudb`] for the raw interface.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn gfudb(udfuns: UdFuns, udfunb: UdFunb, step: f64, cnfine: &mut Cell<f64>) -> Cell<f64> {
+    let mut result = Cell::new(CELL_MAXWIN);
+    raw::gfudb(udfuns, udfunb, step, cnfine, &mut result);
     result
 }
 

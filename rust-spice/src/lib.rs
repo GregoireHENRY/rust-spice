@@ -32,12 +32,20 @@ pub(crate) use crate::core::*;
 
 // These items need to be exposed regardless of whether 'lock' is enabled or not
 pub use crate::core::cell::{Cell, CellItem, CELL_MAXID, CELL_MAX_LEN};
-pub use crate::core::raw::{
-    DSK02_SPADSZ, DSKXSI_DCSIZE, DSKXSI_ICSIZE, DSK_KEYAMG, DSK_KEYLAL, DSK_KEYPTM, DSK_KEYSGR,
-    DSK_KEYSPM, DSK_KEYXFR, DSK_NSYPAR, TLE_NELTS, TLE_NGEOPHS,
+pub use crate::core::ffi::{
+    UdBail, UdFunb, UdFunc, UdFuns, UdRefn, UdRepf, UdRepi, UdRepu, UdStep,
 };
-pub use crate::core::raw::{ELLIPSE, PLANE};
-pub use crate::core::{DLADSC, DSKDSC, MAX_LEN_OUT, TIME_FORMAT, TIME_FORMAT_SIZE};
+pub use crate::core::raw::{dsk02, ELLIPSE, PLANE};
+// GENERATED: the constants of `raw`, which `lock` would otherwise put out of reach.
+pub use crate::core::raw::{
+    DAF_MAXSUM, DSK02_SPADSZ, DSKXSI_DCSIZE, DSKXSI_ICSIZE, DSK_KEYAMG, DSK_KEYLAL, DSK_KEYPTM,
+    DSK_KEYSGR, DSK_KEYSPM, DSK_KEYXFR, DSK_NSYPAR, EK_CHR, EK_CSTRLN, EK_DP, EK_EXP_COL,
+    EK_EXP_EXPR, EK_EXP_FUNC, EK_INT, EK_MAXQSEL, EK_MXCLSG, EK_TIME, EK_TSTRLN, EK_VARSIZ,
+    SPK_DSCSIZ, TLE_NELTS, TLE_NGEOPHS,
+};
+pub use crate::core::{
+    DLADSC, DSKDSC, EKATTDSC, EKSEGSUM, MAX_LEN_OUT, TIME_FORMAT, TIME_FORMAT_SIZE,
+};
 
 #[cfg(any(feature = "lock", doc))]
 #[cfg_attr(docsrs, doc(cfg(feature = "lock")))]

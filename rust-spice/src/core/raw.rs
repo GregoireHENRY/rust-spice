@@ -11,7 +11,8 @@ declares them. Wrappers that need an explicit buffer size, or a caller allocated
 
 use crate::c::{SpiceChar, SpiceDouble, SpiceInt};
 use crate::core::cell::{Cell, CellItem};
-use crate::core::ffi::{from_cbuf, to_cstring};
+use crate::core::ffi::{from_cbuf, from_strided, to_cstring, to_strided};
+use crate::core::ffi::{UdBail, UdFunb, UdFunc, UdFuns, UdRefn, UdRepf, UdRepi, UdRepu, UdStep};
 use spice_derive::cspice_proc;
 
 #[cfg(any(feature = "lock", doc))]
@@ -102,6 +103,29 @@ pub fn bodvrd(bodynm: &str, item: &str, maxn: usize) -> Vec<f64> {
             bodynm.as_ptr() as *mut SpiceChar,
             item.as_ptr() as *mut SpiceChar,
             maxn as SpiceInt,
+            &mut dim,
+            values.as_mut_ptr(),
+        )
+    };
+    values.truncate(dim.max(0) as usize);
+    values
+}
+
+/**
+Fetch from the kernel pool the double precision values of an item associated with a body.
+
+Deprecated by CSPICE in favour of [`bodvcd`] and [`bodvrd`]: it takes no bound on how much it may
+write, so the caller has to know how many values to make room for.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn bodvar(body: i32, item: &str, maxn: usize) -> Vec<f64> {
+    let item = to_cstring(item);
+    let mut dim = 0;
+    let mut values = vec![0.0; maxn];
+    unsafe {
+        crate::c::bodvar_c(
+            body,
+            item.as_ptr() as *mut SpiceChar,
             &mut dim,
             values.as_mut_ptr(),
         )
@@ -579,6 +603,48 @@ cspice_proc! {
     pub fn dskstl(keywrd: i32, dpval: f64) {}
 }
 
+/// Type 2 DSK keywords for [`dskd02`] and [`dski02`]; each belongs to one of the two.
+pub mod dsk02 {
+    /// Number of vertices in the model, an integer item.
+    pub const KWNV: i32 = 1;
+    /// Number of plates in the model, an integer item.
+    pub const KWNP: i32 = 2;
+    /// Total number of voxels in the fine grid, an integer item.
+    pub const KWNVXT: i32 = 3;
+    /// Voxel grid extent, an integer item.
+    pub const KWVGRX: i32 = 4;
+    /// Coarse voxel grid scale, an integer item.
+    pub const KWCGSC: i32 = 5;
+    /// Size of the voxel to plate pointer array, an integer item.
+    pub const KWVXPS: i32 = 6;
+    /// Voxel-plate correspondence list size, an integer item.
+    pub const KWVXLS: i32 = 7;
+    /// Vertex-plate correspondence list size, an integer item.
+    pub const KWVTLS: i32 = 8;
+    /// Plate array, an integer item.
+    pub const KWPLAT: i32 = 9;
+    /// Voxel-plate pointer list, an integer item.
+    pub const KWVXPT: i32 = 10;
+    /// Voxel-plate correspondence list, an integer item.
+    pub const KWVXPL: i32 = 11;
+    /// Vertex-plate pointer list, an integer item.
+    pub const KWVTPT: i32 = 12;
+    /// Vertex-plate correspondence list, an integer item.
+    pub const KWVTPL: i32 = 13;
+    /// Coarse voxel grid pointers, an integer item.
+    pub const KWCGPT: i32 = 14;
+    /// The segment descriptor, a double precision item.
+    pub const KWDSC: i32 = 15;
+    /// Vertex bounds, a double precision item.
+    pub const KWVTBD: i32 = 16;
+    /// Voxel grid origin, a double precision item.
+    pub const KWVXOR: i32 = 17;
+    /// Voxel size, a double precision item.
+    pub const KWVXSZ: i32 = 18;
+    /// Vertex coordinates, a double precision item.
+    pub const KWVERT: i32 = 19;
+}
+
 /// Size of the double precision component of a type 2 DSK spatial index.
 pub const DSK02_SPADSZ: usize = 10;
 
@@ -927,6 +993,55 @@ pub fn gcpool(name: &str, start: usize, room: usize, lenout: usize) -> Vec<Strin
 }
 
 /**
+Set a watch on a set of kernel pool variables for a named agent.
+
+[`cvpool`] then reports whether any of them have been updated since the agent last asked.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn swpool<S: AsRef<str>>(agent: &str, names: &[S]) {
+    let agent = to_cstring(agent);
+    let (buffer, lenvals) = to_strided(names);
+    unsafe {
+        crate::c::swpool_c(
+            agent.as_ptr() as *mut SpiceChar,
+            names.len() as SpiceInt,
+            lenvals as SpiceInt,
+            buffer.as_ptr().cast(),
+        )
+    }
+}
+
+/**
+Return the names of the kernel pool variables matching a template.
+
+The vector is empty when nothing matches.
+
+This function has a [neat version][crate::neat::gnpool].
+*/
+pub fn gnpool(name: &str, start: usize, room: usize, lenout: usize) -> Vec<String> {
+    let name = to_cstring(name);
+    let lenout = lenout.max(1);
+    let mut buffer = vec![0 as SpiceChar; room.max(1) * lenout];
+    let mut n = 0;
+    let mut found = 0;
+
+    unsafe {
+        crate::c::gnpool_c(
+            name.as_ptr() as *mut SpiceChar,
+            start as SpiceInt,
+            room as SpiceInt,
+            lenout as SpiceInt,
+            &mut n,
+            buffer.as_mut_ptr().cast(),
+            &mut found,
+        )
+    };
+
+    let count = if found != 0 { n.max(0) as usize } else { 0 };
+    from_strided(&buffer, lenout, count)
+}
+
+/**
 Insert double precision values into the kernel pool.
 */
 #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
@@ -962,20 +1077,7 @@ Insert character values into the kernel pool.
 #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
 pub fn pcpool<S: AsRef<str>>(name: &str, values: &[S]) {
     let name = to_cstring(name);
-    let lenvals = values
-        .iter()
-        .map(|value| value.as_ref().len() + 1)
-        .max()
-        .unwrap_or(1);
-
-    // CSPICE reads the values out of one contiguous, fixed stride, char array.
-    let mut buffer = vec![0 as SpiceChar; values.len().max(1) * lenvals];
-    for (index, value) in values.iter().enumerate() {
-        let slot = &mut buffer[index * lenvals..(index + 1) * lenvals];
-        for (target, byte) in slot.iter_mut().zip(value.as_ref().as_bytes()) {
-            *target = *byte as SpiceChar;
-        }
-    }
+    let (buffer, lenvals) = to_strided(values);
 
     unsafe {
         crate::c::pcpool_c(
@@ -3367,6 +3469,7 @@ cspice_proc! {
     to the first interval of that length.
     */
     #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    #[allow(clippy::type_complexity)]
     pub fn wnsumd(window: &mut Cell<f64>) -> (f64, f64, f64, i32, i32) {}
 }
 
@@ -3655,6 +3758,3901 @@ cspice_proc! {
 }
 
 /* -------------------------------------------------------------------------------------------- */
+/* Searching, sorting and ordering                                                                */
+/* -------------------------------------------------------------------------------------------- */
+
+/// Generate the wrappers that search a slice for a value.
+macro_rules! search {
+    ($($name:ident($ty:ty) => $cname:ident, $doc:expr);* $(;)?) => {$(
+        #[doc = $doc]
+        ///
+        /// Returns the index found, or `-1`.
+        #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+        pub fn $name(value: $ty, array: &[$ty]) -> i32 {
+            unsafe { crate::c::$cname(value, array.len() as SpiceInt, array.as_ptr() as *mut _) }
+        }
+    )*};
+}
+
+search! {
+    bsrchd(f64) => bsrchd_c, "Binary search a sorted array of doubles.";
+    bsrchi(i32) => bsrchi_c, "Binary search a sorted array of integers.";
+    lstled(f64) => lstled_c, "Last index of the doubles less than or equal to a value.";
+    lstlei(i32) => lstlei_c, "Last index of the integers less than or equal to a value.";
+    lstltd(f64) => lstltd_c, "Last index of the doubles strictly less than a value.";
+    lstlti(i32) => lstlti_c, "Last index of the integers strictly less than a value.";
+}
+
+/// Generate the wrappers that sort a slice in place.
+macro_rules! sort_in_place {
+    ($($name:ident($ty:ty) => $cname:ident, $doc:expr);* $(;)?) => {$(
+        #[doc = $doc]
+        #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+        pub fn $name(array: &mut [$ty]) {
+            unsafe { crate::c::$cname(array.len() as SpiceInt, array.as_mut_ptr()) }
+        }
+    )*};
+}
+
+sort_in_place! {
+    shelld(f64) => shelld_c, "Sort an array of doubles in place.";
+    shelli(i32) => shelli_c, "Sort an array of integers in place.";
+}
+
+/// Generate the wrappers that report the order of a slice without moving it.
+macro_rules! order_of {
+    ($($name:ident($ty:ty) => $cname:ident, $doc:expr);* $(;)?) => {$(
+        #[doc = $doc]
+        #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+        pub fn $name(array: &[$ty]) -> Vec<i32> {
+            let mut iorder = vec![0; array.len()];
+            unsafe {
+                crate::c::$cname(
+                    array.as_ptr() as *mut _,
+                    array.len() as SpiceInt,
+                    iorder.as_mut_ptr(),
+                )
+            };
+            iorder
+        }
+    )*};
+}
+
+order_of! {
+    orderd(f64) => orderd_c, "The order vector that sorts an array of doubles.";
+    orderi(i32) => orderi_c, "The order vector that sorts an array of integers.";
+}
+
+/// Generate the wrappers that apply an order vector to a slice in place.
+macro_rules! reorder {
+    ($($name:ident($ty:ty) => $cname:ident, $doc:expr);* $(;)?) => {$(
+        #[doc = $doc]
+        ///
+        /// # Panics
+        ///
+        /// Panics if the order vector is not as long as the array.
+        #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+        pub fn $name(iorder: &[i32], array: &mut [$ty]) {
+            assert!(
+                iorder.len() == array.len(),
+                "the order vector has {} entries for an array of {}",
+                iorder.len(),
+                array.len()
+            );
+            unsafe {
+                crate::c::$cname(
+                    iorder.as_ptr() as *mut SpiceInt,
+                    array.len() as SpiceInt,
+                    array.as_mut_ptr(),
+                )
+            };
+        }
+    )*};
+}
+
+reorder! {
+    reordd(f64) => reordd_c, "Reorder an array of doubles in place.";
+    reordi(i32) => reordi_c, "Reorder an array of integers in place.";
+    reordl(crate::c::SpiceBoolean) => reordl_c, "Reorder an array of logical flags in place.";
+}
+
+cspice_proc! {
+    /**
+    Bracket a double precision number between two endpoints.
+    */
+    #[return_output]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn brcktd(number: f64, end1: f64, end2: f64) -> f64 {}
+}
+
+cspice_proc! {
+    /**
+    Bracket an integer between two endpoints.
+    */
+    #[return_output]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn brckti(number: i32, end1: i32, end2: i32) -> i32 {}
+}
+
+/**
+The sum of an array of doubles.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn sumad(array: &[f64]) -> f64 {
+    unsafe { crate::c::sumad_c(array.as_ptr() as *mut SpiceDouble, array.len() as SpiceInt) }
+}
+
+/**
+The sum of an array of integers.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn sumai(array: &[i32]) -> i32 {
+    unsafe { crate::c::sumai_c(array.as_ptr() as *mut SpiceInt, array.len() as SpiceInt) }
+}
+
+/**
+Whether an array is an order vector: a permutation of `0 .. n`.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn isordv(array: &[i32]) -> bool {
+    unsafe { crate::c::isordv_c(array.as_ptr() as *mut SpiceInt, array.len() as SpiceInt) != 0 }
+}
+
+/// Generate the wrappers that search a strided array of strings.
+macro_rules! search_strings {
+    ($($name:ident => $cname:ident, $doc:expr);* $(;)?) => {$(
+        #[doc = $doc]
+        ///
+        /// Returns the index found, or `-1`.
+        #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+        pub fn $name<S: AsRef<str>>(value: &str, array: &[S]) -> i32 {
+            let value = to_cstring(value);
+            let (buffer, stride) = to_strided(array);
+            unsafe {
+                crate::c::$cname(
+                    value.as_ptr() as *mut SpiceChar,
+                    array.len() as SpiceInt,
+                    stride as SpiceInt,
+                    buffer.as_ptr().cast(),
+                )
+            }
+        }
+    )*};
+}
+
+search_strings! {
+    bsrchc => bsrchc_c, "Binary search a sorted array of strings.";
+    esrchc => esrchc_c, "Search an array of strings, ignoring case and trailing blanks.";
+    lstlec => lstlec_c, "Last index of the strings less than or equal to a value.";
+    lstltc => lstltc_c, "Last index of the strings strictly less than a value.";
+}
+
+/**
+Binary search an array of integers ordered by an order vector.
+
+Returns the index found, or `-1`.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn bschoi(value: i32, array: &[i32], order: &[i32]) -> i32 {
+    unsafe {
+        crate::c::bschoi_c(
+            value,
+            array.len() as SpiceInt,
+            array.as_ptr() as *mut SpiceInt,
+            order.as_ptr() as *mut SpiceInt,
+        )
+    }
+}
+
+/**
+Binary search an array of strings ordered by an order vector.
+
+Returns the index found, or `-1`.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn bschoc<S: AsRef<str>>(value: &str, array: &[S], order: &[i32]) -> i32 {
+    let value = to_cstring(value);
+    let (buffer, stride) = to_strided(array);
+    unsafe {
+        crate::c::bschoc_c(
+            value.as_ptr() as *mut SpiceChar,
+            array.len() as SpiceInt,
+            stride as SpiceInt,
+            buffer.as_ptr().cast(),
+            order.as_ptr() as *mut SpiceInt,
+        )
+    }
+}
+
+/**
+The order vector that sorts an array of strings.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn orderc<S: AsRef<str>>(array: &[S]) -> Vec<i32> {
+    let (buffer, stride) = to_strided(array);
+    let mut iorder = vec![0; array.len()];
+    unsafe {
+        crate::c::orderc_c(
+            stride as SpiceInt,
+            buffer.as_ptr().cast(),
+            array.len() as SpiceInt,
+            iorder.as_mut_ptr(),
+        )
+    };
+    iorder
+}
+
+/**
+Apply an order vector to an array of strings.
+
+# Panics
+
+Panics if the order vector is not as long as the array.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn reordc<S: AsRef<str>>(iorder: &[i32], array: &[S]) -> Vec<String> {
+    assert!(
+        iorder.len() == array.len(),
+        "the order vector has {} entries for an array of {}",
+        iorder.len(),
+        array.len()
+    );
+    let (mut buffer, stride) = to_strided(array);
+    unsafe {
+        crate::c::reordc_c(
+            iorder.as_ptr() as *mut SpiceInt,
+            array.len() as SpiceInt,
+            stride as SpiceInt,
+            buffer.as_mut_ptr().cast(),
+        )
+    };
+    from_strided(&buffer, stride, array.len())
+}
+
+/**
+Sort an array of strings.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn shellc<S: AsRef<str>>(array: &[S]) -> Vec<String> {
+    let (mut buffer, stride) = to_strided(array);
+    unsafe {
+        crate::c::shellc_c(
+            array.len() as SpiceInt,
+            stride as SpiceInt,
+            buffer.as_mut_ptr().cast(),
+        )
+    };
+    from_strided(&buffer, stride, array.len())
+}
+
+/* -------------------------------------------------------------------------------------------- */
+/* Strings                                                                                        */
+/* -------------------------------------------------------------------------------------------- */
+
+cspice_proc! {
+    /**
+    Convert a string to lower case.
+    */
+    pub fn lcase(input: &str, #[lenout] lenout: i32) -> String {}
+}
+
+cspice_proc! {
+    /**
+    Convert a string to upper case.
+    */
+    pub fn ucase(input: &str, #[lenout] lenout: i32) -> String {}
+}
+
+cspice_proc! {
+    /**
+    Compress runs of a delimiter down to `n` of them.
+    */
+    pub fn cmprss(delim: char, n: i32, input: &str, #[lenout] lenout: i32) -> String {}
+}
+
+cspice_proc! {
+    /**
+    Whether two strings are equivalent, ignoring case and leading and trailing blanks.
+    */
+    #[return_output]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn eqstr(a: &str, b: &str) -> bool {}
+}
+
+cspice_proc! {
+    /**
+    Match a string against a template, ignoring case; `wstr` matches any run of characters and
+    `wchr` any single one.
+    */
+    #[return_output]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn matchi(string: &str, templ: &str, wstr: char, wchr: char) -> bool {}
+}
+
+cspice_proc! {
+    /**
+    Match a string against a template, respecting case.
+    */
+    #[return_output]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn matchw(string: &str, templ: &str, wstr: char, wchr: char) -> bool {}
+}
+
+cspice_proc! {
+    /**
+    Replace a marker in a string with a string.
+    */
+    pub fn repmc(input: &str, marker: &str, value: &str, #[lenout] lenout: i32) -> String {}
+}
+
+cspice_proc! {
+    /**
+    Replace a marker in a string with a double precision number.
+    */
+    pub fn repmd(
+        input: &str,
+        marker: &str,
+        value: f64,
+        sigdig: i32,
+        #[lenout] lenout: i32
+    ) -> String {
+    }
+}
+
+cspice_proc! {
+    /**
+    Replace a marker in a string with a formatted double precision number; `format` is `'E'` or
+    `'F'`.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    #[allow(clippy::too_many_arguments)]
+    pub fn repmf(
+        input: &str,
+        marker: &str,
+        value: f64,
+        sigdig: i32,
+        format: char,
+        #[lenout] lenout: i32
+    ) -> String {
+    }
+}
+
+cspice_proc! {
+    /**
+    Replace a marker in a string with an integer.
+    */
+    pub fn repmi(input: &str, marker: &str, value: i32, #[lenout] lenout: i32) -> String {}
+}
+
+cspice_proc! {
+    /**
+    Replace a marker in a string with the text of a boolean; `rtcase` picks the capitalisation.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn repml(
+        input: &str,
+        marker: &str,
+        value: bool,
+        rtcase: char,
+        #[lenout] outlen: i32
+    ) -> String {
+    }
+}
+
+cspice_proc! {
+    /**
+    Replace a marker in a string with an ordinal number; `strcase` picks the capitalisation.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    #[cname(repmot_c)]
+    pub fn repmot(
+        input: &str,
+        marker: &str,
+        value: i32,
+        strcase: char,
+        #[lenout] lenout: i32
+    ) -> String {
+    }
+}
+
+/**
+Split a string at the first run of blanks, into the first word and the rest.
+*/
+pub fn nextwd(string: &str, nexlen: usize, reslen: usize) -> (String, String) {
+    let string = to_cstring(string);
+    let mut next = vec![0 as SpiceChar; nexlen.max(1)];
+    let mut rest = vec![0 as SpiceChar; reslen.max(1)];
+
+    unsafe {
+        crate::c::nextwd_c(
+            string.as_ptr() as *mut SpiceChar,
+            nexlen as SpiceInt,
+            reslen as SpiceInt,
+            next.as_mut_ptr(),
+            rest.as_mut_ptr(),
+        )
+    };
+
+    (from_cbuf(&next), from_cbuf(&rest))
+}
+
+/**
+Split a list on a single delimiter.
+
+This function has a [neat version][crate::neat::lparse].
+*/
+pub fn lparse(list: &str, delim: &str, nmax: usize, lenout: usize) -> Vec<String> {
+    let list = to_cstring(list);
+    let delim = to_cstring(delim);
+    let lenout = lenout.max(1);
+    let mut buffer = vec![0 as SpiceChar; nmax.max(1) * lenout];
+    let mut n = 0;
+
+    unsafe {
+        crate::c::lparse_c(
+            list.as_ptr() as *mut SpiceChar,
+            delim.as_ptr() as *mut SpiceChar,
+            nmax as SpiceInt,
+            lenout as SpiceInt,
+            &mut n,
+            buffer.as_mut_ptr().cast(),
+        )
+    };
+
+    from_strided(&buffer, lenout, n.max(0) as usize)
+}
+
+/**
+Split a list on any of a set of delimiters, treating runs of them as one.
+
+This function has a [neat version][crate::neat::lparsm].
+*/
+pub fn lparsm(list: &str, delims: &str, nmax: usize, lenout: usize) -> Vec<String> {
+    let list = to_cstring(list);
+    let delims = to_cstring(delims);
+    let lenout = lenout.max(1);
+    let mut buffer = vec![0 as SpiceChar; nmax.max(1) * lenout];
+    let mut n = 0;
+
+    unsafe {
+        crate::c::lparsm_c(
+            list.as_ptr() as *mut SpiceChar,
+            delims.as_ptr() as *mut SpiceChar,
+            nmax as SpiceInt,
+            lenout as SpiceInt,
+            &mut n,
+            buffer.as_mut_ptr().cast(),
+        )
+    };
+
+    from_strided(&buffer, lenout, n.max(0) as usize)
+}
+
+/* ---------------------------------------------------------------------------------------------- */
+/* Units, numbers and text                                                                        */
+/* ---------------------------------------------------------------------------------------------- */
+
+cspice_proc! {
+    /**
+    Take a measurement X, the units associated with X, and units to which X should be converted; return Y --- the value of the measurement in the output units.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn convrt(x: f64, input: &str, output: &str) -> f64 {}
+}
+
+cspice_proc! {
+    /**
+    Return the value of the largest (positive) number representable in a double precision variable.
+    */
+    #[return_output]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn dpmax() -> f64 {}
+}
+
+cspice_proc! {
+    /**
+    Return the value of the smallest (negative) number representable in a double precision variable.
+    */
+    #[return_output]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn dpmin() -> f64 {}
+}
+
+cspice_proc! {
+    /**
+    Convert a double precision number to an equivalent character string using a base 16 "scientific notation."
+    */
+    pub fn dp2hx(number: f64, #[lenout] lenout: i32) -> (String, i32) {}
+}
+
+cspice_proc! {
+    /**
+    Convert a string representing a double precision number in a base 16 "scientific notation" into its equivalent double precision number.
+    */
+    pub fn hx2dp(string: &str, #[lenout] lenout: i32) -> (f64, bool, String) {}
+}
+
+cspice_proc! {
+    /**
+    Find the first occurrence in a string of a character belonging to a collection of characters, starting at a specified location, searching forward.
+    */
+    #[return_output]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn cpos(string: &str, chars: &str, start: i32) -> i32 {}
+}
+
+cspice_proc! {
+    /**
+    Find the first occurrence in a string of a character belonging to a collection of characters, starting at a specified location, searching in reverse.
+    */
+    #[return_output]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn cposr(string: &str, chars: &str, start: i32) -> i32 {}
+}
+
+cspice_proc! {
+    /**
+    Find the first occurrence in a string of a substring, starting at a specified location, searching forward.
+    */
+    #[return_output]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn pos(string: &str, substr: &str, start: i32) -> i32 {}
+}
+
+cspice_proc! {
+    /**
+    Find the first occurrence in a string of a substring, starting at a specified location, searching backward.
+    */
+    #[return_output]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn posr(string: &str, substr: &str, start: i32) -> i32 {}
+}
+
+cspice_proc! {
+    /**
+    Convert from an ephemeris epoch measured in seconds past the epoch of J2000 to a calendar string format using a formal calendar free of leapseconds.
+    */
+    pub fn etcal(et: f64, #[lenout] lenout: i32) -> String {}
+}
+
+cspice_proc! {
+    /**
+    Restrict the set of strings that are recognized by SPICE time parsing routines to those that have standard values for all time components.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn tparch(kind: &str) {}
+}
+
+cspice_proc! {
+    /**
+    Determine if a kernel pool variable is present and if so that it has the correct size and type.
+    */
+    #[return_output]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn badkpv(caller: &str, name: &str, comp: &str, size: i32, divby: i32, kind: char) -> bool {}
+}
+
+/* ---------------------------------------------------------------------------------------------- */
+/* Bodies, frames and the kernel pool                                                             */
+/* ---------------------------------------------------------------------------------------------- */
+
+cspice_proc! {
+    /**
+    Return the frame name, frame ID, and center associated with a given frame class and class ID.
+    */
+    pub fn ccifrm(frclss: i32, clssid: i32, #[lenout] lenout: i32) -> (i32, String, i32, bool) {}
+}
+
+cspice_proc! {
+    /**
+    Retrieve frame ID code and name to associate with a frame center.
+    */
+    pub fn cidfrm(cent: i32, #[lenout] lenout: i32) -> (i32, String, bool) {}
+}
+
+cspice_proc! {
+    /**
+    Retrieve frame ID code and name to associate with an object.
+    */
+    pub fn cnmfrm(cname: &str, #[lenout] lenout: i32) -> (i32, String, bool) {}
+}
+
+cspice_proc! {
+    /**
+    Return a SPICE set containing the frame IDs of all built-in frames of a specified class.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn bltfrm(frmcls: i32, idset: &mut Cell<i32>) {}
+}
+
+cspice_proc! {
+    /**
+    Indicate whether or not any watched kernel variables that have a specified agent on their notification list have been updated.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn cvpool(agent: &str) -> bool {}
+}
+
+/* ---------------------------------------------------------------------------------------------- */
+/* Assorted routines                                                                              */
+/* ---------------------------------------------------------------------------------------------- */
+
+cspice_proc! {
+    /**
+    Return the azimuth/elevation coordinates of a specified target relative to an "observer," where the observer has constant position in a specified reference frame. The observer's position is provided by the calling program rather than by loaded SPK files.
+    */
+    #[allow(clippy::too_many_arguments)]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn azlcpo(method: &str, target: &str, et: f64, abcorr: &str, azccw: bool, elplsz: bool, obspos: [f64; 3], obsctr: &str, obsref: &str) -> ([f64; 6], f64) {}
+}
+
+cspice_proc! {
+    /**
+    Define a body name/ID code pair for later translation via bodn2c_c or bodc2n_c.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn boddef(name: &str, code: i32) {}
+}
+
+cspice_proc! {
+    /**
+    Inform the CSPICE error handling mechanism of entry into a routine.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn chkin(module: &str) {}
+}
+
+cspice_proc! {
+    /**
+    Inform the CSPICE error handling mechanism of exit from a routine.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn chkout(module: &str) {}
+}
+
+cspice_proc! {
+    /**
+    Compute the state (position and velocity) of an ellipsoid surface point nearest to the position component of a specified state.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn dnearp(state: [f64; 6], a: f64, b: f64, c: f64) -> ([f64; 6], [f64; 2], bool) {}
+}
+
+cspice_proc! {
+    /**
+    Compute the unit vector parallel to the cross product of two 3-dimensional vectors and the derivative of this unit vector.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn ducrss(s1: [f64; 6], s2: [f64; 6]) -> [f64; 6] {}
+}
+
+cspice_proc! {
+    /**
+    Compute the cross product of two 3-dimensional vectors and the derivative of this cross product.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn dvcrss(s1: [f64; 6], s2: [f64; 6]) -> [f64; 6] {}
+}
+
+cspice_proc! {
+    /**
+    Compute the derivative of the dot product of two double precision position vectors.
+    */
+    #[return_output]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn dvdot(s1: [f64; 6], s2: [f64; 6]) -> f64 {}
+}
+
+cspice_proc! {
+    /**
+    Find the unit vector corresponding to a state vector and the derivative of the unit vector.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn dvhat(s1: [f64; 6]) -> [f64; 6] {}
+}
+
+cspice_proc! {
+    /**
+    Calculate the derivative of the norm of a 3-vector.
+    */
+    #[return_output]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn dvnorm(state: [f64; 6]) -> f64 {}
+}
+
+cspice_proc! {
+    /**
+    Delete a variable from the kernel pool.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn dvpool(name: &str) {}
+}
+
+cspice_proc! {
+    /**
+    Calculate the time derivative of the separation angle between two input states, S1 and S2.
+    */
+    #[return_output]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn dvsep(s1: [f64; 6], s2: [f64; 6]) -> f64 {}
+}
+
+cspice_proc! {
+    /**
+    Return the unique point on an ellipsoid's surface where the outward normal direction is a given vector.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn ednmpt(a: f64, b: f64, c: f64, normal: [f64; 3]) -> [f64; 3] {}
+}
+
+cspice_proc! {
+    /**
+    Scale a point so that it lies on the surface of a specified triaxial ellipsoid that is centered at the origin and aligned with the Cartesian coordinate axes.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn edpnt(p: [f64; 3], a: f64, b: f64, c: f64) -> [f64; 3] {}
+}
+
+cspice_proc! {
+    /**
+    Compute the state (position and velocity) of an object whose trajectory is described via equinoctial elements relative to some fixed plane (usually the equatorial plane of some planet).
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn eqncpv(et: f64, epoch: f64, eqel: [f64; 9], rapol: f64, decpol: f64) -> [f64; 6] {}
+}
+
+cspice_proc! {
+    /**
+    Whether a routine should return immediately because the toolkit is in an error state.
+
+    Named `return_c` rather than `return`, which is a keyword in Rust. It is the only routine in
+    the toolkit whose name has to change, and SpiceyPy renames it the same way for the same reason.
+    */
+    #[return_output]
+    #[cname(return_c)]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn return_c() -> bool {}
+}
+
+cspice_proc! {
+    /**
+    Signal an error, with the short message given.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn sigerr(message: &str) {}
+}
+
+cspice_proc! {
+    /**
+    Substitute a double precision number for the first occurrence of a marker in the long error
+    message being built.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn errdp(marker: &str, number: f64) {}
+}
+
+cspice_proc! {
+    /**
+    Substitute an integer for the first occurrence of a marker in the long error message being
+    built.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn errint(marker: &str, number: i32) {}
+}
+
+cspice_proc! {
+    /**
+    Substitute a character string for the first occurrence of a marker in the current long error message.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn errch(marker: &str, string: &str) {}
+}
+
+cspice_proc! {
+    /**
+    Close a file designated by a Fortran-style integer logical unit.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn ftncls(unit: i32) {}
+}
+
+cspice_proc! {
+    /**
+    Deprecated: This routine has been superseded by the CSPICE routine ilumin_c. This routine is supported for purposes of backward compatibility only.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn illum(target: &str, et: f64, abcorr: &str, obsrvr: &str, spoint: [f64; 3]) -> (f64, f64, f64) {}
+}
+
+cspice_proc! {
+    /**
+    Return the inverse of a state transformation matrix.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn invstm(mat: [[f64; 6]; 6]) -> [[f64; 6]; 6] {}
+}
+
+cspice_proc! {
+    /**
+    Return a boolean value indicating whether a string contains only white space characters.
+    */
+    #[return_output]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn iswhsp(string: &str) -> bool {}
+}
+
+cspice_proc! {
+    /**
+    Return the zero based index of the last non-blank character in a character string.
+    */
+    #[return_output]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn lastnb(string: &str) -> i32 {}
+}
+
+cspice_proc! {
+    /**
+    Compute the transmission (or reception) time of a signal at a specified target, given the reception (or transmission) time at a specified observer. Also return the elapsed time between transmission and reception.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn ltime(etobs: f64, obs: i32, dir: &str, targ: i32) -> (f64, f64) {}
+}
+
+cspice_proc! {
+    /**
+    Scan a string from a specified starting position for the end of a decimal number.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn lx4dec(string: &str, first: i32) -> (i32, i32) {}
+}
+
+cspice_proc! {
+    /**
+    Scan a string from a specified starting position for the end of a number.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn lx4num(string: &str, first: i32) -> (i32, i32) {}
+}
+
+cspice_proc! {
+    /**
+    Scan a string from a specified starting position for the end of a signed integer.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn lx4sgn(string: &str, first: i32) -> (i32, i32) {}
+}
+
+cspice_proc! {
+    /**
+    Scan a string from a specified starting position for the end of an unsigned integer.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn lx4uns(string: &str, first: i32) -> (i32, i32) {}
+}
+
+cspice_proc! {
+    /**
+    Scan (lex) a quoted string.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn lxqstr(string: &str, qchar: char, first: i32) -> (i32, i32) {}
+}
+
+cspice_proc! {
+    /**
+    Find the first occurrence in a string of a character NOT belonging to a collection of characters, starting at a specified location, searching forward.
+    */
+    #[return_output]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn ncpos(string: &str, chars: &str, start: i32) -> i32 {}
+}
+
+cspice_proc! {
+    /**
+    Find the first occurrence in a string of a character NOT belonging to a collection of characters, starting at a specified location, searching in reverse.
+    */
+    #[return_output]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn ncposr(string: &str, chars: &str, start: i32) -> i32 {}
+}
+
+cspice_proc! {
+    /**
+    Expand a triangular plate by a specified amount. The expanded plate is co-planar with, and has the same orientation as, the original. The centroids of the two plates coincide.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn pltexp(iverts: [[f64; 3]; 3], delta: f64) -> [[f64; 3]; 3] {}
+}
+
+cspice_proc! {
+    /**
+    Parse a string as a double precision number, encapsulating error handling.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn prsdp(string: &str) -> f64 {}
+}
+
+cspice_proc! {
+    /**
+    Parse a string as an integer, encapsulating error handling.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn prsint(string: &str) -> i32 {}
+}
+
+cspice_proc! {
+    /**
+    Derive angular velocity from a unit quaternion and its derivative with respect to time.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn qdq2av(q: [f64; 4], dq: [f64; 4]) -> [f64; 3] {}
+}
+
+cspice_proc! {
+    /**
+    Transform a vector to a new coordinate system rotated by `angle' radians about axis `iaxis'. This transformation rotates `v1' by -angle radians about the specified axis.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn rotvec(v1: [f64; 3], angle: f64, iaxis: i32) -> [f64; 3] {}
+}
+
+cspice_proc! {
+    /**
+    Find the roots of a quadratic equation.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn rquad(a: f64, b: f64, c: f64) -> ([f64; 2], [f64; 2]) {}
+}
+
+cspice_proc! {
+    /**
+    Convert ephemeris seconds past J2000 (ET) to integral encoded spacecraft clock (`ticks'). For conversion to fractional ticks, (required for C-kernel production), see the routine sce2c_c.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn sce2t(sc: i32, et: f64) -> f64 {}
+}
+
+cspice_proc! {
+    /**
+    Convert a spacecraft clock format string to number of "ticks".
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn sctiks(sc: i32, clkstr: &str) -> f64 {}
+}
+
+cspice_proc! {
+    /**
+    Set the value of the current long error message.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn setmsg(msg: &str) {}
+}
+
+cspice_proc! {
+    /**
+    Deprecated: This routine has been superseded by the CSPICE routine sincpt_c. This routine is supported for purposes of backward compatibility only.
+    */
+    #[allow(clippy::too_many_arguments)]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    #[allow(clippy::type_complexity)]
+    pub fn srfxpt(method: &str, target: &str, et: f64, abcorr: &str, obsrvr: &str, dref: &str, dvec: [f64; 3]) -> ([f64; 3], f64, f64, [f64; 3], bool) {}
+}
+
+cspice_proc! {
+    /**
+    Correct the apparent position of an object for stellar aberration.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn stelab(pobj: [f64; 3], vobs: [f64; 3]) -> [f64; 3] {}
+}
+
+cspice_proc! {
+    /**
+    Correct the position of a target for the stellar aberration effect on radiation transmitted from a specified observer to the target.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn stlabx(pobj: [f64; 3], vobs: [f64; 3]) -> [f64; 3] {}
+}
+
+cspice_proc! {
+    /**
+    Deprecated: This routine has been superseded by the CSPICE routine subpnt_c. This routine is supported for purposes of backward compatibility only.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn subpt(method: &str, target: &str, et: f64, abcorr: &str, obsrvr: &str) -> ([f64; 3], f64) {}
+}
+
+cspice_proc! {
+    /**
+    Deprecated: This routine has been superseded by the CSPICE routine subslr_c. This routine is supported for purposes of backward compatibility only.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn subsol(method: &str, target: &str, et: f64, abcorr: &str, obsrvr: &str) -> [f64; 3] {}
+}
+
+cspice_proc! {
+    /**
+    Compute, for a given observer, ray emanating from the observer, and target, the "tangent point": the point on the ray nearest to the target's surface. Also compute the point on the target's surface nearest to the tangent point.
+    */
+    #[allow(clippy::too_many_arguments)]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    #[allow(clippy::type_complexity)]
+    pub fn tangpt(method: &str, target: &str, et: f64, fixref: &str, abcorr: &str, corloc: &str, obsrvr: &str, dref: &str, dvec: [f64; 3]) -> ([f64; 3], f64, f64, [f64; 3], f64, [f64; 3]) {}
+}
+
+cspice_proc! {
+    /**
+    Return a 3x3 matrix that transforms positions in inertial coordinates to positions in body-equator-and-prime-meridian coordinates.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn tipbod(frame: &str, body: i32, et: f64) -> [[f64; 3]; 3] {}
+}
+
+cspice_proc! {
+    /**
+    Return a 6x6 matrix that transforms states in inertial coordinates to states in body-equator-and-prime-meridian coordinates.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn tisbod(frame: &str, body: i32, et: f64) -> [[f64; 6]; 6] {}
+}
+
+cspice_proc! {
+    /**
+    Find the position rotation matrix from a Text Kernel (TK) frame with the specified frame class ID to its base frame.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn tkfram(frcode: i32) -> ([[f64; 3]; 3], i32, bool) {}
+}
+
+cspice_proc! {
+    /**
+    Return the number of modules in the traceback representation.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn trcdep() -> i32 {}
+}
+
+cspice_proc! {
+    /**
+    Compute the angular separation in radians between two spherical or point objects.
+    */
+    #[allow(clippy::too_many_arguments)]
+    #[return_output]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn trgsep(et: f64, targ1: &str, shape1: &str, frame1: &str, targ2: &str, shape2: &str, frame2: &str, obsrvr: &str, abcorr: &str) -> f64 {}
+}
+
+cspice_proc! {
+    /**
+    Set the lower bound on the 100 year range
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn tsetyr(year: i32) {}
+}
+
+cspice_proc! {
+    /**
+    Find the state transformation from a base frame to the right-handed frame defined by two state vectors: one state vector defining a specified axis and a second state vector defining a specified coordinate plane.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn twovxf(axdef: [f64; 6], indexa: i32, plndef: [f64; 6], indexp: i32) -> [[f64; 6]; 6] {}
+}
+
+cspice_proc! {
+    /**
+    Compute the normalized cross product of two 3-vectors.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn ucrss(v1: [f64; 3], v2: [f64; 3]) -> [f64; 3] {}
+}
+
+/* ---------------------------------------------------------------------------------------------- */
+/* DAF, DAS and the kernel file layers                                                            */
+/* ---------------------------------------------------------------------------------------------- */
+
+cspice_proc! {
+    /**
+    Find the position rotation matrix from a C-kernel (CK) frame with the specified frame class ID (CK ID) to the base frame of the highest priority CK segment containing orientation data for this CK frame at the time requested.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn ckfrot(inst: i32, et: f64) -> ([[f64; 3]; 3], i32, bool) {}
+}
+
+cspice_proc! {
+    /**
+    Find the state transformation matrix from a C-kernel (CK) frame with the specified frame class ID (CK ID) to the base frame of the highest priority CK segment containing orientation and angular velocity data for this CK frame at the time requested.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn ckfxfm(inst: i32, et: f64) -> ([[f64; 6]; 6], i32, bool) {}
+}
+
+cspice_proc! {
+    /**
+    Load a CK pointing file for use by the CK readers. Return that file's handle, to be used by other CK routines to refer to the file.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn cklpf(fname: &str) -> i32 {}
+}
+
+cspice_proc! {
+    /**
+    Return (depending upon the user's request) the ID code of either the spacecraft or spacecraft clock associated with a C-Kernel ID code.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn ckmeta(ckid: i32, meta: &str) -> i32 {}
+}
+
+cspice_proc! {
+    /**
+    Unload a CK pointing file so that it will no longer be searched by the readers.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn ckupf(handle: i32) {}
+}
+
+cspice_proc! {
+    /**
+    Begin a backward search for arrays in a DAF.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn dafbbs(handle: i32) {}
+}
+
+cspice_proc! {
+    /**
+    Begin a forward search for arrays in a DAF.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn dafbfs(handle: i32) {}
+}
+
+cspice_proc! {
+    /**
+    Close the DAF associated with a given handle.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn dafcls(handle: i32) {}
+}
+
+cspice_proc! {
+    /**
+    Select a DAF that already has a search in progress as the one to continue searching.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn dafcs(handle: i32) {}
+}
+
+cspice_proc! {
+    /**
+    Delete the entire comment area of a specified DAF file.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn dafdc(handle: i32) {}
+}
+
+cspice_proc! {
+    /**
+    Find the next (forward) array in the current DAF.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn daffna() -> bool {}
+}
+
+cspice_proc! {
+    /**
+    Find the previous (backward) array in the current DAF.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn daffpa() -> bool {}
+}
+
+cspice_proc! {
+    /**
+    Return (get) the handle of the DAF currently being searched.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn dafgh() -> i32 {}
+}
+
+/**
+Read a contiguous run of double precision words from a DAF record.
+
+Returns the `end - begin + 1` words, and whether the record was found.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn dafgsr(handle: i32, recno: i32, begin: i32, end: i32) -> (Vec<f64>, bool) {
+    let words = (end - begin + 1).max(0) as usize;
+    let mut data = vec![0.0; words.max(1)];
+    let mut found = 0;
+    unsafe { crate::c::dafgsr_c(handle, recno, begin, end, data.as_mut_ptr(), &mut found) };
+    data.truncate(words);
+    (data, found != 0)
+}
+
+cspice_proc! {
+    /**
+    Return the summary format associated with a handle.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn dafhsf(handle: i32) -> (i32, i32) {}
+}
+
+cspice_proc! {
+    /**
+    Open a DAF for subsequent read requests.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn dafopr(fname: &str) -> i32 {}
+}
+
+cspice_proc! {
+    /**
+    Open a DAF for subsequent write requests.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn dafopw(fname: &str) -> i32 {}
+}
+
+cspice_proc! {
+    /**
+    Delete the entire comment area of a previously opened binary DAS file.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn dasdc(handle: i32) {}
+}
+
+cspice_proc! {
+    /**
+    Return a file summary for a specified DAS file.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    #[allow(clippy::type_complexity)]
+    pub fn dashfs(handle: i32) -> (i32, i32, i32, i32, i32, [i32; 3], [i32; 3], [i32; 3]) {}
+}
+
+cspice_proc! {
+    /**
+    Return last DAS logical addresses of character, double precision and integer type that are currently in use in a specified DAS file.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn daslla(handle: i32) -> (i32, i32, i32) {}
+}
+
+cspice_proc! {
+    /**
+    Close the DAS file associated with a given handle, without flushing buffered data or segregating the file.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn dasllc(handle: i32) {}
+}
+
+cspice_proc! {
+    /**
+    Open a new DAS file and set the file type.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn dasonw(fname: &str, ftype: &str, ifname: &str, ncomr: i32) -> i32 {}
+}
+
+cspice_proc! {
+    /**
+    Open a scratch DAS file for writing.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn dasops() -> i32 {}
+}
+
+cspice_proc! {
+    /**
+    Open a DAS file for writing.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn dasopw(fname: &str) -> i32 {}
+}
+
+cspice_proc! {
+    /**
+    Write out all buffered records of a specified DAS file.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn daswbr(handle: i32) {}
+}
+
+cspice_proc! {
+    /**
+    Begin a new segment in a DLA file.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn dlabns(handle: i32) {}
+}
+
+cspice_proc! {
+    /**
+    End a new segment in a DLA file.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn dlaens(handle: i32) {}
+}
+
+cspice_proc! {
+    /**
+    Open a new DLA file and set the file type.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn dlaopn(fname: &str, ftype: &str, ifname: &str, ncomch: i32) -> i32 {}
+}
+
+cspice_proc! {
+    /**
+    Close an open PCK file.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn pckcls(handle: i32) {}
+}
+
+cspice_proc! {
+    /**
+    Load a binary PCK file for use by the readers. Return the handle of the loaded file which is used by other PCK routines to refer to the file.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn pcklof(fname: &str) -> i32 {}
+}
+
+cspice_proc! {
+    /**
+    Create a new PCK file, returning the handle of the opened file.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn pckopn(name: &str, ifname: &str, ncomch: i32) -> i32 {}
+}
+
+cspice_proc! {
+    /**
+    Unload a binary PCK file so that it will no longer be searched by the readers.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn pckuof(handle: i32) {}
+}
+
+/* -------------------------------------------------------------------------------------------- */
+/* DAF and DAS, the array files underneath the kernels                                            */
+/* -------------------------------------------------------------------------------------------- */
+
+/// Largest DAF summary, in double precision words.
+pub const DAF_MAXSUM: usize = 125;
+
+/// Read a run of double precision words from a DAF, for the two routines that do it.
+macro_rules! daf_read {
+    ($($name:ident => $cname:ident, $doc:expr);* $(;)?) => {$(
+        #[doc = $doc]
+        ///
+        /// Returns the `end - begin + 1` words, addressed from one.
+        #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+        pub fn $name(handle: i32, begin: i32, end: i32) -> Vec<f64> {
+            let words = (end - begin + 1).max(0) as usize;
+            let mut data = vec![0.0; words.max(1)];
+            unsafe { crate::c::$cname(handle, begin, end, data.as_mut_ptr()) };
+            data.truncate(words);
+            data
+        }
+    )*};
+}
+
+daf_read! {
+    dafgda => dafgda_c, "Read double precision data from the current array of a DAF.";
+    dafrda => dafrda_c, "Read double precision data from a DAF; superseded by `dafgda`.";
+}
+
+cspice_proc! {
+    /**
+    Return the name of the current array in the current DAF.
+    */
+    pub fn dafgn(#[lenout] lenout: i32) -> String {}
+}
+
+/**
+Return the summary of the current array in the current DAF.
+
+At most [`DAF_MAXSUM`] words are returned, which is the largest a DAF summary can be.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn dafgs() -> Vec<f64> {
+    let mut summary = vec![0.0; DAF_MAXSUM];
+    unsafe { crate::c::dafgs_c(summary.as_mut_ptr()) };
+    summary
+}
+
+/**
+Pack the double precision and integer components of a DAF summary into one array.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn dafps(dc: &[f64], ic: &[i32]) -> Vec<f64> {
+    let words = dc.len() + (ic.len() + 1) / 2 + 1;
+    let mut summary = vec![0.0; words.max(1)];
+    unsafe {
+        crate::c::dafps_c(
+            dc.len() as SpiceInt,
+            ic.len() as SpiceInt,
+            dc.as_ptr() as *mut SpiceDouble,
+            ic.as_ptr() as *mut SpiceInt,
+            summary.as_mut_ptr(),
+        )
+    };
+    summary
+}
+
+/**
+Unpack a DAF summary into its `nd` double precision and `ni` integer components.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn dafus(summary: &[f64], nd: usize, ni: usize) -> (Vec<f64>, Vec<i32>) {
+    let mut dc = vec![0.0; nd.max(1)];
+    let mut ic = vec![0; ni.max(1)];
+    unsafe {
+        crate::c::dafus_c(
+            summary.as_ptr() as *mut SpiceDouble,
+            nd as SpiceInt,
+            ni as SpiceInt,
+            dc.as_mut_ptr(),
+            ic.as_mut_ptr(),
+        )
+    };
+    dc.truncate(nd);
+    ic.truncate(ni);
+    (dc, ic)
+}
+
+/**
+Replace the summary of the current array in the current DAF.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn dafrs(summary: &[f64]) {
+    unsafe { crate::c::dafrs_c(summary.as_ptr() as *mut SpiceDouble) }
+}
+
+/**
+Read the file record of a DAF: the summary sizes, the internal file name, and the pointers to the
+first and last summary records and the first free address.
+*/
+#[allow(clippy::type_complexity)]
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn dafrfr(handle: i32, lenout: usize) -> (i32, i32, String, i32, i32, i32) {
+    let mut ifname = vec![0 as SpiceChar; lenout.max(1)];
+    let (mut nd, mut ni, mut fward, mut bward, mut free) = (0, 0, 0, 0, 0);
+    unsafe {
+        crate::c::dafrfr_c(
+            handle,
+            lenout as SpiceInt,
+            &mut nd,
+            &mut ni,
+            ifname.as_mut_ptr(),
+            &mut fward,
+            &mut bward,
+            &mut free,
+        )
+    };
+    (nd, ni, from_cbuf(&ifname), fward, bward, free)
+}
+
+/**
+Add comment lines to the comment area of a DAF.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn dafac<S: AsRef<str>>(handle: i32, buffer: &[S]) {
+    let (packed, lenvals) = to_strided(buffer);
+    unsafe {
+        crate::c::dafac_c(
+            handle,
+            buffer.len() as SpiceInt,
+            lenvals as SpiceInt,
+            packed.as_ptr().cast(),
+        )
+    }
+}
+
+/**
+Read comment lines from the comment area of a DAF.
+
+Returns at most `bufsiz` lines, and whether the comment area has been read to the end.
+
+This function has a [neat version][crate::neat::dafec].
+*/
+pub fn dafec(handle: i32, bufsiz: usize, lenout: usize) -> (Vec<String>, bool) {
+    let lenout = lenout.max(1);
+    let mut buffer = vec![0 as SpiceChar; bufsiz.max(1) * lenout];
+    let (mut n, mut done) = (0, 0);
+    unsafe {
+        crate::c::dafec_c(
+            handle,
+            bufsiz as SpiceInt,
+            lenout as SpiceInt,
+            &mut n,
+            buffer.as_mut_ptr().cast(),
+            &mut done,
+        )
+    };
+    (from_strided(&buffer, lenout, n.max(0) as usize), done != 0)
+}
+
+/// Read a run of words from a DAS, for the double precision and integer cases.
+macro_rules! das_read {
+    ($($name:ident($ty:ty) => $cname:ident, $doc:expr);* $(;)?) => {$(
+        #[doc = $doc]
+        ///
+        /// Returns the `last - first + 1` words, addressed from one.
+        #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+        pub fn $name(handle: i32, first: i32, last: i32) -> Vec<$ty> {
+            let words = (last - first + 1).max(0) as usize;
+            let mut data = vec![<$ty>::default(); words.max(1)];
+            unsafe { crate::c::$cname(handle, first, last, data.as_mut_ptr()) };
+            data.truncate(words);
+            data
+        }
+    )*};
+}
+
+das_read! {
+    dasrdd(f64) => dasrdd_c, "Read double precision data from a DAS.";
+    dasrdi(i32) => dasrdi_c, "Read integer data from a DAS.";
+}
+
+/// Update a run of words in a DAS, for the double precision and integer cases.
+macro_rules! das_update {
+    ($($name:ident($ty:ty) => $cname:ident, $doc:expr);* $(;)?) => {$(
+        #[doc = $doc]
+        #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+        pub fn $name(handle: i32, first: i32, last: i32, data: &[$ty]) {
+            unsafe { crate::c::$cname(handle, first, last, data.as_ptr() as *mut _) }
+        }
+    )*};
+}
+
+das_update! {
+    dasudd(f64) => dasudd_c, "Update double precision data in a DAS.";
+    dasudi(i32) => dasudi_c, "Update integer data in a DAS.";
+}
+
+/// Append data to a DAS, for the double precision and integer cases.
+macro_rules! das_add {
+    ($($name:ident($ty:ty) => $cname:ident, $doc:expr);* $(;)?) => {$(
+        #[doc = $doc]
+        #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+        pub fn $name(handle: i32, data: &[$ty]) {
+            unsafe {
+                crate::c::$cname(handle, data.len() as SpiceInt, data.as_ptr() as *mut _)
+            }
+        }
+    )*};
+}
+
+das_add! {
+    dasadd(f64) => dasadd_c, "Append double precision data to a DAS.";
+    dasadi(i32) => dasadi_c, "Append integer data to a DAS.";
+}
+
+/**
+Append characters to a DAS, taking the substring `bpos ..= epos` of each line.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn dasadc<S: AsRef<str>>(handle: i32, bpos: i32, epos: i32, data: &[S]) {
+    let (packed, datlen) = to_strided(data);
+    // The count CSPICE wants is of characters, not of lines.
+    let sublen = (epos - bpos + 1).max(0) as usize;
+    unsafe {
+        crate::c::dasadc_c(
+            handle,
+            (data.len() * sublen) as SpiceInt,
+            bpos,
+            epos,
+            datlen as SpiceInt,
+            packed.as_ptr().cast(),
+        )
+    }
+}
+
+/**
+Read characters from a DAS, into the substring `bpos ..= epos` of each line.
+
+Returns one line per substring the range covers, each `epos + 1` characters long, of which only
+`bpos ..= epos` come from the file.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn dasrdc(handle: i32, first: i32, last: i32, bpos: i32, epos: i32) -> Vec<String> {
+    let sublen = (epos - bpos + 1).max(1) as usize;
+    let datlen = (epos + 1).max(1) as usize;
+    let lines = ((last - first + 1).max(0) as usize + sublen - 1) / sublen;
+    // The routine reads the file as a stream of characters and leaves the rest of each line alone,
+    // so the lines start out blank rather than empty.
+    let mut data = vec![b' ' as SpiceChar; lines.max(1) * datlen];
+    unsafe {
+        crate::c::dasrdc_c(
+            handle,
+            first,
+            last,
+            bpos,
+            epos,
+            datlen as SpiceInt,
+            data.as_mut_ptr().cast(),
+        )
+    };
+    (0..lines)
+        .map(|line| {
+            data[line * datlen..(line + 1) * datlen]
+                .iter()
+                .map(|&byte| byte as u8 as char)
+                .collect()
+        })
+        .collect()
+}
+
+/**
+Update characters in a DAS, taking the substring `bpos ..= epos` of each line.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn dasudc<S: AsRef<str>>(handle: i32, first: i32, last: i32, bpos: i32, epos: i32, data: &[S]) {
+    // Only `bpos ..= epos` of each line is read, so every line has to reach at least that far.
+    let datlen = (epos + 1).max(1) as usize;
+    let mut packed = vec![b' ' as SpiceChar; data.len().max(1) * datlen];
+    for (line, value) in data.iter().enumerate() {
+        let slot = &mut packed[line * datlen..(line + 1) * datlen];
+        for (target, byte) in slot.iter_mut().zip(value.as_ref().as_bytes()) {
+            *target = *byte as SpiceChar;
+        }
+    }
+    unsafe {
+        crate::c::dasudc_c(
+            handle,
+            first,
+            last,
+            bpos,
+            epos,
+            datlen as SpiceInt,
+            packed.as_ptr().cast(),
+        )
+    }
+}
+
+/**
+Add comment lines to the comment area of a DAS.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn dasac<S: AsRef<str>>(handle: i32, buffer: &[S]) {
+    let (packed, buflen) = to_strided(buffer);
+    unsafe {
+        crate::c::dasac_c(
+            handle,
+            buffer.len() as SpiceInt,
+            buflen as SpiceInt,
+            packed.as_ptr().cast(),
+        )
+    }
+}
+
+/**
+Read comment lines from the comment area of a DAS.
+
+This function has a [neat version][crate::neat::dasec].
+*/
+pub fn dasec(handle: i32, bufsiz: usize, buflen: usize) -> (Vec<String>, bool) {
+    let buflen = buflen.max(1);
+    let mut buffer = vec![0 as SpiceChar; bufsiz.max(1) * buflen];
+    let (mut n, mut done) = (0, 0);
+    unsafe {
+        crate::c::dasec_c(
+            handle,
+            bufsiz as SpiceInt,
+            buflen as SpiceInt,
+            &mut n,
+            buffer.as_mut_ptr().cast(),
+            &mut done,
+        )
+    };
+    (from_strided(&buffer, buflen, n.max(0) as usize), done != 0)
+}
+
+cspice_proc! {
+    /**
+    Return the name of the file a DAS handle refers to.
+    */
+    pub fn dashfn(handle: i32, #[lenout] namlen: i32) -> String {}
+}
+
+/**
+Read the file record of a DAS: the ID word, the internal file name, and the reserved and comment
+area sizes.
+*/
+#[allow(clippy::type_complexity)]
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn dasrfr(handle: i32, idwlen: usize, ifnlen: usize) -> (String, String, i32, i32, i32, i32) {
+    let mut idword = vec![0 as SpiceChar; idwlen.max(1)];
+    let mut ifname = vec![0 as SpiceChar; ifnlen.max(1)];
+    let (mut nresvr, mut nresvc, mut ncomr, mut ncomc) = (0, 0, 0, 0);
+    unsafe {
+        crate::c::dasrfr_c(
+            handle,
+            idwlen as SpiceInt,
+            ifnlen as SpiceInt,
+            idword.as_mut_ptr(),
+            ifname.as_mut_ptr(),
+            &mut nresvr,
+            &mut nresvc,
+            &mut ncomr,
+            &mut ncomc,
+        )
+    };
+    (
+        from_cbuf(&idword),
+        from_cbuf(&ifname),
+        nresvr,
+        nresvc,
+        ncomr,
+        ncomc,
+    )
+}
+
+cspice_proc! {
+    /**
+    Find the segment preceding a specified segment in a DLA file.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn dlafps(handle: i32, descr: DLADSC) -> (DLADSC, bool) {}
+}
+
+/* ---------------------------------------------------------------------------------------------- */
+/* Kernel readers and writers                                                                     */
+/* ---------------------------------------------------------------------------------------------- */
+
+cspice_proc! {
+    /**
+    Begin a type 14 SPK segment in the SPK file associated with `handle'.
+    */
+    #[allow(clippy::too_many_arguments)]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn spk14b(handle: i32, segid: &str, body: i32, center: i32, frame: &str, first: f64, last: f64, chbdeg: i32) {}
+}
+
+cspice_proc! {
+    /**
+    End the type 14 SPK segment currently being written to the SPK file associated with `handle'.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn spk14e(handle: i32) {}
+}
+
+cspice_proc! {
+    /**
+    Return the state (position and velocity) of a target body relative to an observer, optionally corrected for light time and stellar aberration, expressed relative to an inertial reference frame.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn spkacs(targ: i32, et: f64, frame: &str, abcorr: &str, obs: i32) -> ([f64; 6], f64, f64) {}
+}
+
+cspice_proc! {
+    /**
+    Return the position of a target body relative to an observer, optionally corrected for light time and stellar aberration.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn spkapo(targ: i32, et: f64, frame: &str, sobs: [f64; 6], abcorr: &str) -> ([f64; 3], f64) {}
+}
+
+cspice_proc! {
+    /**
+    Deprecated: This routine has been superseded by the CSPICE routine spkaps_c. This routine is supported for purposes of backward compatibility only.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn spkapp(targ: i32, et: f64, frame: &str, sobs: [f64; 6], abcorr: &str) -> ([f64; 6], f64) {}
+}
+
+cspice_proc! {
+    /**
+    Return the state (position and velocity) of a target body relative to an observer specified by its state and acceleration relative to the solar system barycenter. The returned state may be optionally corrected for light time and stellar aberration. All input and output vectors are expressed relative to an inertial reference frame.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn spkaps(targ: i32, et: f64, frame: &str, abcorr: &str, stobs: [f64; 6], accobs: [f64; 3]) -> ([f64; 6], f64, f64) {}
+}
+
+cspice_proc! {
+    /**
+    Compute the geometric position of a target body relative to an observing body.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn spkgps(targ: i32, et: f64, frame: &str, obs: i32) -> ([f64; 3], f64) {}
+}
+
+cspice_proc! {
+    /**
+    Return the state (position and velocity) of a target body relative to an observer, optionally corrected for light time, expressed relative to an inertial reference frame.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn spkltc(targ: i32, et: f64, frame: &str, abcorr: &str, stobs: [f64; 6]) -> ([f64; 6], f64, f64) {}
+}
+
+cspice_proc! {
+    /**
+    Perform routine error checks and if all check pass, pack the descriptor for an SPK segment
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn spkpds(body: i32, center: i32, frame: &str, kind: i32, first: f64, last: f64) -> [f64; 5] {}
+}
+
+cspice_proc! {
+    /**
+    Return, for a specified SPK segment and time, the state (position and velocity) of the segment's target body relative to its center of motion.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn spkpvn(handle: i32, descr: [f64; 5], et: f64) -> (i32, [f64; 6], i32) {}
+}
+
+cspice_proc! {
+    /**
+    Return the state (position and velocity) of a target body relative to the solar system barycenter.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn spkssb(targ: i32, et: f64, frame: &str) -> [f64; 6] {}
+}
+
+cspice_proc! {
+    /**
+    Unload an ephemeris file so that it will no longer be searched by the readers.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn spkuef(handle: i32) {}
+}
+
+cspice_proc! {
+    /**
+    Write an SPK segment of type 15 given a type 15 data record.
+    */
+    #[allow(clippy::too_many_arguments)]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn spkw15(handle: i32, body: i32, center: i32, frame: &str, first: f64, last: f64, segid: &str, epoch: f64, tp: [f64; 3], pa: [f64; 3], p: f64, ecc: f64, j2flg: f64, pv: [f64; 3], gm: f64, j2: f64, radius: f64) {}
+}
+
+cspice_proc! {
+    /**
+    Write an SPK segment of type 17 given a type 17 data record.
+    */
+    #[allow(clippy::too_many_arguments)]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn spkw17(handle: i32, body: i32, center: i32, frame: &str, first: f64, last: f64, segid: &str, epoch: f64, eqel: [f64; 9], rapol: f64, decpol: f64) {}
+}
+
+/* -------------------------------------------------------------------------------------------- */
+/* Kernel writers and low level readers                                                           */
+/* -------------------------------------------------------------------------------------------- */
+
+/// Largest SPK or PCK segment descriptor, in double precision words.
+pub const SPK_DSCSIZ: usize = 5;
+
+/// Write a segment whose data is one flat run of Chebyshev coefficients.
+macro_rules! spk_chebyshev {
+    ($($name:ident => $cname:ident, $doc:expr);* $(;)?) => {$(
+        #[doc = $doc]
+        #[allow(clippy::too_many_arguments)]
+        #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+        pub fn $name(
+            handle: i32,
+            body: i32,
+            center: i32,
+            frame: &str,
+            first: f64,
+            last: f64,
+            segid: &str,
+            intlen: f64,
+            n: i32,
+            polydg: i32,
+            cdata: &[f64],
+            btime: f64,
+        ) {
+            let frame = to_cstring(frame);
+            let segid = to_cstring(segid);
+            unsafe {
+                crate::c::$cname(
+                    handle, body, center,
+                    frame.as_ptr() as *mut SpiceChar,
+                    first, last,
+                    segid.as_ptr() as *mut SpiceChar,
+                    intlen, n, polydg,
+                    cdata.as_ptr() as *mut SpiceDouble,
+                    btime,
+                );
+            }
+        }
+    )*};
+}
+
+spk_chebyshev! {
+    spkw02 => spkw02_c, "Write a type 2 segment: Chebyshev polynomials for position.";
+    spkw03 => spkw03_c, "Write a type 3 segment: Chebyshev polynomials for position and velocity.";
+}
+
+/// Write a segment whose data is a run of states at given epochs.
+macro_rules! spk_states_at_epochs {
+    ($($name:ident($mid:ident: $midty:ty) => $cname:ident, $doc:expr);* $(;)?) => {$(
+        #[doc = $doc]
+        ///
+        /// # Panics
+        ///
+        /// Panics if `n` is larger than `states` or `epochs`.
+        #[allow(clippy::too_many_arguments)]
+        #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+        pub fn $name(
+            handle: i32,
+            body: i32,
+            center: i32,
+            frame: &str,
+            first: f64,
+            last: f64,
+            segid: &str,
+            $mid: $midty,
+            n: i32,
+            states: &[[f64; 6]],
+            epochs: &[f64],
+        ) {
+            let count = usize::try_from(n).expect("the record count cannot be negative");
+            assert!(
+                count <= states.len() && count <= epochs.len(),
+                "asked for {count} records but got {} states and {} epochs",
+                states.len(),
+                epochs.len()
+            );
+            let frame = to_cstring(frame);
+            let segid = to_cstring(segid);
+            unsafe {
+                crate::c::$cname(
+                    handle, body, center,
+                    frame.as_ptr() as *mut SpiceChar,
+                    first, last,
+                    segid.as_ptr() as *mut SpiceChar,
+                    $mid, n,
+                    states.as_ptr() as *mut [SpiceDouble; 6],
+                    epochs.as_ptr() as *mut SpiceDouble,
+                );
+            }
+        }
+    )*};
+}
+
+spk_states_at_epochs! {
+    spkw05(gm: f64) => spkw05_c,
+        "Write a type 5 segment: discrete states propagated with two body dynamics.";
+    spkw13(degree: i32) => spkw13_c,
+        "Write a type 13 segment: Hermite interpolation of unequally spaced states.";
+}
+
+/// Write a segment whose states are evenly spaced in time.
+macro_rules! spk_states_evenly_spaced {
+    ($($name:ident => $cname:ident, $doc:expr);* $(;)?) => {$(
+        #[doc = $doc]
+        ///
+        /// # Panics
+        ///
+        /// Panics if `n` is larger than `states`.
+        #[allow(clippy::too_many_arguments)]
+        #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+        pub fn $name(
+            handle: i32,
+            body: i32,
+            center: i32,
+            frame: &str,
+            first: f64,
+            last: f64,
+            segid: &str,
+            degree: i32,
+            n: i32,
+            states: &[[f64; 6]],
+            epoch0: f64,
+            step: f64,
+        ) {
+            let count = usize::try_from(n).expect("the record count cannot be negative");
+            assert!(count <= states.len(), "asked for {count} states but got {}", states.len());
+            let frame = to_cstring(frame);
+            let segid = to_cstring(segid);
+            unsafe {
+                crate::c::$cname(
+                    handle, body, center,
+                    frame.as_ptr() as *mut SpiceChar,
+                    first, last,
+                    segid.as_ptr() as *mut SpiceChar,
+                    degree, n,
+                    states.as_ptr() as *mut [SpiceDouble; 6],
+                    epoch0, step,
+                );
+            }
+        }
+    )*};
+}
+
+spk_states_evenly_spaced! {
+    spkw08 => spkw08_c, "Write a type 8 segment: Lagrange interpolation of evenly spaced states.";
+    spkw12 => spkw12_c, "Write a type 12 segment: Hermite interpolation of evenly spaced states.";
+}
+
+/**
+Write a type 10 segment: two-line element sets.
+*/
+#[allow(clippy::too_many_arguments)]
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn spkw10(
+    handle: i32,
+    body: i32,
+    center: i32,
+    frame: &str,
+    first: f64,
+    last: f64,
+    segid: &str,
+    consts: &[f64],
+    n: i32,
+    elems: &[f64],
+    epochs: &[f64],
+) {
+    let frame = to_cstring(frame);
+    let segid = to_cstring(segid);
+    unsafe {
+        crate::c::spkw10_c(
+            handle,
+            body,
+            center,
+            frame.as_ptr() as *mut SpiceChar,
+            first,
+            last,
+            segid.as_ptr() as *mut SpiceChar,
+            consts.as_ptr() as *mut SpiceDouble,
+            n,
+            elems.as_ptr() as *mut SpiceDouble,
+            epochs.as_ptr() as *mut SpiceDouble,
+        );
+    }
+}
+
+/**
+Write a type 18 segment: Hermite or Lagrange interpolation of packets of state data.
+
+`packts` holds one packet per epoch, laid out row by row.
+*/
+#[allow(clippy::too_many_arguments)]
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn spkw18(
+    handle: i32,
+    subtyp: i32,
+    body: i32,
+    center: i32,
+    frame: &str,
+    first: f64,
+    last: f64,
+    segid: &str,
+    degree: i32,
+    n: i32,
+    packts: &[f64],
+    epochs: &[f64],
+) {
+    let frame = to_cstring(frame);
+    let segid = to_cstring(segid);
+    unsafe {
+        crate::c::spkw18_c(
+            handle,
+            subtyp as crate::c::SpiceSPK18Subtype,
+            body,
+            center,
+            frame.as_ptr() as *mut SpiceChar,
+            first,
+            last,
+            segid.as_ptr() as *mut SpiceChar,
+            degree,
+            n,
+            packts.as_ptr().cast(),
+            epochs.as_ptr() as *mut SpiceDouble,
+        );
+    }
+}
+
+/**
+Write a type 20 segment: Chebyshev polynomials for velocity, with the position at the interval
+start.
+*/
+#[allow(clippy::too_many_arguments)]
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn spkw20(
+    handle: i32,
+    body: i32,
+    center: i32,
+    frame: &str,
+    first: f64,
+    last: f64,
+    segid: &str,
+    intlen: f64,
+    n: i32,
+    polydg: i32,
+    cdata: &[f64],
+    dscale: f64,
+    tscale: f64,
+    initjd: f64,
+    initfr: f64,
+) {
+    let frame = to_cstring(frame);
+    let segid = to_cstring(segid);
+    unsafe {
+        crate::c::spkw20_c(
+            handle,
+            body,
+            center,
+            frame.as_ptr() as *mut SpiceChar,
+            first,
+            last,
+            segid.as_ptr() as *mut SpiceChar,
+            intlen,
+            n,
+            polydg,
+            cdata.as_ptr() as *mut SpiceDouble,
+            dscale,
+            tscale,
+            initjd,
+            initfr,
+        );
+    }
+}
+
+/**
+Add Chebyshev coefficient sets to a type 14 segment opened with [`spk14b`].
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn spk14a(handle: i32, ncsets: i32, coeffs: &[f64], epochs: &[f64]) {
+    unsafe {
+        crate::c::spk14a_c(
+            handle,
+            ncsets,
+            coeffs.as_ptr() as *mut SpiceDouble,
+            epochs.as_ptr() as *mut SpiceDouble,
+        )
+    }
+}
+
+/**
+Search for the segment of an SPK that covers a body at an epoch.
+
+This function has a [neat version][crate::neat::spksfs].
+*/
+pub fn spksfs(body: i32, et: f64, idlen: usize) -> (i32, [f64; SPK_DSCSIZ], String, bool) {
+    let mut descr = [0.0; SPK_DSCSIZ];
+    let mut ident = vec![0 as SpiceChar; idlen.max(1)];
+    let (mut handle, mut found) = (0, 0);
+    unsafe {
+        crate::c::spksfs_c(
+            body,
+            et,
+            idlen as SpiceInt,
+            &mut handle,
+            descr.as_mut_ptr(),
+            ident.as_mut_ptr(),
+            &mut found,
+        )
+    };
+    (handle, descr, from_cbuf(&ident), found != 0)
+}
+
+cspice_proc! {
+    /**
+    Load an SPK for use by the low level readers, outside the KEEPER subsystem.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn spklef(filename: &str) -> i32 {}
+}
+
+/**
+Unpack an SPK segment descriptor.
+*/
+#[allow(clippy::type_complexity)]
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn spkuds(descr: &[f64]) -> (i32, i32, i32, i32, f64, f64, i32, i32) {
+    let (mut body, mut center, mut frame, mut kind) = (0, 0, 0, 0);
+    let (mut first, mut last) = (0.0, 0.0);
+    let (mut begin, mut end) = (0, 0);
+    unsafe {
+        crate::c::spkuds_c(
+            descr.as_ptr() as *mut SpiceDouble,
+            &mut body,
+            &mut center,
+            &mut frame,
+            &mut kind,
+            &mut first,
+            &mut last,
+            &mut begin,
+            &mut end,
+        )
+    };
+    (body, center, frame, kind, first, last, begin, end)
+}
+
+/**
+Copy a subset of the data in an SPK segment into another file.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn spksub(handle: i32, descr: &mut [f64], ident: &str, begin: f64, end: f64, newh: i32) {
+    let ident = to_cstring(ident);
+    unsafe {
+        crate::c::spksub_c(
+            handle,
+            descr.as_mut_ptr(),
+            ident.as_ptr() as *mut SpiceChar,
+            begin,
+            end,
+            newh,
+        )
+    }
+}
+
+/**
+Write a type 1 segment to a CK file: discrete pointing with angular velocity.
+*/
+#[allow(clippy::too_many_arguments)]
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn ckw01(
+    handle: i32,
+    begtime: f64,
+    endtime: f64,
+    inst: i32,
+    frame: &str,
+    avflag: bool,
+    segid: &str,
+    nrec: i32,
+    sclkdp: &[f64],
+    quats: &[[f64; 4]],
+    avvs: &[[f64; 3]],
+) {
+    let frame = to_cstring(frame);
+    let segid = to_cstring(segid);
+    unsafe {
+        crate::c::ckw01_c(
+            handle,
+            begtime,
+            endtime,
+            inst,
+            frame.as_ptr() as *mut SpiceChar,
+            avflag as crate::c::SpiceBoolean,
+            segid.as_ptr() as *mut SpiceChar,
+            nrec,
+            sclkdp.as_ptr() as *mut SpiceDouble,
+            quats.as_ptr() as *mut [SpiceDouble; 4],
+            avvs.as_ptr() as *mut [SpiceDouble; 3],
+        );
+    }
+}
+
+/**
+Write a type 2 segment to a CK file: constant angular velocity over each interval.
+*/
+#[allow(clippy::too_many_arguments)]
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn ckw02(
+    handle: i32,
+    begtim: f64,
+    endtim: f64,
+    inst: i32,
+    frame: &str,
+    segid: &str,
+    nrec: i32,
+    start: &[f64],
+    stop: &[f64],
+    quats: &[[f64; 4]],
+    avvs: &[[f64; 3]],
+    rates: &[f64],
+) {
+    let frame = to_cstring(frame);
+    let segid = to_cstring(segid);
+    unsafe {
+        crate::c::ckw02_c(
+            handle,
+            begtim,
+            endtim,
+            inst,
+            frame.as_ptr() as *mut SpiceChar,
+            segid.as_ptr() as *mut SpiceChar,
+            nrec,
+            start.as_ptr() as *mut SpiceDouble,
+            stop.as_ptr() as *mut SpiceDouble,
+            quats.as_ptr() as *mut [SpiceDouble; 4],
+            avvs.as_ptr() as *mut [SpiceDouble; 3],
+            rates.as_ptr() as *mut SpiceDouble,
+        );
+    }
+}
+
+/**
+Write a type 5 segment to a CK file: interpolated quaternion packets.
+*/
+#[allow(clippy::too_many_arguments)]
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn ckw05(
+    handle: i32,
+    subtyp: i32,
+    degree: i32,
+    begtim: f64,
+    endtim: f64,
+    inst: i32,
+    frame: &str,
+    avflag: bool,
+    segid: &str,
+    n: i32,
+    sclkdp: &[f64],
+    packets: &[f64],
+    rate: f64,
+    nints: i32,
+    starts: &[f64],
+) {
+    let frame = to_cstring(frame);
+    let segid = to_cstring(segid);
+    unsafe {
+        crate::c::ckw05_c(
+            handle,
+            subtyp as crate::c::SpiceCK05Subtype,
+            degree,
+            begtim,
+            endtim,
+            inst,
+            frame.as_ptr() as *mut SpiceChar,
+            avflag as crate::c::SpiceBoolean,
+            segid.as_ptr() as *mut SpiceChar,
+            n,
+            sclkdp.as_ptr() as *mut SpiceDouble,
+            packets.as_ptr().cast(),
+            rate,
+            nints,
+            starts.as_ptr() as *mut SpiceDouble,
+        );
+    }
+}
+
+/// Read a pointing record from a CK segment, for the two segment types that have them.
+macro_rules! ck_record {
+    ($($name:ident => $cname:ident, $doc:expr);* $(;)?) => {$(
+        #[doc = $doc]
+        ///
+        /// `room` is how many double precision words to make space for.
+        #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+        pub fn $name(handle: i32, descr: &[f64], recno: i32, room: usize) -> Vec<f64> {
+            let mut record = vec![0.0; room.max(1)];
+            unsafe {
+                crate::c::$cname(
+                    handle,
+                    descr.as_ptr() as *mut SpiceDouble,
+                    recno,
+                    record.as_mut_ptr(),
+                )
+            };
+            record
+        }
+    )*};
+}
+
+ck_record! {
+    ckgr02 => ckgr02_c, "Read a pointing record from a type 2 CK segment.";
+    ckgr03 => ckgr03_c, "Read a pointing record from a type 3 CK segment.";
+}
+
+/// Count the pointing records of a CK segment, for the two segment types that have them.
+macro_rules! ck_record_count {
+    ($($name:ident => $cname:ident, $doc:expr);* $(;)?) => {$(
+        #[doc = $doc]
+        #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+        pub fn $name(handle: i32, descr: &[f64]) -> i32 {
+            let mut nrec = 0;
+            unsafe {
+                crate::c::$cname(handle, descr.as_ptr() as *mut SpiceDouble, &mut nrec)
+            };
+            nrec
+        }
+    )*};
+}
+
+ck_record_count! {
+    cknr02 => cknr02_c, "Number of pointing records in a type 2 CK segment.";
+    cknr03 => cknr03_c, "Number of pointing records in a type 3 CK segment.";
+}
+
+/**
+Write a type 2 segment to a binary PCK file: Chebyshev polynomials for the Euler angles.
+*/
+#[allow(clippy::too_many_arguments)]
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn pckw02(
+    handle: i32,
+    clssid: i32,
+    frame: &str,
+    first: f64,
+    last: f64,
+    segid: &str,
+    intlen: f64,
+    n: i32,
+    polydg: i32,
+    cdata: &[f64],
+    btime: f64,
+) {
+    let frame = to_cstring(frame);
+    let segid = to_cstring(segid);
+    unsafe {
+        crate::c::pckw02_c(
+            handle,
+            clssid,
+            frame.as_ptr() as *mut SpiceChar,
+            first,
+            last,
+            segid.as_ptr() as *mut SpiceChar,
+            intlen,
+            n,
+            polydg,
+            cdata.as_ptr() as *mut SpiceDouble,
+            btime,
+        );
+    }
+}
+
+/**
+Return the bookkeeping parameters of a type 2 DSK segment.
+*/
+#[allow(clippy::type_complexity)]
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn dskb02(
+    handle: i32,
+    dladsc: DLADSC,
+) -> (
+    i32,
+    i32,
+    i32,
+    [[f64; 2]; 3],
+    f64,
+    [f64; 3],
+    [i32; 3],
+    i32,
+    i32,
+    i32,
+    i32,
+) {
+    let mut dladsc = dladsc;
+    let (mut nv, mut np, mut nvxtot) = (0, 0, 0);
+    let mut vtxbds = [[0.0; 2]; 3];
+    let mut voxsiz = 0.0;
+    let mut voxori = [0.0; 3];
+    let mut vgrext = [0; 3];
+    let (mut cgscal, mut vtxnpl, mut voxnpt, mut voxnpl) = (0, 0, 0, 0);
+    unsafe {
+        crate::c::dskb02_c(
+            handle,
+            &mut dladsc,
+            &mut nv,
+            &mut np,
+            &mut nvxtot,
+            vtxbds.as_mut_ptr(),
+            &mut voxsiz,
+            voxori.as_mut_ptr(),
+            vgrext.as_mut_ptr(),
+            &mut cgscal,
+            &mut vtxnpl,
+            &mut voxnpt,
+            &mut voxnpl,
+        )
+    };
+    (
+        nv, np, nvxtot, vtxbds, voxsiz, voxori, vgrext, cgscal, vtxnpl, voxnpt, voxnpl,
+    )
+}
+
+/// Fetch a run of items from a type 2 DSK segment, for the double precision and integer cases.
+macro_rules! dsk_fetch {
+    ($($name:ident($ty:ty) => $cname:ident, $doc:expr);* $(;)?) => {$(
+        #[doc = $doc]
+        ///
+        /// `item` is one of the [`dsk02`] keywords and at most `room` values are returned.
+        ///
+        /// `start` counts from **zero**, unlike most of the toolkit: the vertex indices of the
+        /// first plate are at `start` 0, even though plate IDs themselves start at 1.
+        #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+        pub fn $name(
+            handle: i32,
+            dladsc: DLADSC,
+            item: i32,
+            start: i32,
+            room: usize,
+        ) -> Vec<$ty> {
+            let mut dladsc = dladsc;
+            let mut values = vec![<$ty>::default(); room.max(1)];
+            let mut n = 0;
+            unsafe {
+                crate::c::$cname(
+                    handle,
+                    &mut dladsc,
+                    item,
+                    start,
+                    room as SpiceInt,
+                    &mut n,
+                    values.as_mut_ptr(),
+                )
+            };
+            values.truncate(n.max(0) as usize);
+            values
+        }
+    )*};
+}
+
+dsk_fetch! {
+    dskd02(f64) => dskd02_c, "Fetch double precision data from a type 2 DSK segment.";
+    dski02(i32) => dski02_c, "Fetch integer data from a type 2 DSK segment.";
+}
+
+/**
+Determine the vertical extent of a plate set in a given coordinate system.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn dskrb2(vrtces: &[[f64; 3]], plates: &[[i32; 3]], corsys: i32, corpar: &[f64]) -> (f64, f64) {
+    assert!(
+        corpar.len() >= DSK_NSYPAR,
+        "dskrb2 needs {DSK_NSYPAR} coordinate parameters but got {}",
+        corpar.len()
+    );
+    let (mut mncor3, mut mxcor3) = (0.0, 0.0);
+    unsafe {
+        crate::c::dskrb2_c(
+            vrtces.len() as SpiceInt,
+            vrtces.as_ptr() as *mut [f64; 3],
+            plates.len() as SpiceInt,
+            plates.as_ptr() as *mut [SpiceInt; 3],
+            corsys,
+            corpar.as_ptr() as *mut SpiceDouble,
+            &mut mncor3,
+            &mut mxcor3,
+        )
+    };
+    (mncor3, mxcor3)
+}
+
+cspice_proc! {
+    /**
+    Convert encoded spacecraft clock ticks to a clock string.
+    */
+    pub fn scfmt(sc: i32, ticks: f64, #[lenout] clkstrlen: i32) -> String {}
+}
+
+/**
+Return the partition start and stop times of a spacecraft clock.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn scpart(sc: i32, maxparts: usize) -> (Vec<f64>, Vec<f64>) {
+    let mut pstart = vec![0.0; maxparts.max(1)];
+    let mut pstop = vec![0.0; maxparts.max(1)];
+    let mut nparts = 0;
+    unsafe { crate::c::scpart_c(sc, &mut nparts, pstart.as_mut_ptr(), pstop.as_mut_ptr()) };
+    let count = nparts.max(0) as usize;
+    pstart.truncate(count);
+    pstop.truncate(count);
+    (pstart, pstop)
+}
+
+/* -------------------------------------------------------------------------------------------- */
+/* Interpolation and polynomials                                                                  */
+/* -------------------------------------------------------------------------------------------- */
+
+/**
+Evaluate a Chebyshev expansion at `x`, returning the value and its derivative.
+
+`x2s` holds the midpoint and radius of the interval the expansion is defined on.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn chbint(cp: &[f64], degp: i32, x2s: [f64; 2], x: f64) -> (f64, f64) {
+    let (mut p, mut dpdx) = (0.0, 0.0);
+    unsafe {
+        crate::c::chbint_c(
+            cp.as_ptr() as *mut SpiceDouble,
+            degp,
+            x2s.as_ptr() as *mut SpiceDouble,
+            x,
+            &mut p,
+            &mut dpdx,
+        )
+    };
+    (p, dpdx)
+}
+
+/**
+Evaluate a Chebyshev expansion at `x`.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn chbval(cp: &[f64], degp: i32, x2s: [f64; 2], x: f64) -> f64 {
+    let mut p = 0.0;
+    unsafe {
+        crate::c::chbval_c(
+            cp.as_ptr() as *mut SpiceDouble,
+            degp,
+            x2s.as_ptr() as *mut SpiceDouble,
+            x,
+            &mut p,
+        )
+    };
+    p
+}
+
+/**
+Evaluate a Chebyshev expansion at `x`, returning the value and its indefinite integral.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn chbigr(degp: i32, cp: &[f64], x2s: [f64; 2], x: f64) -> (f64, f64) {
+    let (mut p, mut itgrlp) = (0.0, 0.0);
+    unsafe {
+        crate::c::chbigr_c(
+            degp,
+            cp.as_ptr() as *mut SpiceDouble,
+            x2s.as_ptr() as *mut SpiceDouble,
+            x,
+            &mut p,
+            &mut itgrlp,
+        )
+    };
+    (p, itgrlp)
+}
+
+/**
+Evaluate a Chebyshev expansion and its first `nderiv` derivatives at `x`.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn chbder(cp: &[f64], degp: i32, x2s: [f64; 2], x: f64, nderiv: i32) -> Vec<f64> {
+    let count = nderiv.max(0) as usize + 1;
+    let mut partdp = vec![0.0; 3 * count.max(1)];
+    let mut dpdxs = vec![0.0; count.max(1)];
+    let mut x2s = x2s;
+    unsafe {
+        crate::c::chbder_c(
+            cp.as_ptr() as *mut SpiceDouble,
+            degp,
+            x2s.as_mut_ptr(),
+            x,
+            nderiv,
+            partdp.as_mut_ptr(),
+            dpdxs.as_mut_ptr(),
+        )
+    };
+    dpdxs
+}
+
+/**
+Evaluate a polynomial and its first `nderiv` derivatives at `t`.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn polyds(coeffs: &[f64], deg: i32, nderiv: i32, t: f64) -> Vec<f64> {
+    let mut p = vec![0.0; nderiv.max(0) as usize + 1];
+    unsafe {
+        crate::c::polyds_c(
+            coeffs.as_ptr() as *mut SpiceDouble,
+            deg,
+            nderiv,
+            t,
+            p.as_mut_ptr(),
+        )
+    };
+    p
+}
+
+/**
+Hermite interpolate a function and its derivative at evenly spaced points.
+
+`yvals` holds the value and derivative at each point, in pairs.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn hrmesp(first: f64, step: f64, yvals: &[f64], x: f64) -> (f64, f64) {
+    let n = (yvals.len() / 2) as SpiceInt;
+    let (mut f, mut df) = (0.0, 0.0);
+    unsafe {
+        crate::c::hrmesp_c(
+            n,
+            first,
+            step,
+            yvals.as_ptr() as *mut SpiceDouble,
+            x,
+            &mut f,
+            &mut df,
+        )
+    };
+    (f, df)
+}
+
+/**
+Hermite interpolate a function and its derivative at unevenly spaced points.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn hrmint(xvals: &[f64], yvals: &[f64], x: f64) -> (f64, f64) {
+    let n = xvals.len() as SpiceInt;
+    let mut work = vec![0.0; (4 * xvals.len() + 4).max(1)];
+    let (mut f, mut df) = (0.0, 0.0);
+    unsafe {
+        crate::c::hrmint_c(
+            n,
+            xvals.as_ptr() as *mut SpiceDouble,
+            yvals.as_ptr() as *mut SpiceDouble,
+            x,
+            work.as_mut_ptr(),
+            &mut f,
+            &mut df,
+        )
+    };
+    (f, df)
+}
+
+/**
+Lagrange interpolate a function at evenly spaced points.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn lgresp(first: f64, step: f64, yvals: &[f64], x: f64) -> f64 {
+    unsafe {
+        crate::c::lgresp_c(
+            yvals.len() as SpiceInt,
+            first,
+            step,
+            yvals.as_ptr() as *mut SpiceDouble,
+            x,
+        )
+    }
+}
+
+/**
+Lagrange interpolate a function at unevenly spaced points.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn lgrint(xvals: &[f64], yvals: &[f64], x: f64) -> f64 {
+    unsafe {
+        crate::c::lgrint_c(
+            xvals.len() as SpiceInt,
+            xvals.as_ptr() as *mut SpiceDouble,
+            yvals.as_ptr() as *mut SpiceDouble,
+            x,
+        )
+    }
+}
+
+/**
+Lagrange interpolate a function and its derivative at unevenly spaced points.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn lgrind(xvals: &[f64], yvals: &[f64], x: f64) -> (f64, f64) {
+    let mut work = vec![0.0; (2 * xvals.len() + 2).max(1)];
+    let (mut p, mut dp) = (0.0, 0.0);
+    unsafe {
+        crate::c::lgrind_c(
+            xvals.len() as SpiceInt,
+            xvals.as_ptr() as *mut SpiceDouble,
+            yvals.as_ptr() as *mut SpiceDouble,
+            work.as_mut_ptr(),
+            x,
+            &mut p,
+            &mut dp,
+        )
+    };
+    (p, dp)
+}
+
+/**
+Estimate a derivative by the central difference of a function sampled either side of a point.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn qderiv(f0: &[f64], f2: &[f64], delta: f64) -> Vec<f64> {
+    let ndim = f0.len().min(f2.len());
+    let mut dfdt = vec![0.0; ndim.max(1)];
+    unsafe {
+        crate::c::qderiv_c(
+            ndim as SpiceInt,
+            f0.as_ptr() as *mut SpiceDouble,
+            f2.as_ptr() as *mut SpiceDouble,
+            delta,
+            dfdt.as_mut_ptr(),
+        )
+    };
+    dfdt.truncate(ndim);
+    dfdt
+}
+
+/* -------------------------------------------------------------------------------------------- */
+/* Plates                                                                                         */
+/* -------------------------------------------------------------------------------------------- */
+
+/**
+The total area of a set of triangular plates.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn pltar(vrtces: &[[f64; 3]], plates: &[[i32; 3]]) -> f64 {
+    unsafe {
+        crate::c::pltar_c(
+            vrtces.len() as SpiceInt,
+            vrtces.as_ptr() as *mut [f64; 3],
+            plates.len() as SpiceInt,
+            plates.as_ptr() as *mut [SpiceInt; 3],
+        )
+    }
+}
+
+/**
+The volume enclosed by a set of triangular plates.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn pltvol(vrtces: &[[f64; 3]], plates: &[[i32; 3]]) -> f64 {
+    unsafe {
+        crate::c::pltvol_c(
+            vrtces.len() as SpiceInt,
+            vrtces.as_ptr() as *mut [f64; 3],
+            plates.len() as SpiceInt,
+            plates.as_ptr() as *mut [SpiceInt; 3],
+        )
+    }
+}
+
+cspice_proc! {
+    /**
+    The outward normal of a triangular plate, scaled by twice its area.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn pltnrm(v1: [f64; 3], v2: [f64; 3], v3: [f64; 3]) -> [f64; 3] {}
+}
+
+cspice_proc! {
+    /**
+    The point of a triangular plate nearest a given point, and the distance between them.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn pltnp(
+        point: [f64; 3],
+        v1: [f64; 3],
+        v2: [f64; 3],
+        v3: [f64; 3]
+    ) -> ([f64; 3], f64) {
+    }
+}
+
+cspice_proc! {
+    /**
+    Diagonalize a symmetric 2x2 matrix, returning the diagonal and the rotation that produces it.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn diags2(symmat: [[f64; 2]; 2]) -> ([[f64; 2]; 2], [[f64; 2]; 2]) {}
+}
+
+/* -------------------------------------------------------------------------------------------- */
+/* More searches, sets and the kernel pool                                                        */
+/* -------------------------------------------------------------------------------------------- */
+
+/// Linear search of an unordered array, for the three element types.
+macro_rules! linear_search {
+    ($($name:ident($ty:ty) => $cname:ident, $doc:expr);* $(;)?) => {$(
+        #[doc = $doc]
+        ///
+        /// Returns the index found, or `-1`.
+        #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+        pub fn $name(value: $ty, array: &[$ty]) -> i32 {
+            unsafe { crate::c::$cname(value, array.len() as SpiceInt, array.as_ptr() as *mut _) }
+        }
+    )*};
+}
+
+linear_search! {
+    isrchd(f64) => isrchd_c, "Search an unordered array of doubles.";
+    isrchi(i32) => isrchi_c, "Search an unordered array of integers.";
+}
+
+/**
+Search an unordered array of strings.
+
+Returns the index found, or `-1`.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn isrchc<S: AsRef<str>>(value: &str, array: &[S]) -> i32 {
+    let value = to_cstring(value);
+    let (buffer, stride) = to_strided(array);
+    unsafe {
+        crate::c::isrchc_c(
+            value.as_ptr() as *mut SpiceChar,
+            array.len() as SpiceInt,
+            stride as SpiceInt,
+            buffer.as_ptr().cast(),
+        )
+    }
+}
+
+/// The ordinal position of an item within a set, for the three element types.
+macro_rules! ordinal {
+    ($($name:ident($ty:ty, $cell:ty) => $cname:ident, $doc:expr);* $(;)?) => {$(
+        #[doc = $doc]
+        ///
+        /// Positions run from zero; the result is `-1` when the item is not in the set.
+        #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+        pub fn $name(item: $ty, set: &mut Cell<$cell>) -> i32 {
+            let raw = set.as_mut_ptr();
+            unsafe { crate::c::$cname(item, raw) }
+        }
+    )*};
+}
+
+ordinal! {
+    ordd(f64, f64) => ordd_c, "The ordinal position of a double precision number in a set.";
+    ordi(i32, i32) => ordi_c, "The ordinal position of an integer in a set.";
+}
+
+/**
+The ordinal position of a string in a set, counting from zero, or `-1` when it is absent.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn ordc(item: &str, set: &mut Cell<String>) -> i32 {
+    let item = to_cstring(item);
+    let raw = set.as_mut_ptr();
+    unsafe { crate::c::ordc_c(item.as_ptr() as *mut SpiceChar, raw) }
+}
+
+cspice_proc! {
+    /**
+    Place the symmetric difference of two sets into `c`.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn sdiff<T: CellItem>(a: &mut Cell<T>, b: &mut Cell<T>, c: &mut Cell<T>) {}
+}
+
+cspice_proc! {
+    /**
+    Compare two sets; `op` is one of `"="`, `"<>"`, `"<="`, `"<"`, `">="` or `">"`.
+    */
+    #[return_output]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn set<T: CellItem>(a: &mut Cell<T>, op: &str, b: &mut Cell<T>) -> bool {}
+}
+
+cspice_proc! {
+    /**
+    Parse a list on any of a set of delimiters, into a set of unique items.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn lparss(list: &str, delims: &str, set: &mut Cell<String>) {}
+}
+
+cspice_proc! {
+    /**
+    Find the frame ID codes of all reference frames of a given class in the kernel pool.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn kplfrm(frmcls: i32, idset: &mut Cell<i32>) {}
+}
+
+/**
+Load the variables of a text kernel held in memory, rather than in a file.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn lmpool<S: AsRef<str>>(cvals: &[S]) {
+    let (buffer, lenvals) = to_strided(cvals);
+    unsafe {
+        crate::c::lmpool_c(
+            buffer.as_ptr().cast(),
+            lenvals as SpiceInt,
+            cvals.len() as SpiceInt,
+        )
+    }
+}
+
+cspice_proc! {
+    /**
+    The value of a kernel pool parameter, such as `"MAXVAR"`, `"MAXLEN"` or `"MAXVAL"`.
+
+    This is about the pool's own limits, not about any variable in it; [`dtpool`] reports how many
+    values a variable holds.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn szpool(name: &str) -> (i32, bool) {}
+}
+
+/**
+Fetch the `nth` string of a kernel pool variable, re-joining any continuation lines.
+
+Returns the string, its length, and whether it was found.
+
+This function has a [neat version][crate::neat::stpool].
+*/
+pub fn stpool(item: &str, nth: i32, contin: &str, lenout: usize) -> (String, i32, bool) {
+    let item = to_cstring(item);
+    let contin = to_cstring(contin);
+    let mut string = vec![0 as SpiceChar; lenout.max(1)];
+    let (mut size, mut found) = (0, 0);
+    unsafe {
+        crate::c::stpool_c(
+            item.as_ptr() as *mut SpiceChar,
+            nth,
+            contin.as_ptr() as *mut SpiceChar,
+            lenout as SpiceInt,
+            string.as_mut_ptr(),
+            &mut size,
+            &mut found,
+        )
+    };
+    (from_cbuf(&string), size, found != 0)
+}
+
+/* -------------------------------------------------------------------------------------------- */
+/* Files, frames and time, the remainder                                                          */
+/* -------------------------------------------------------------------------------------------- */
+
+cspice_proc! {
+    /**
+    Whether a file exists.
+    */
+    #[return_output]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn exists(name: &str) -> bool {}
+}
+
+/**
+Determine the architecture and type of a SPICE kernel file.
+
+This function has a [neat version][crate::neat::getfat].
+*/
+pub fn getfat(file: &str, arclen: usize, typlen: usize) -> (String, String) {
+    let file = to_cstring(file);
+    let mut arch = vec![0 as SpiceChar; arclen.max(1)];
+    let mut kind = vec![0 as SpiceChar; typlen.max(1)];
+    unsafe {
+        crate::c::getfat_c(
+            file.as_ptr() as *mut SpiceChar,
+            arclen as SpiceInt,
+            typlen as SpiceInt,
+            arch.as_mut_ptr(),
+            kind.as_mut_ptr(),
+        )
+    };
+    (from_cbuf(&arch), from_cbuf(&kind))
+}
+
+/**
+Read the next line of a text file, opening it if it is not already open.
+
+Returns the line and whether the end of the file has been reached.
+
+The file stays open until it has been read to the end, and CSPICE refuses to load a file it already
+has open, so an abandoned partial read makes that file unloadable. The C API has no counterpart to
+Fortran's `CLTEXT` to close one early.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn rdtext(file: &str, lenout: usize) -> (String, bool) {
+    let file = to_cstring(file);
+    let mut line = vec![0 as SpiceChar; lenout.max(1)];
+    let mut eof = 0;
+    unsafe {
+        crate::c::rdtext_c(
+            file.as_ptr() as *mut SpiceChar,
+            lenout as SpiceInt,
+            line.as_mut_ptr(),
+            &mut eof,
+        )
+    };
+    (from_cbuf(&line), eof != 0)
+}
+
+cspice_proc! {
+    /**
+    The centre, class and class ID of a reference frame.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn frinfo(frcode: i32) -> (i32, i32, i32, bool) {}
+}
+
+/**
+Build a right handed orthonormal frame from a vector, which is normalised in place.
+
+Returns the normalised input and the two vectors completing the frame.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn frame(x: [f64; 3]) -> ([f64; 3], [f64; 3], [f64; 3]) {
+    let mut x = x;
+    let (mut y, mut z) = ([0.0; 3], [0.0; 3]);
+    unsafe { crate::c::frame_c(x.as_mut_ptr(), y.as_mut_ptr(), z.as_mut_ptr()) };
+    (x, y, z)
+}
+
+/*
+These two take their epoch through a `SpiceDouble *` rather than by value, so they cannot go
+through the macro.
+*/
+
+/**
+Whether a ray is in the field of view of an instrument at a given epoch.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn fovray(
+    inst: &str,
+    raydir: [f64; 3],
+    rframe: &str,
+    abcorr: &str,
+    obsrvr: &str,
+    et: f64,
+) -> bool {
+    let inst = to_cstring(inst);
+    let rframe = to_cstring(rframe);
+    let abcorr = to_cstring(abcorr);
+    let obsrvr = to_cstring(obsrvr);
+    let mut raydir = raydir;
+    let mut et = et;
+    let mut visible = 0;
+    unsafe {
+        crate::c::fovray_c(
+            inst.as_ptr() as *mut SpiceChar,
+            raydir.as_mut_ptr(),
+            rframe.as_ptr() as *mut SpiceChar,
+            abcorr.as_ptr() as *mut SpiceChar,
+            obsrvr.as_ptr() as *mut SpiceChar,
+            &mut et,
+            &mut visible,
+        )
+    };
+    visible != 0
+}
+
+/**
+Whether a target is in the field of view of an instrument at a given epoch.
+*/
+#[allow(clippy::too_many_arguments)]
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn fovtrg(
+    inst: &str,
+    target: &str,
+    tshape: &str,
+    tframe: &str,
+    abcorr: &str,
+    obsrvr: &str,
+    et: f64,
+) -> bool {
+    let inst = to_cstring(inst);
+    let target = to_cstring(target);
+    let tshape = to_cstring(tshape);
+    let tframe = to_cstring(tframe);
+    let abcorr = to_cstring(abcorr);
+    let obsrvr = to_cstring(obsrvr);
+    let mut et = et;
+    let mut visible = 0;
+    unsafe {
+        crate::c::fovtrg_c(
+            inst.as_ptr() as *mut SpiceChar,
+            target.as_ptr() as *mut SpiceChar,
+            tshape.as_ptr() as *mut SpiceChar,
+            tframe.as_ptr() as *mut SpiceChar,
+            abcorr.as_ptr() as *mut SpiceChar,
+            obsrvr.as_ptr() as *mut SpiceChar,
+            &mut et,
+            &mut visible,
+        )
+    };
+    visible != 0
+}
+
+cspice_proc! {
+    /**
+    Find the illumination angles at a surface point, with the illumination source named separately.
+    */
+    #[allow(clippy::too_many_arguments)]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn illumg(
+        method: &str,
+        target: &str,
+        ilusrc: &str,
+        et: f64,
+        fixref: &str,
+        abcorr: &str,
+        obsrvr: &str,
+        spoint: [f64; 3]
+    ) -> (f64, [f64; 3], f64, f64, f64) {
+    }
+}
+
+/**
+Return the field of view of an instrument, given its name, with the boundary vectors in the
+instrument frame.
+
+This function has a [neat version][crate::neat::getfvn].
+*/
+pub fn getfvn(
+    inst: &str,
+    room: usize,
+    shalen: usize,
+    fralen: usize,
+) -> (String, String, [f64; 3], Vec<[f64; 3]>) {
+    let inst = to_cstring(inst);
+    let mut shape = vec![0 as SpiceChar; shalen.max(1)];
+    let mut frame = vec![0 as SpiceChar; fralen.max(1)];
+    let mut bsight = [0.0; 3];
+    let mut n = 0;
+    let mut bounds = vec![[0.0; 3]; room.max(1)];
+    unsafe {
+        crate::c::getfvn_c(
+            inst.as_ptr() as *mut SpiceChar,
+            room as SpiceInt,
+            shalen as SpiceInt,
+            fralen as SpiceInt,
+            shape.as_mut_ptr(),
+            frame.as_mut_ptr(),
+            bsight.as_mut_ptr(),
+            &mut n,
+            bounds.as_mut_ptr(),
+        )
+    };
+    bounds.truncate(n.max(0) as usize);
+    (from_cbuf(&shape), from_cbuf(&frame), bsight, bounds)
+}
+
+/**
+The local solar time at a longitude on a body.
+
+Returns the hour, minute and second, then the time string and the AM/PM form.
+*/
+#[allow(clippy::type_complexity)]
+pub fn et2lst(
+    et: f64,
+    body: i32,
+    lon: f64,
+    kind: &str,
+    timlen: usize,
+    ampmlen: usize,
+) -> (i32, i32, i32, String, String) {
+    let kind = to_cstring(kind);
+    let mut time = vec![0 as SpiceChar; timlen.max(1)];
+    let mut ampm = vec![0 as SpiceChar; ampmlen.max(1)];
+    let (mut hr, mut mn, mut sc) = (0, 0, 0);
+    unsafe {
+        crate::c::et2lst_c(
+            et,
+            body,
+            lon,
+            kind.as_ptr() as *mut SpiceChar,
+            timlen as SpiceInt,
+            ampmlen as SpiceInt,
+            &mut hr,
+            &mut mn,
+            &mut sc,
+            time.as_mut_ptr(),
+            ampm.as_mut_ptr(),
+        )
+    };
+    (hr, mn, sc, from_cbuf(&time), from_cbuf(&ampm))
+}
+
+/**
+Build a time format picture from a sample time string.
+
+Returns the picture, whether the sample was understood, and the error if it was not.
+*/
+pub fn tpictr(sample: &str, lenpictur: usize, lenerror: usize) -> (String, bool, String) {
+    let sample = to_cstring(sample);
+    let mut pictur = vec![0 as SpiceChar; lenpictur.max(1)];
+    let mut errmsg = vec![0 as SpiceChar; lenerror.max(1)];
+    let mut ok = 0;
+    unsafe {
+        crate::c::tpictr_c(
+            sample.as_ptr() as *mut SpiceChar,
+            lenpictur as SpiceInt,
+            lenerror as SpiceInt,
+            pictur.as_mut_ptr(),
+            &mut ok,
+            errmsg.as_mut_ptr(),
+        )
+    };
+    (from_cbuf(&pictur), ok != 0, from_cbuf(&errmsg))
+}
+
+/**
+Set or retrieve a default used by the time routines.
+
+`action` is `"SET"` or `"GET"`; the current value is returned either way.
+*/
+pub fn timdef(action: &str, item: &str, value: &str, lenout: usize) -> String {
+    let action = to_cstring(action);
+    let item = to_cstring(item);
+    let mut buffer = vec![0 as SpiceChar; lenout.max(value.len() + 1)];
+    for (target, byte) in buffer.iter_mut().zip(value.as_bytes()) {
+        *target = *byte as SpiceChar;
+    }
+    unsafe {
+        crate::c::timdef_c(
+            action.as_ptr() as *mut SpiceChar,
+            item.as_ptr() as *mut SpiceChar,
+            buffer.len() as SpiceInt,
+            buffer.as_mut_ptr(),
+        )
+    };
+    from_cbuf(&buffer)
+}
+
+cspice_proc! {
+    /**
+    The name of the routine at a given depth in the traceback.
+    */
+    pub fn trcnam(index: i32, #[lenout] namelen: i32) -> String {}
+}
+
+cspice_proc! {
+    /**
+    Disable the traceback, which cannot be turned back on.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn trcoff() {}
+}
+
+cspice_proc! {
+    /**
+    Replace a marker in a string with the cardinal text of an integer.
+    */
+    pub fn repmct(
+        input: &str,
+        marker: &str,
+        value: i32,
+        strcase: char,
+        #[lenout] lenout: i32
+    ) -> String {
+    }
+}
+
+/**
+Extract the substring of a word that follows a keyword, from a list of terminating keywords.
+
+Returns the remaining string, whether the keyword was found, and the substring.
+*/
+#[allow(clippy::type_complexity)]
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn kxtrct<S: AsRef<str>>(
+    keywd: &str,
+    terms: &[S],
+    string: &str,
+    stringlen: usize,
+    substrlen: usize,
+) -> (String, bool, String) {
+    let keywd = to_cstring(keywd);
+    let (packed, termlen) = to_strided(terms);
+    let mut buffer = vec![0 as SpiceChar; stringlen.max(string.len() + 1)];
+    for (target, byte) in buffer.iter_mut().zip(string.as_bytes()) {
+        *target = *byte as SpiceChar;
+    }
+    let mut substr = vec![0 as SpiceChar; substrlen.max(1)];
+    let mut found = 0;
+    unsafe {
+        crate::c::kxtrct_c(
+            keywd.as_ptr() as *mut SpiceChar,
+            termlen as SpiceInt,
+            packed.as_ptr().cast(),
+            terms.len() as SpiceInt,
+            buffer.len() as SpiceInt,
+            substrlen as SpiceInt,
+            buffer.as_mut_ptr(),
+            &mut found,
+            substr.as_mut_ptr(),
+        )
+    };
+    (from_cbuf(&buffer), found != 0, from_cbuf(&substr))
+}
+
+/* -------------------------------------------------------------------------------------------- */
+/* Geometry finder                                                                                */
+/* -------------------------------------------------------------------------------------------- */
+
+/*
+Every search takes a confinement window to search within and a window to report the answer in. The
+confinement window is an input that CSPICE also reads back, so it is taken by `&mut`; the result is
+cleared and filled. Each has a neat version that allocates the result for you.
+*/
+
+/// Generate the searches that compare a scalar quantity against a reference value.
+macro_rules! gf_search {
+    ($($name:ident($($arg:ident: $ty:ty),*) => $cname:ident, $doc:expr);* $(;)?) => {$(
+        #[doc = $doc]
+        ///
+        /// `relate` is one of `"="`, `"<"`, `">"`, `"LOCMIN"`, `"ABSMIN"`, `"LOCMAX"` or
+        /// `"ABSMAX"`; `nintvls` is the room to make in `result`, in intervals.
+        #[allow(clippy::too_many_arguments)]
+        pub fn $name(
+            $($arg: $ty,)*
+            relate: &str,
+            refval: f64,
+            adjust: f64,
+            step: f64,
+            nintvls: i32,
+            cnfine: &mut Cell<f64>,
+            result: &mut Cell<f64>,
+        ) {
+            $(let $arg = crate::core::ffi::In::new($arg);)*
+            let relate = to_cstring(relate);
+            #[allow(unused_mut)]
+            let ($(mut $arg,)*) = ($($arg,)*);
+            let cnfine = cnfine.as_mut_ptr();
+            let result = result.as_mut_ptr();
+            unsafe {
+                crate::c::$cname(
+                    $($arg.raw() as _,)*
+                    relate.as_ptr() as *mut SpiceChar,
+                    refval,
+                    adjust,
+                    step,
+                    nintvls,
+                    cnfine,
+                    result,
+                );
+            }
+        }
+    )*};
+}
+
+gf_search! {
+    gfdist(target: &str, abcorr: &str, obsrvr: &str) => gfdist_c,
+        "Search for times when the distance to a target meets a condition.";
+    gfrr(target: &str, abcorr: &str, obsrvr: &str) => gfrr_c,
+        "Search for times when the range rate of a target meets a condition.";
+    gfpa(target: &str, illmn: &str, abcorr: &str, obsrvr: &str) => gfpa_c,
+        "Search for times when the phase angle of a target meets a condition.";
+    gfposc(
+        target: &str, frame: &str, abcorr: &str, obsrvr: &str, crdsys: &str, coord: &str
+    ) => gfposc_c,
+        "Search for times when a coordinate of a target's position meets a condition.";
+    gfsubc(
+        target: &str, fixref: &str, method: &str, abcorr: &str, obsrvr: &str, crdsys: &str,
+        coord: &str
+    ) => gfsubc_c,
+        "Search for times when a coordinate of the sub-observer point meets a condition.";
+    gfsntc(
+        target: &str, fixref: &str, method: &str, abcorr: &str, obsrvr: &str, dref: &str,
+        dvec: [f64; 3], crdsys: &str, coord: &str
+    ) => gfsntc_c,
+        "Search for times when a coordinate of a ray-surface intercept meets a condition.";
+    gfsep(
+        targ1: &str, shape1: &str, frame1: &str, targ2: &str, shape2: &str, frame2: &str,
+        abcorr: &str, obsrvr: &str
+    ) => gfsep_c,
+        "Search for times when the angular separation of two targets meets a condition.";
+    gfilum(
+        method: &str, angtyp: &str, target: &str, illmn: &str, fixref: &str, abcorr: &str,
+        obsrvr: &str, spoint: [f64; 3]
+    ) => gfilum_c,
+        "Search for times when an illumination angle at a surface point meets a condition.";
+}
+
+cspice_proc! {
+    /**
+    Search for times when a ray is in the field of view of an instrument.
+    */
+    #[allow(clippy::too_many_arguments)]
+    pub fn gfrfov(
+        inst: &str,
+        raydir: [f64; 3],
+        rframe: &str,
+        abcorr: &str,
+        obsrvr: &str,
+        step: f64,
+        cnfine: &mut Cell<f64>,
+        result: &mut Cell<f64>
+    ) {
+    }
+}
+
+cspice_proc! {
+    /**
+    Search for times when a target is in the field of view of an instrument.
+    */
+    #[allow(clippy::too_many_arguments)]
+    pub fn gftfov(
+        inst: &str,
+        target: &str,
+        tshape: &str,
+        tframe: &str,
+        abcorr: &str,
+        obsrvr: &str,
+        step: f64,
+        cnfine: &mut Cell<f64>,
+        result: &mut Cell<f64>
+    ) {
+    }
+}
+
+cspice_proc! {
+    /**
+    Set the step size the geometry finder takes between samples.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn gfsstp(step: f64) {}
+}
+
+cspice_proc! {
+    /**
+    The step to take from an epoch, as set by [`gfsstp`].
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn gfstep(time: f64) -> f64 {}
+}
+
+cspice_proc! {
+    /**
+    Set the convergence tolerance the geometry finder uses, in seconds.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn gfstol(value: f64) {}
+}
+
+cspice_proc! {
+    /**
+    Refine a bracketing interval by bisection.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn gfrefn(t1: f64, t2: f64, s1: bool, s2: bool) -> f64 {}
+}
+
+cspice_proc! {
+    /**
+    Whether an interrupt has been requested; see [`gfinth`].
+    */
+    #[return_output]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn gfbail() -> bool {}
+}
+
+cspice_proc! {
+    /**
+    Clear the interrupt handler installed by [`gfinth`].
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn gfclrh() {}
+}
+
+cspice_proc! {
+    /**
+    Install an interrupt handler for the signal `sigcode`, so a search can be stopped.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn gfinth(sigcode: i32) {}
+}
+
+cspice_proc! {
+    /**
+    Begin the default progress report over a confinement window.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn gfrepi(window: &mut Cell<f64>, begmss: &str, endmss: &str) {}
+}
+
+cspice_proc! {
+    /**
+    Update the default progress report.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn gfrepu(ivbeg: f64, ivend: f64, time: f64) {}
+}
+
+cspice_proc! {
+    /**
+    Finish the default progress report.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn gfrepf() {}
+}
+
+cspice_proc! {
+    /**
+    A placeholder scalar function, for the searches that want one but do not use it.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn udf(x: f64) -> f64 {}
+}
+
+/**
+Whether a scalar function is decreasing at `x`, by a central difference over `dx`.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn uddc(udfunc: UdFunc, x: f64, dx: f64) -> bool {
+    let mut isdecr = 0;
+    unsafe { crate::c::uddc_c(Some(udfunc), x, dx, &mut isdecr) };
+    isdecr != 0
+}
+
+/**
+The derivative of a scalar function at `x`, by a central difference over `dx`.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn uddf(udfunc: UdFunc, x: f64, dx: f64) -> f64 {
+    let mut deriv = 0.0;
+    unsafe { crate::c::uddf_c(Some(udfunc), x, dx, &mut deriv) };
+    deriv
+}
+
+/**
+Search for times when a scalar function the caller supplies meets a condition.
+
+`udfuns` computes the quantity and `udfunb` says whether it is decreasing; [`uddc`] can be used to
+build the second from the first.
+*/
+#[allow(clippy::too_many_arguments)]
+pub fn gfuds(
+    udfuns: UdFuns,
+    udfunb: UdFunb,
+    relate: &str,
+    refval: f64,
+    adjust: f64,
+    step: f64,
+    nintvls: i32,
+    cnfine: &mut Cell<f64>,
+    result: &mut Cell<f64>,
+) {
+    let relate = to_cstring(relate);
+    let cnfine = cnfine.as_mut_ptr();
+    let result = result.as_mut_ptr();
+    unsafe {
+        crate::c::gfuds_c(
+            Some(udfuns),
+            Some(udfunb),
+            relate.as_ptr() as *mut SpiceChar,
+            refval,
+            adjust,
+            step,
+            nintvls,
+            cnfine,
+            result,
+        );
+    }
+}
+
+/**
+Search for times when a boolean function the caller supplies is true.
+*/
+pub fn gfudb(
+    udfuns: UdFuns,
+    udfunb: UdFunb,
+    step: f64,
+    cnfine: &mut Cell<f64>,
+    result: &mut Cell<f64>,
+) {
+    let cnfine = cnfine.as_mut_ptr();
+    let result = result.as_mut_ptr();
+    unsafe { crate::c::gfudb_c(Some(udfuns), Some(udfunb), step, cnfine, result) };
+}
+
+/**
+Search for times when an occultation occurs, with the search progress and stepping under the
+caller's control.
+
+[`crate::neat::gfoclt`] is the form to reach for unless the stepping needs to be customised.
+*/
+#[allow(clippy::too_many_arguments)]
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn gfocce(
+    occtyp: &str,
+    front: &str,
+    fshape: &str,
+    fframe: &str,
+    back: &str,
+    bshape: &str,
+    bframe: &str,
+    abcorr: &str,
+    obsrvr: &str,
+    tol: f64,
+    udstep: UdStep,
+    udrefn: UdRefn,
+    rpt: bool,
+    udrepi: UdRepi,
+    udrepu: UdRepu,
+    udrepf: UdRepf,
+    bail: bool,
+    udbail: UdBail,
+    cnfine: &mut Cell<f64>,
+    result: &mut Cell<f64>,
+) {
+    let occtyp = to_cstring(occtyp);
+    let front = to_cstring(front);
+    let fshape = to_cstring(fshape);
+    let fframe = to_cstring(fframe);
+    let back = to_cstring(back);
+    let bshape = to_cstring(bshape);
+    let bframe = to_cstring(bframe);
+    let abcorr = to_cstring(abcorr);
+    let obsrvr = to_cstring(obsrvr);
+    let cnfine = cnfine.as_mut_ptr();
+    let result = result.as_mut_ptr();
+    unsafe {
+        crate::c::gfocce_c(
+            occtyp.as_ptr() as *mut SpiceChar,
+            front.as_ptr() as *mut SpiceChar,
+            fshape.as_ptr() as *mut SpiceChar,
+            fframe.as_ptr() as *mut SpiceChar,
+            back.as_ptr() as *mut SpiceChar,
+            bshape.as_ptr() as *mut SpiceChar,
+            bframe.as_ptr() as *mut SpiceChar,
+            abcorr.as_ptr() as *mut SpiceChar,
+            obsrvr.as_ptr() as *mut SpiceChar,
+            tol,
+            Some(udstep),
+            Some(udrefn),
+            rpt as crate::c::SpiceBoolean,
+            Some(udrepi),
+            Some(udrepu),
+            Some(udrepf),
+            bail as crate::c::SpiceBoolean,
+            Some(udbail),
+            cnfine,
+            result,
+        );
+    }
+}
+
+/**
+Search for times when a target or ray is in the field of view of an instrument, with the search
+progress and stepping under the caller's control.
+
+[`gftfov`] and [`gfrfov`] are the forms to reach for unless the stepping needs to be customised.
+*/
+#[allow(clippy::too_many_arguments)]
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn gffove(
+    inst: &str,
+    tshape: &str,
+    raydir: [f64; 3],
+    target: &str,
+    tframe: &str,
+    abcorr: &str,
+    obsrvr: &str,
+    tol: f64,
+    udstep: UdStep,
+    udrefn: UdRefn,
+    rpt: bool,
+    udrepi: UdRepi,
+    udrepu: UdRepu,
+    udrepf: UdRepf,
+    bail: bool,
+    udbail: UdBail,
+    cnfine: &mut Cell<f64>,
+    result: &mut Cell<f64>,
+) {
+    let inst = to_cstring(inst);
+    let tshape = to_cstring(tshape);
+    let target = to_cstring(target);
+    let tframe = to_cstring(tframe);
+    let abcorr = to_cstring(abcorr);
+    let obsrvr = to_cstring(obsrvr);
+    let mut raydir = raydir;
+    let cnfine = cnfine.as_mut_ptr();
+    let result = result.as_mut_ptr();
+    unsafe {
+        crate::c::gffove_c(
+            inst.as_ptr() as *mut SpiceChar,
+            tshape.as_ptr() as *mut SpiceChar,
+            raydir.as_mut_ptr(),
+            target.as_ptr() as *mut SpiceChar,
+            tframe.as_ptr() as *mut SpiceChar,
+            abcorr.as_ptr() as *mut SpiceChar,
+            obsrvr.as_ptr() as *mut SpiceChar,
+            tol,
+            Some(udstep),
+            Some(udrefn),
+            rpt as crate::c::SpiceBoolean,
+            Some(udrepi),
+            Some(udrepu),
+            Some(udrepf),
+            bail as crate::c::SpiceBoolean,
+            Some(udbail),
+            cnfine,
+            result,
+        );
+    }
+}
+
+/**
+Search for times when a geometric quantity named by a string meets a condition.
+
+The quantity and its parameters are given by name, which is what makes this the most general of the
+searches and the most awkward to call; the specific searches above are easier where they apply.
+*/
+#[allow(clippy::too_many_arguments)]
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn gfevnt<S: AsRef<str>, T: AsRef<str>>(
+    udstep: UdStep,
+    udrefn: UdRefn,
+    gquant: &str,
+    qpnams: &[S],
+    qcpars: &[T],
+    qdpars: &[f64],
+    qipars: &[i32],
+    qlpars: &[bool],
+    op: &str,
+    refval: f64,
+    tol: f64,
+    adjust: f64,
+    rpt: bool,
+    udrepi: UdRepi,
+    udrepu: UdRepu,
+    udrepf: UdRepf,
+    nintvls: i32,
+    bail: bool,
+    udbail: UdBail,
+    cnfine: &mut Cell<f64>,
+    result: &mut Cell<f64>,
+) {
+    let gquant = to_cstring(gquant);
+    let op = to_cstring(op);
+    let (names, namelen) = to_strided(qpnams);
+    let (values, valuelen) = to_strided(qcpars);
+    let lenvals = namelen.max(valuelen);
+    // Both string arrays are read with the same stride, so they have to be packed with it.
+    let (names, _) = if namelen == lenvals {
+        (names, namelen)
+    } else {
+        repack(qpnams, lenvals)
+    };
+    let (values, _) = if valuelen == lenvals {
+        (values, valuelen)
+    } else {
+        repack(qcpars, lenvals)
+    };
+    // CSPICE reads one element of each of the three numeric arrays per parameter name, whether or
+    // not the quantity uses it, so they are padded rather than passed at the length given.
+    let count = qpnams.len().max(1);
+    let mut reals = qdpars.to_vec();
+    let mut ints = qipars.to_vec();
+    let mut flags = qlpars
+        .iter()
+        .map(|&flag| flag as crate::c::SpiceBoolean)
+        .collect::<Vec<_>>();
+    reals.resize(count, 0.0);
+    ints.resize(count, 0);
+    flags.resize(count, 0);
+    let cnfine = cnfine.as_mut_ptr();
+    let result = result.as_mut_ptr();
+
+    unsafe {
+        crate::c::gfevnt_c(
+            Some(udstep),
+            Some(udrefn),
+            gquant.as_ptr() as *mut SpiceChar,
+            qpnams.len() as SpiceInt,
+            lenvals as SpiceInt,
+            names.as_ptr().cast(),
+            values.as_ptr().cast(),
+            reals.as_ptr() as *mut SpiceDouble,
+            ints.as_ptr() as *mut SpiceInt,
+            flags.as_ptr() as *mut crate::c::SpiceBoolean,
+            op.as_ptr() as *mut SpiceChar,
+            refval,
+            tol,
+            adjust,
+            rpt as crate::c::SpiceBoolean,
+            Some(udrepi),
+            Some(udrepu),
+            Some(udrepf),
+            nintvls,
+            bail as crate::c::SpiceBoolean,
+            Some(udbail),
+            cnfine,
+            result,
+        );
+    }
+}
+
+/// Pack strings at a stride the caller chooses, rather than at the natural one.
+fn repack<S: AsRef<str>>(values: &[S], stride: usize) -> (Vec<SpiceChar>, usize) {
+    let mut buffer = vec![0 as SpiceChar; values.len().max(1) * stride];
+    for (index, value) in values.iter().enumerate() {
+        let slot = &mut buffer[index * stride..(index + 1) * stride];
+        for (target, byte) in slot.iter_mut().zip(value.as_ref().as_bytes()) {
+            *target = *byte as SpiceChar;
+        }
+    }
+    (buffer, stride)
+}
+
+cspice_proc! {
+    /**
+    The largest integer CSPICE represents.
+    */
+    #[return_output]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn intmax() -> i32 {}
+}
+
+cspice_proc! {
+    /**
+    The smallest integer CSPICE represents.
+    */
+    #[return_output]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn intmin() -> i32 {}
+}
+
+/* -------------------------------------------------------------------------------------------- */
 /* Constants                                                                                      */
 /* -------------------------------------------------------------------------------------------- */
 
@@ -3695,4 +7693,816 @@ cspice_proc! {
     #[return_output]
     #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
     pub fn tkvrsn(item: &str) -> String {}
+}
+
+/* -------------------------------------------------------------------------------------------- */
+/* Events kernels                                                                                 */
+/* -------------------------------------------------------------------------------------------- */
+
+/// Attributes of one column of a table of an events kernel.
+#[allow(clippy::upper_case_acronyms)]
+pub type EKATTDSC = crate::c::SpiceEKAttDsc;
+
+/// Summary of one segment of an events kernel: its table, its shape and its columns.
+#[allow(clippy::upper_case_acronyms)]
+pub type EKSEGSUM = crate::c::SpiceEKSegSum;
+
+/// Greatest number of columns a segment of an events kernel may have.
+pub const EK_MXCLSG: usize = 100;
+
+/// Greatest number of items the `SELECT` clause of a query may name.
+pub const EK_MAXQSEL: usize = 50;
+
+/// Length of the name of a column, with room for the terminator.
+pub const EK_CSTRLN: usize = 33;
+
+/// Length of the name of a table, with room for the terminator.
+pub const EK_TSTRLN: usize = 65;
+
+/// The size a column declares when the number of values in its entries varies from row to row.
+pub const EK_VARSIZ: i32 = -1;
+
+/// The data type of a column of character strings.
+pub const EK_CHR: crate::c::SpiceEKDataType = crate::c::_SpiceDataType_SPICE_CHR;
+
+/// The data type of a column of double precision numbers.
+pub const EK_DP: crate::c::SpiceEKDataType = crate::c::_SpiceDataType_SPICE_DP;
+
+/// The data type of a column of integers.
+pub const EK_INT: crate::c::SpiceEKDataType = crate::c::_SpiceDataType_SPICE_INT;
+
+/// The data type of a column of epochs, which are read as double precision numbers.
+pub const EK_TIME: crate::c::SpiceEKDataType = crate::c::_SpiceDataType_SPICE_TIME;
+
+/// A selected item that is a column.
+pub const EK_EXP_COL: crate::c::SpiceEKExprClass = crate::c::_SpiceEKExprClass_SPICE_EK_EXP_COL;
+
+/// A selected item that is a function applied to a column.
+pub const EK_EXP_FUNC: crate::c::SpiceEKExprClass = crate::c::_SpiceEKExprClass_SPICE_EK_EXP_FUNC;
+
+/// A selected item that is neither a column nor a function of one.
+pub const EK_EXP_EXPR: crate::c::SpiceEKExprClass = crate::c::_SpiceEKExprClass_SPICE_EK_EXP_EXPR;
+
+cspice_proc! {
+    /**
+    Open a new events kernel and prepare it for writing, returning the handle of the open file.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn ekopn(fname: &str, ifname: &str, ncomch: i32) -> i32 {}
+}
+
+cspice_proc! {
+    /**
+    Open an existing events kernel for reading, returning the handle of the open file.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn ekopr(fname: &str) -> i32 {}
+}
+
+cspice_proc! {
+    /**
+    Open an existing events kernel for writing, returning the handle of the open file.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn ekopw(fname: &str) -> i32 {}
+}
+
+cspice_proc! {
+    /**
+    Open a scratch events kernel and prepare it for writing, returning the handle of the open file.
+
+    The file is deleted when it is closed.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn ekops() -> i32 {}
+}
+
+cspice_proc! {
+    /**
+    Close an open events kernel.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn ekcls(handle: i32) {}
+}
+
+cspice_proc! {
+    /**
+    Load an events kernel, making it readable by the query routines, and return its handle.
+
+    [`furnsh`] loads one too; this is the form that hands back the handle.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn eklef(fname: &str) -> i32 {}
+}
+
+cspice_proc! {
+    /**
+    Unload an events kernel, making its contents unreadable and its room available again.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn ekuef(handle: i32) {}
+}
+
+cspice_proc! {
+    /**
+    Return the number of tables the loaded events kernels hold between them.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn ekntab() -> i32 {}
+}
+
+cspice_proc! {
+    /**
+    Return the name of the `n`th loaded table, counting from zero.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn ektnam(n: i32, #[lenout] lenout: i32) -> String {}
+}
+
+cspice_proc! {
+    /**
+    Return the number of distinct columns of a loaded table.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn ekccnt(table: &str) -> i32 {}
+}
+
+cspice_proc! {
+    /**
+    Return the name and the attributes of the `cindex`th column of a loaded table, counting from
+    zero.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn ekcii(table: &str, cindex: i32, #[lenout] lenout: i32) -> (String, EKATTDSC) {}
+}
+
+cspice_proc! {
+    /**
+    Return the number of segments of an open events kernel.
+    */
+    #[return_output]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn eknseg(handle: i32) -> i32 {}
+}
+
+cspice_proc! {
+    /**
+    Return the summary of a segment of an open events kernel, counting segments from zero.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn ekssum(handle: i32, segno: i32) -> EKSEGSUM {}
+}
+
+cspice_proc! {
+    /**
+    Run a query, returning the number of rows it matched, whether it could not be parsed, and the
+    message saying why it could not.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn ekfind(query: &str, #[lenout] lenout: i32) -> (i32, bool, String) {}
+}
+
+cspice_proc! {
+    /**
+    Return the number of values in the entry of the `selidx`th selected item in a row of the result
+    of the last [`ekfind`], counting both from zero.
+    */
+    #[return_output]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn eknelt(selidx: i32, row: i32) -> i32 {}
+}
+
+cspice_proc! {
+    /**
+    Return one value of a character entry from the result of the last [`ekfind`], and whether it is
+    null and whether it was found.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn ekgc(
+        selidx: i32,
+        row: i32,
+        elment: i32,
+        #[lenout] lenout: i32
+    ) -> (String, bool, bool) {
+    }
+}
+
+cspice_proc! {
+    /**
+    Return one value of a double precision entry from the result of the last [`ekfind`], and
+    whether it is null and whether it was found.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn ekgd(selidx: i32, row: i32, elment: i32) -> (f64, bool, bool) {}
+}
+
+cspice_proc! {
+    /**
+    Return one value of an integer entry from the result of the last [`ekfind`], and whether it is
+    null and whether it was found.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn ekgi(selidx: i32, row: i32, elment: i32) -> (i32, bool, bool) {}
+}
+
+cspice_proc! {
+    /**
+    Append an empty record to a segment of an open events kernel, returning its number.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn ekappr(handle: i32, segno: i32) -> i32 {}
+}
+
+cspice_proc! {
+    /**
+    Insert an empty record into a segment of an open events kernel, at the given index.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn ekinsr(handle: i32, segno: i32, recno: i32) {}
+}
+
+cspice_proc! {
+    /**
+    Delete a record from a segment of an open events kernel.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn ekdelr(handle: i32, segno: i32, recno: i32) {}
+}
+
+/**
+Start a segment of an open events kernel, returning its number.
+
+`cnames` names the columns and `decls` declares them, so the two have the same length.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn ekbseg<S: AsRef<str>, T: AsRef<str>>(
+    handle: i32,
+    tabnam: &str,
+    cnames: &[S],
+    decls: &[T],
+) -> i32 {
+    let tabnam = to_cstring(tabnam);
+    let (names, cnmlen) = to_strided(cnames);
+    let (declarations, declen) = to_strided(decls);
+    let mut segno = 0;
+    unsafe {
+        crate::c::ekbseg_c(
+            handle,
+            tabnam.as_ptr() as *mut SpiceChar,
+            cnames.len() as SpiceInt,
+            cnmlen as SpiceInt,
+            names.as_ptr().cast(),
+            declen as SpiceInt,
+            declarations.as_ptr().cast(),
+            &mut segno,
+        );
+    }
+    segno
+}
+
+/**
+Start a segment of an open events kernel that is to be written a column at a time.
+
+Returns the number of the segment and the record pointers, which every later call writing the
+segment is handed in turn: the column additions [`ekaclc`], [`ekacld`] and [`ekacli`], and finally
+[`ekffld`].
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn ekifld<S: AsRef<str>, T: AsRef<str>>(
+    handle: i32,
+    tabnam: &str,
+    nrows: i32,
+    cnames: &[S],
+    decls: &[T],
+) -> (i32, Vec<i32>) {
+    let tabnam = to_cstring(tabnam);
+    let (names, cnmlen) = to_strided(cnames);
+    let (declarations, declen) = to_strided(decls);
+    let mut segno = 0;
+    let mut rcptrs = vec![0; (nrows.max(0) as usize).max(1)];
+    unsafe {
+        crate::c::ekifld_c(
+            handle,
+            tabnam.as_ptr() as *mut SpiceChar,
+            cnames.len() as SpiceInt,
+            nrows,
+            cnmlen as SpiceInt,
+            names.as_ptr().cast(),
+            declen as SpiceInt,
+            declarations.as_ptr().cast(),
+            &mut segno,
+            rcptrs.as_mut_ptr(),
+        );
+    }
+    rcptrs.truncate(nrows.max(0) as usize);
+    (segno, rcptrs)
+}
+
+/**
+Finish writing a segment started by [`ekifld`], given the record pointers it returned.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn ekffld(handle: i32, segno: i32, rcptrs: &mut [i32]) {
+    unsafe { crate::c::ekffld_c(handle, segno, rcptrs.as_mut_ptr()) };
+}
+
+/// The three column additions differ only in the type of the values they are handed.
+macro_rules! ek_add_column {
+    ($name:ident, $cname:ident, $ty:ty, $values:ident, $doc:expr) => {
+        #[doc = $doc]
+        ///
+        /// `entszs` gives the number of values in each row's entry and `nlflgs` says which entries
+        /// are null, so both have one element per row. `rcptrs` is what [`ekifld`] returned.
+        #[allow(clippy::too_many_arguments)]
+        #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+        pub fn $name(
+            handle: i32,
+            segno: i32,
+            column: &str,
+            $values: &[$ty],
+            entszs: &[i32],
+            nlflgs: &[bool],
+            rcptrs: &[i32],
+        ) {
+            let column = to_cstring(column);
+            let flags = nlflgs
+                .iter()
+                .map(|&flag| flag as crate::c::SpiceBoolean)
+                .collect::<Vec<_>>();
+            // The index is only read when the column is indexed, and then it needs one slot a row.
+            let mut wkindx = vec![0 as SpiceInt; rcptrs.len().max(1)];
+            unsafe {
+                crate::c::$cname(
+                    handle,
+                    segno,
+                    column.as_ptr() as *mut SpiceChar,
+                    $values.as_ptr() as *mut _,
+                    entszs.as_ptr() as *mut SpiceInt,
+                    flags.as_ptr() as *mut crate::c::SpiceBoolean,
+                    rcptrs.as_ptr() as *mut SpiceInt,
+                    wkindx.as_mut_ptr(),
+                );
+            }
+        }
+    };
+}
+
+ek_add_column!(
+    ekacld,
+    ekacld_c,
+    f64,
+    dvals,
+    "Write a whole double precision column of a segment started by [`ekifld`]."
+);
+ek_add_column!(
+    ekacli,
+    ekacli_c,
+    i32,
+    ivals,
+    "Write a whole integer column of a segment started by [`ekifld`]."
+);
+
+/**
+Write a whole character column of a segment started by [`ekifld`].
+
+`entszs` gives the number of values in each row's entry and `nlflgs` says which entries are null,
+so both have one element per row. `rcptrs` is what [`ekifld`] returned.
+*/
+#[allow(clippy::too_many_arguments)]
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn ekaclc<S: AsRef<str>>(
+    handle: i32,
+    segno: i32,
+    column: &str,
+    cvals: &[S],
+    entszs: &[i32],
+    nlflgs: &[bool],
+    rcptrs: &[i32],
+) {
+    let column = to_cstring(column);
+    let (values, vallen) = to_strided(cvals);
+    let flags = nlflgs
+        .iter()
+        .map(|&flag| flag as crate::c::SpiceBoolean)
+        .collect::<Vec<_>>();
+    let mut wkindx = vec![0 as SpiceInt; rcptrs.len().max(1)];
+    unsafe {
+        crate::c::ekaclc_c(
+            handle,
+            segno,
+            column.as_ptr() as *mut SpiceChar,
+            vallen as SpiceInt,
+            values.as_ptr().cast(),
+            entszs.as_ptr() as *mut SpiceInt,
+            flags.as_ptr() as *mut crate::c::SpiceBoolean,
+            rcptrs.as_ptr() as *mut SpiceInt,
+            wkindx.as_mut_ptr(),
+        );
+    }
+}
+
+/// Adding an entry to a record and updating one take the same arguments.
+macro_rules! ek_record_write {
+    ($name:ident, $cname:ident, $ty:ty, $values:ident, $doc:expr) => {
+        #[doc = $doc]
+        #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+        pub fn $name(
+            handle: i32,
+            segno: i32,
+            recno: i32,
+            column: &str,
+            $values: &[$ty],
+            isnull: bool,
+        ) {
+            let column = to_cstring(column);
+            unsafe {
+                crate::c::$cname(
+                    handle,
+                    segno,
+                    recno,
+                    column.as_ptr() as *mut SpiceChar,
+                    $values.len() as SpiceInt,
+                    $values.as_ptr() as *mut _,
+                    isnull as crate::c::SpiceBoolean,
+                );
+            }
+        }
+    };
+}
+
+ek_record_write!(
+    ekaced,
+    ekaced_c,
+    f64,
+    dvals,
+    "Write a double precision entry into a record of a segment of an open events kernel."
+);
+ek_record_write!(
+    ekacei,
+    ekacei_c,
+    i32,
+    ivals,
+    "Write an integer entry into a record of a segment of an open events kernel."
+);
+ek_record_write!(
+    ekuced,
+    ekuced_c,
+    f64,
+    dvals,
+    "Replace a double precision entry of a record of a segment of an open events kernel."
+);
+ek_record_write!(
+    ekucei,
+    ekucei_c,
+    i32,
+    ivals,
+    "Replace an integer entry of a record of a segment of an open events kernel."
+);
+
+/// The two character record writers differ only in the routine they call.
+macro_rules! ek_record_write_c {
+    ($name:ident, $cname:ident, $doc:expr) => {
+        #[doc = $doc]
+        #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+        pub fn $name<S: AsRef<str>>(
+            handle: i32,
+            segno: i32,
+            recno: i32,
+            column: &str,
+            cvals: &[S],
+            isnull: bool,
+        ) {
+            let column = to_cstring(column);
+            let (values, vallen) = to_strided(cvals);
+            unsafe {
+                crate::c::$cname(
+                    handle,
+                    segno,
+                    recno,
+                    column.as_ptr() as *mut SpiceChar,
+                    cvals.len() as SpiceInt,
+                    vallen as SpiceInt,
+                    values.as_ptr().cast(),
+                    isnull as crate::c::SpiceBoolean,
+                );
+            }
+        }
+    };
+}
+
+ek_record_write_c!(
+    ekacec,
+    ekacec_c,
+    "Write a character entry into a record of a segment of an open events kernel."
+);
+ek_record_write_c!(
+    ekucec,
+    ekucec_c,
+    "Replace a character entry of a record of a segment of an open events kernel."
+);
+
+/// The two numeric record readers differ only in the type of the values they report.
+macro_rules! ek_record_read {
+    ($name:ident, $cname:ident, $ty:ty, $zero:expr, $doc:expr) => {
+        #[doc = $doc]
+        ///
+        /// `maxvals` is the room to make for the entry, in values; CSPICE writes as many as the
+        /// entry holds, which is at most the size the column declares.
+        #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+        pub fn $name(
+            handle: i32,
+            segno: i32,
+            recno: i32,
+            column: &str,
+            maxvals: usize,
+        ) -> (Vec<$ty>, bool) {
+            let column = to_cstring(column);
+            let mut values = vec![$zero; maxvals.max(1)];
+            let (mut nvals, mut isnull) = (0, 0);
+            unsafe {
+                crate::c::$cname(
+                    handle,
+                    segno,
+                    recno,
+                    column.as_ptr() as *mut SpiceChar,
+                    &mut nvals,
+                    values.as_mut_ptr(),
+                    &mut isnull,
+                );
+            }
+            values.truncate((nvals.max(0) as usize).min(maxvals));
+            (values, isnull != 0)
+        }
+    };
+}
+
+ek_record_read!(
+    ekrced,
+    ekrced_c,
+    f64,
+    0.0,
+    "Read a double precision entry of a record of a segment of an open events kernel."
+);
+ek_record_read!(
+    ekrcei,
+    ekrcei_c,
+    i32,
+    0,
+    "Read an integer entry of a record of a segment of an open events kernel."
+);
+
+/**
+Read a character entry of a record of a segment of an open events kernel.
+
+`maxvals` is the room to make for the entry, in values, and `lenout` the room for each of them.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn ekrcec(
+    handle: i32,
+    segno: i32,
+    recno: i32,
+    column: &str,
+    maxvals: usize,
+    lenout: usize,
+) -> (Vec<String>, bool) {
+    let column = to_cstring(column);
+    let stride = lenout.max(1);
+    let mut buffer = vec![0 as SpiceChar; maxvals.max(1) * stride];
+    let (mut nvals, mut isnull) = (0, 0);
+    unsafe {
+        crate::c::ekrcec_c(
+            handle,
+            segno,
+            recno,
+            column.as_ptr() as *mut SpiceChar,
+            stride as SpiceInt,
+            &mut nvals,
+            buffer.as_mut_ptr().cast(),
+            &mut isnull,
+        );
+    }
+    let count = (nvals.max(0) as usize).min(maxvals);
+    (from_strided(&buffer, stride, count), isnull != 0)
+}
+
+/**
+Parse the `SELECT` clause of a query, reporting in full on each item it selects.
+
+Returns, for each selected item, where its expression begins and ends in `query`, its data type,
+its class, the table it is taken from and the column it names; then whether the query could not be
+parsed, and the message saying why.
+*/
+#[allow(clippy::type_complexity)]
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn ekpsel(
+    query: &str,
+    msglen: usize,
+    tablen: usize,
+    collen: usize,
+) -> (
+    Vec<i32>,
+    Vec<i32>,
+    Vec<crate::c::SpiceEKDataType>,
+    Vec<crate::c::SpiceEKExprClass>,
+    Vec<String>,
+    Vec<String>,
+    bool,
+    String,
+) {
+    let query = to_cstring(query);
+    let (tablen, collen) = (tablen.max(1), collen.max(1));
+    let mut xbegs = vec![0 as SpiceInt; EK_MAXQSEL];
+    let mut xends = vec![0 as SpiceInt; EK_MAXQSEL];
+    let mut xtypes = vec![EK_CHR; EK_MAXQSEL];
+    let mut xclass = vec![EK_EXP_COL; EK_MAXQSEL];
+    let mut tabs = vec![0 as SpiceChar; EK_MAXQSEL * tablen];
+    let mut cols = vec![0 as SpiceChar; EK_MAXQSEL * collen];
+    let mut errmsg = vec![0 as SpiceChar; msglen.max(1)];
+    let (mut n, mut error) = (0, 0);
+    unsafe {
+        crate::c::ekpsel_c(
+            query.as_ptr() as *mut SpiceChar,
+            errmsg.len() as SpiceInt,
+            tablen as SpiceInt,
+            collen as SpiceInt,
+            &mut n,
+            xbegs.as_mut_ptr(),
+            xends.as_mut_ptr(),
+            xtypes.as_mut_ptr(),
+            xclass.as_mut_ptr(),
+            tabs.as_mut_ptr().cast(),
+            cols.as_mut_ptr().cast(),
+            &mut error,
+            errmsg.as_mut_ptr(),
+        );
+    }
+    let count = (n.max(0) as usize).min(EK_MAXQSEL);
+    xbegs.truncate(count);
+    xends.truncate(count);
+    xtypes.truncate(count);
+    xclass.truncate(count);
+    (
+        xbegs,
+        xends,
+        xtypes,
+        xclass,
+        from_strided(&tabs, tablen, count),
+        from_strided(&cols, collen, count),
+        error != 0,
+        from_cbuf(&errmsg),
+    )
+}
+
+/* -------------------------------------------------------------------------------------------- */
+/* The rest of the toolkit                                                                        */
+/* -------------------------------------------------------------------------------------------- */
+
+/// Building an array of a repeated value, for the cases CSPICE provides a routine for.
+macro_rules! fill_array {
+    ($($name:ident($ty:ty, $value:expr) => $cname:ident, $doc:expr);* $(;)?) => {$(
+        #[doc = $doc]
+        ///
+        /// `vec![]` does the same thing without leaving Rust; this is here for completeness.
+        #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+        pub fn $name(value: $ty, ndim: usize) -> Vec<$ty> {
+            let mut array = vec![$value; ndim.max(1)];
+            unsafe { crate::c::$cname(value, ndim as SpiceInt, array.as_mut_ptr()) };
+            array.truncate(ndim);
+            array
+        }
+    )*};
+}
+
+fill_array! {
+    filld(f64, 0.0) => filld_c, "Fill a double precision array with a value.";
+    filli(i32, 0) => filli_c, "Fill an integer array with a value.";
+}
+
+/// Building an array of zeros, for the cases CSPICE provides a routine for.
+macro_rules! clear_array {
+    ($($name:ident($ty:ty, $value:expr) => $cname:ident, $doc:expr);* $(;)?) => {$(
+        #[doc = $doc]
+        ///
+        /// `vec![]` does the same thing without leaving Rust; this is here for completeness.
+        #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+        pub fn $name(ndim: usize) -> Vec<$ty> {
+            let mut array = vec![$value; ndim.max(1)];
+            unsafe { crate::c::$cname(ndim as SpiceInt, array.as_mut_ptr()) };
+            array.truncate(ndim);
+            array
+        }
+    )*};
+}
+
+clear_array! {
+    cleard(f64, 1.0) => cleard_c, "Set every element of a double precision array to zero.";
+    cleari(i32, 1) => cleari_c, "Set every element of an integer array to zero.";
+}
+
+/**
+Set every string of an array to blank, returning `ndim` of them, each `arrlen` characters long.
+
+`vec![]` does the same thing without leaving Rust; this is here for completeness.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn clearc(ndim: usize, arrlen: usize) -> Vec<String> {
+    let arrlen = arrlen.max(1);
+    let mut array = vec![b'x' as SpiceChar; ndim.max(1) * arrlen];
+    unsafe {
+        crate::c::clearc_c(
+            ndim as SpiceInt,
+            arrlen as SpiceInt,
+            array.as_mut_ptr().cast(),
+        )
+    };
+    from_strided(&array, arrlen, ndim)
+}
+
+/// The extremes, which CSPICE takes as variadic arguments.
+macro_rules! extremum {
+    ($($name:ident($ty:ty) => $cname:ident, $doc:expr);* $(;)?) => {$(
+        #[doc = $doc]
+        ///
+        /// The C routine is variadic, which Rust cannot hand a list whose length is only known
+        /// while it runs; folding the two argument form over the slice gives the same answer for
+        /// any length. An empty slice gives zero, as the C routine does for a count of none.
+        #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+        pub fn $name(values: &[$ty]) -> $ty {
+            values
+                .iter()
+                .copied()
+                .reduce(|left, right| unsafe { crate::c::$cname(2, left, right) })
+                .unwrap_or_else(|| unsafe { crate::c::$cname(0) })
+        }
+    )*};
+}
+
+extremum! {
+    maxd(f64) => maxd_c, "The largest of a set of double precision numbers.";
+    maxi(i32) => maxi_c, "The largest of a set of integers.";
+    mind(f64) => mind_c, "The smallest of a set of double precision numbers.";
+    mini(i32) => mini_c, "The smallest of a set of integers.";
+}
+
+cspice_proc! {
+    /**
+    Return the `nth` word of a string, counting from zero, and where in the string it starts.
+
+    The location counts from zero too, and is -1 when the string has no such word.
+    */
+    pub fn nthwd(string: &str, nth: i32, #[lenout] worlen: i32) -> (String, i32) {}
+}
+
+/**
+Display a prompt and return the line the user types in reply.
+
+Reads from the standard input, so it blocks until there is a line to read.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn prompt(dspmsg: &str, buflen: usize) -> String {
+    let dspmsg = to_cstring(dspmsg);
+    let mut buffer = vec![0 as SpiceChar; buflen.max(1)];
+    unsafe {
+        crate::c::prompt_c(
+            dspmsg.as_ptr() as *mut SpiceChar,
+            buffer.len() as SpiceInt,
+            buffer.as_mut_ptr(),
+        )
+    };
+    from_cbuf(&buffer)
+}
+
+/**
+Store the command line arguments, so that [`getcml`] can hand them back.
+
+CSPICE keeps the pointers rather than the strings, so the copy this makes is leaked on purpose: it
+has to outlive every later call. The toolkit refuses a second call, for the same reason.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn putcml<S: AsRef<str>>(argv: &[S]) {
+    let pointers = argv
+        .iter()
+        .map(|value| to_cstring(value).into_raw())
+        .collect::<Vec<_>>();
+    let pointers = Box::leak(pointers.into_boxed_slice());
+    unsafe { crate::c::putcml_c(argv.len() as SpiceInt, pointers.as_mut_ptr()) }
+}
+
+/**
+Return the command line arguments [`putcml`] was given.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn getcml() -> Vec<String> {
+    let (mut argc, mut argv) = (0, std::ptr::null_mut());
+    unsafe { crate::c::getcml_c(&mut argc, &mut argv) };
+    if argv.is_null() {
+        return Vec::new();
+    }
+    (0..argc.max(0) as usize)
+        .map(|index| unsafe {
+            std::ffi::CStr::from_ptr(*argv.add(index))
+                .to_string_lossy()
+                .into_owned()
+        })
+        .collect()
 }

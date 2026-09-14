@@ -89,3 +89,27 @@ fn the_action_and_device_can_be_read_back() {
 
     common::unload();
 }
+
+#[test]
+#[serial]
+fn numbers_in_a_message() {
+    common::reset();
+    spice::errors::quiet();
+
+    // The markers are filled in by the `err*` routines, in the order they are called.
+    spice::setmsg("the value was # over # tries");
+    spice::errdp("#", 1.5);
+    spice::errint("#", 7);
+    spice::sigerr("SPICE(TESTVALUE)");
+
+    let error = spice::errors::check().expect_err("sigerr should have failed");
+    assert_eq!(error.short, "SPICE(TESTVALUE)");
+    assert!(
+        error.long.starts_with("the value was 1.5"),
+        "got {:?}",
+        error.long
+    );
+    assert!(error.long.ends_with("over 7 tries"), "got {:?}", error.long);
+
+    spice::errors::loud();
+}
