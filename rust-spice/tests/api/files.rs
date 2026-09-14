@@ -99,8 +99,79 @@ fn daf_raw_reads() {
     // `dafgh` reports the handle of the file the search is in.
     assert_eq!(spice::dafgh(), handle);
 
+    // The words of the segment itself, addressed by the summary.
+    let (_, ic) = spice::dafus(&spice::dafgs(), nd as usize, ni as usize);
+    let (begin, end) = (ic[4], ic[5]);
+    let words = spice::dafgda(handle, begin, begin + 3);
+    common::assert_ok("dafgda");
+    assert_eq!(words.len(), 4);
+    assert_eq!(
+        spice::dafrda(handle, begin, begin + 3),
+        words,
+        "the superseded reader reads the same words"
+    );
+    assert!(end > begin);
+
+    // Starting a search in a second file makes that one current; `dafcs` switches back.
+    let other = spice::dafopr(&common::kernel("test.bc"));
+    spice::dafbfs(other);
+    assert!(spice::daffna());
+    assert_eq!(spice::dafgh(), other);
+    spice::dafcs(handle);
+    common::assert_ok("dafcs");
+    assert_eq!(spice::dafgh(), handle);
+    spice::dafcls(other);
+
     spice::dafcls(handle);
     common::unload();
+}
+
+#[test]
+#[serial]
+fn daf_summary_replacement() {
+    common::load();
+
+    // A file of its own, since this rewrites what it finds.
+    let path = common::kernel("resummarised.bsp");
+    let _ = std::fs::remove_file(&path);
+    let epochs = (0..16).map(|index| index as f64 * 60.0).collect::<Vec<_>>();
+    let states = epochs
+        .iter()
+        .map(|&et| [et, 0.0, 0.0, 1.0, 0.0, 0.0])
+        .collect::<Vec<_>>();
+    let handle = spice::spkopn(&path, "rust-spice test DAF", 0);
+    spice::spkw09(
+        handle,
+        common::SPACECRAFT,
+        common::TARGET,
+        "J2000",
+        epochs[0],
+        epochs[15],
+        "RESUMMARISED",
+        3,
+        states.len() as i32,
+        &states,
+        &epochs,
+    );
+    spice::spkcls(handle);
+    common::assert_ok("writing the DAF");
+
+    // Narrow the coverage the summary claims, leaving the data alone.
+    let handle = spice::dafopw(&path);
+    spice::dafbfs(handle);
+    assert!(spice::daffna());
+    let (mut dc, ic) = spice::dafus(&spice::dafgs(), 2, 6);
+    dc[1] -= 60.0;
+    spice::dafrs(&spice::dafps(&dc, &ic));
+    common::assert_ok("dafrs");
+    spice::dafcls(handle);
+
+    // It is the narrowed coverage that is read back.
+    let coverage = spice::spkcov(&path, common::SPACECRAFT);
+    assert_relative_eq!(coverage.get(1).unwrap(), epochs[14], epsilon = 1e-6);
+
+    common::unload();
+    let _ = std::fs::remove_file(&path);
 }
 
 #[test]
@@ -234,6 +305,31 @@ fn das_writing() {
     common::assert_ok("reading the DAS back");
     spice::dascls(handle);
 
+    // Reopening for writing is what lets the comment area be thrown away.
+    let handle = spice::dasopw(&path);
+    common::assert_ok("dasopw");
+    let (nresvr, nresvc, ncomr, ncomc, free, lastla, lastrc, lastwd) = spice::dashfs(handle);
+    common::assert_ok("dashfs");
+    assert_eq!((nresvr, nresvc), (0, 0), "no reserved records");
+    assert!(ncomr > 0 && ncomc > 0, "the comment area holds the comment");
+    assert!(free > 0);
+    assert_eq!(lastla.len(), 3, "one last address per kind of data");
+    assert!(lastla[0] >= 10, "ten characters were written");
+    let _ = (lastrc, lastwd);
+
+    spice::dasdc(handle);
+    common::assert_ok("dasdc");
+    assert!(spice::dasec(handle).is_empty(), "the comment is gone");
+    spice::dascls(handle);
+
+    // A scratch DAS behaves like any other until it is closed, and is never named.
+    let scratch = spice::dasops();
+    common::assert_ok("dasops");
+    spice::dasadi(scratch, &[1, 2, 3]);
+    assert_eq!(spice::dasrdi(scratch, 1, 3), vec![1, 2, 3]);
+    spice::dascls(scratch);
+    common::assert_ok("closing the scratch DAS");
+
     common::unload();
     let _ = std::fs::remove_file(&path);
 }
@@ -298,4 +394,88 @@ fn ck_and_pck_handles() {
     common::assert_ok("pckuof");
 
     common::unload();
+}
+
+#[test]
+#[serial]
+fn dla_writing() {
+    common::reset();
+
+    let path = common::kernel("written.dla");
+    let _ = std::fs::remove_file(&path);
+
+    // A DLA is a DAS whose segments are linked, so the data goes in between the two markers.
+    let handle = spice::dlaopn(&path, "DLA", "rust-spice test DLA", 0);
+    common::assert_ok("dlaopn");
+    spice::dlabns(handle);
+    spice::dasadi(handle, &[7, 8, 9]);
+    spice::dasadd(handle, &[1.5, 2.5]);
+    spice::dlaens(handle);
+    common::assert_ok("dlaens");
+    spice::dascls(handle);
+
+    let handle = spice::dasopr(&path);
+    let (descriptor, found) = spice::dlabfs(handle);
+    common::assert_ok("dlabfs");
+    assert!(found, "the segment just written is the only one");
+    assert_eq!(descriptor.isize_, 3);
+    assert_eq!(descriptor.dsize, 2);
+    assert_eq!(
+        spice::dasrdi(handle, descriptor.ibase + 1, descriptor.ibase + 3),
+        vec![7, 8, 9]
+    );
+    assert_eq!(
+        spice::dasrdd(handle, descriptor.dbase + 1, descriptor.dbase + 2),
+        vec![1.5, 2.5]
+    );
+    spice::dascls(handle);
+
+    common::unload();
+    let _ = std::fs::remove_file(&path);
+}
+
+#[test]
+#[serial]
+fn pck_writing() {
+    common::load();
+
+    let path = common::kernel("written.bpc");
+    let _ = std::fs::remove_file(&path);
+    let frame_id = -999_004;
+
+    // One interval a day, each the degree zero expansion of the three Euler angles, so the
+    // orientation the frame describes never changes.
+    let intervals = 4;
+    let angles = [0.1, 0.2, 0.3];
+    let handle = spice::pckopn(&path, "rust-spice written PCK", 0);
+    common::assert_ok("pckopn");
+    spice::pckw02(
+        handle,
+        frame_id,
+        "J2000",
+        0.0,
+        intervals as f64 * 86400.0,
+        "WRITTEN ORIENTATION",
+        86400.0,
+        intervals,
+        0,
+        &angles.repeat(intervals as usize),
+        0.0,
+    );
+    spice::pckcls(handle);
+    common::assert_ok("pckw02");
+
+    // The frame it describes has to be declared before the orientation can be asked for.
+    assert_eq!(spice::pckfrm(&path).to_vec(), vec![frame_id]);
+    let coverage = spice::pckcov(&path, frame_id);
+    assert_relative_eq!(coverage.get(0).unwrap(), 0.0, epsilon = 1e-6);
+    assert_relative_eq!(
+        coverage.get(1).unwrap(),
+        intervals as f64 * 86400.0,
+        epsilon = 1e-6
+    );
+    common::assert_ok("pckfrm and pckcov");
+
+    common::unload();
+    let _ = std::fs::remove_file(&path);
 }

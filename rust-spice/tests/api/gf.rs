@@ -1015,3 +1015,22 @@ fn searches_driven_by_the_caller() {
 
     common::unload();
 }
+
+#[test]
+#[serial]
+fn validating_a_window() {
+    common::reset();
+
+    // A cell holding unordered, overlapping endpoints is not a window until it is validated.
+    let mut window = spice::Cell::<f64>::new(16);
+    for endpoint in [10.0, 12.0, 2.0, 7.0, 1.0, 5.0, 23.0, 29.0] {
+        spice::appndd(endpoint, &mut window);
+    }
+    common::assert_ok("appndd");
+    assert_eq!(window.len(), 8);
+
+    spice::wnvald(16, 8, &mut window);
+    common::assert_ok("wnvald");
+    assert_eq!(window.to_vec(), vec![1.0, 7.0, 10.0, 12.0, 23.0, 29.0]);
+    assert_eq!(spice::wncard(&mut window), 3);
+}

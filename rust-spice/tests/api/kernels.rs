@@ -273,6 +273,16 @@ fn spk_low_level_readers() {
     let (apparent_state, _) = spice::spkapp(common::TARGET, et, "J2000", observer, "LT");
     assert_slice_eq(&apparent_state[..3], &apparent, 1e-9);
 
+    // `spkaps` is `spkltc` with stellar aberration, so it needs the observer's acceleration as
+    // well as its state. With no correction asked for neither is used, and the state is the
+    // geometric one, though the light time is still reported.
+    let (state, lt, dlt) = spice::spkaps(common::TARGET, et, "J2000", "NONE", observer, [0.0; 3]);
+    common::assert_ok("spkaps");
+    assert_slice_eq(&state, &geometric, 1e-9);
+    let (_, geometric_lt) = spice::spkgeo(common::TARGET, et, "J2000", common::CENTER);
+    assert_relative_eq!(lt, geometric_lt, epsilon = 1e-12);
+    assert!(dlt.abs() < 1.0);
+
     common::unload();
 }
 
@@ -343,8 +353,106 @@ fn ck_writers() {
     common::assert_ok("ckw02");
     assert_eq!(spice::ckobj(&path).to_vec(), vec![instrument]);
 
+    // The records of the segment can be read back one at a time, through the descriptor the DAF
+    // search reports.
+    let descriptor = first_segment(&path);
+    let reader = spice::dafopr(&path);
+    spice::dafbfs(reader);
+    assert!(spice::daffna());
+    assert_eq!(spice::cknr02(reader, &descriptor), 2);
+    common::assert_ok("cknr02");
+    let record = spice::ckgr02(reader, &descriptor, 1, 10);
+    common::assert_ok("ckgr02");
+    assert_eq!(record.len(), 10);
+    assert_slice_eq(&record[..3], &[starts[0], stops[0], rates[0]], 1e-9);
+    assert_slice_eq(&record[3..7], &quats[0], 1e-15);
+    spice::dafcls(reader);
+    spice::unload(&path);
+    let _ = std::fs::remove_file(&path);
+
+    // Type 3 holds discrete pointing with linear interpolation inside each interval.
+    let path = common::kernel("written03.bc");
+    let _ = std::fs::remove_file(&path);
+    let ticks = vec![0.0, 1000.0, 2000.0];
+    let quats = vec![[1.0, 0.0, 0.0, 0.0]; 3];
+    let avvs = vec![[0.0; 3]; 3];
+
+    let handle = spice::ckopn(&path, "type 3", 0);
+    spice::ckw03(
+        handle,
+        ticks[0],
+        ticks[2],
+        instrument,
+        "J2000",
+        true,
+        "TYPE 3",
+        3,
+        &ticks,
+        &quats,
+        &avvs,
+        1,
+        &[ticks[0]],
+    );
+    spice::ckcls(handle);
+    common::assert_ok("ckw03");
+
+    let descriptor = first_segment(&path);
+    let reader = spice::dafopr(&path);
+    spice::dafbfs(reader);
+    assert!(spice::daffna());
+    assert_eq!(spice::cknr03(reader, &descriptor), 3);
+    common::assert_ok("cknr03");
+    let record = spice::ckgr03(reader, &descriptor, 2, 8);
+    common::assert_ok("ckgr03");
+    assert_relative_eq!(record[0], ticks[1], epsilon = 1e-9);
+    assert_slice_eq(&record[1..5], &quats[1], 1e-15);
+    spice::dafcls(reader);
+    let _ = std::fs::remove_file(&path);
+
+    // Type 5 interpolates the quaternions themselves; subtype 1 carries nothing else.
+    let path = common::kernel("written05.bc");
+    let _ = std::fs::remove_file(&path);
+    let packets = [1.0, 0.0, 0.0, 0.0].repeat(2);
+
+    let handle = spice::ckopn(&path, "type 5", 0);
+    spice::ckw05(
+        handle,
+        1,
+        1,
+        ticks[0],
+        ticks[2],
+        instrument,
+        "J2000",
+        true,
+        "TYPE 5",
+        2,
+        &[ticks[0], ticks[2]],
+        &packets,
+        1.0,
+        1,
+        &[ticks[0]],
+    );
+    spice::ckcls(handle);
+    common::assert_ok("ckw05");
+
+    spice::furnsh(&path);
+    let (matrix, _, found) = spice::ckgp(instrument, ticks[1], 1000.0, "J2000");
+    common::assert_ok("reading the type 5 CK");
+    assert!(found);
+    crate::assert_matrix_eq(&matrix, &spice::ident(), 1e-12);
+
     common::unload();
     let _ = std::fs::remove_file(&path);
+}
+
+/// The descriptor of the first segment of a DAF, which the low level readers are addressed by.
+fn first_segment(path: &str) -> Vec<f64> {
+    let handle = spice::dafopr(path);
+    spice::dafbfs(handle);
+    assert!(spice::daffna(), "the file should hold a segment");
+    let summary = spice::dafgs();
+    spice::dafcls(handle);
+    summary
 }
 
 #[test]
@@ -438,4 +546,320 @@ fn spacecraft_clock_formatting() {
     assert!(stops[0] > starts[0]);
 
     common::unload();
+}
+
+#[test]
+#[serial]
+fn spk_conic_and_equinoctial_writers() {
+    common::load();
+
+    // A circular, equatorial orbit of ten thousand kilometres about the target, which both of
+    // these describe in their own terms.
+    let radius: f64 = 10_000.0;
+    let rate = (common::GM_TARGET / radius.powi(3)).sqrt();
+    let expected = [radius, 0.0, 0.0, 0.0, radius * rate, 0.0];
+
+    // Type 15 takes the periapsis, the poles and the shape of the conic. A flag of three asks for
+    // no precession, so the constants that would drive it are not used.
+    round_trip(
+        "w15.bsp",
+        |handle| {
+            spice::spkw15(
+                handle,
+                common::SPACECRAFT,
+                common::TARGET,
+                "J2000",
+                0.0,
+                86400.0,
+                "TYPE 15",
+                0.0,
+                [0.0, 0.0, 1.0],
+                [1.0, 0.0, 0.0],
+                radius,
+                0.0,
+                3.0,
+                [0.0, 0.0, 1.0],
+                common::GM_TARGET,
+                0.0,
+                0.0,
+            )
+        },
+        |_| {
+            let (state, _) = spice::spkezr("TEST_SPACECRAFT", 0.0, "J2000", "NONE", "EARTH");
+            assert_slice_eq(&state, &expected, 1e-6);
+        },
+    );
+
+    // Type 17 takes the same orbit as equinoctial elements: a circular orbit has no eccentricity
+    // and no inclination, so only the semi-major axis and the mean longitude rate are not zero.
+    let mut elements = [0.0; 9];
+    elements[0] = radius;
+    elements[7] = rate;
+    round_trip(
+        "w17.bsp",
+        |handle| {
+            spice::spkw17(
+                handle,
+                common::SPACECRAFT,
+                common::TARGET,
+                "J2000",
+                0.0,
+                86400.0,
+                "TYPE 17",
+                0.0,
+                elements,
+                0.0,
+                std::f64::consts::FRAC_PI_2,
+            )
+        },
+        |_| {
+            // With the pole of the central body along +z, the equatorial frame the elements are
+            // given in has no preferred x axis, so it is the shape of the orbit that is checked
+            // rather than where on it the body starts.
+            let (state, _) = spice::spkezr("TEST_SPACECRAFT", 0.0, "J2000", "NONE", "EARTH");
+            let (position, velocity) = (
+                [state[0], state[1], state[2]],
+                [state[3], state[4], state[5]],
+            );
+            assert_relative_eq!(spice::vnorm(position), radius, epsilon = 1e-6);
+            assert_relative_eq!(spice::vnorm(velocity), radius * rate, epsilon = 1e-9);
+            assert_relative_eq!(spice::vdot(position, velocity), 0.0, epsilon = 1e-6);
+            // An equatorial orbit, so nothing leaves the plane.
+            assert_relative_eq!(position[2], 0.0, epsilon = 1e-9);
+            assert_relative_eq!(velocity[2], 0.0, epsilon = 1e-12);
+        },
+    );
+
+    common::unload();
+}
+
+#[test]
+#[serial]
+fn spk_chebyshev_and_hermite_writers() {
+    common::load();
+
+    // Type 14 is type 2 and 3 written a set at a time: each set opens with the midpoint and the
+    // radius of the interval it covers, then the coefficients for each component. A degree zero
+    // expansion is a constant.
+    let position = [100.0, 200.0, 300.0];
+    round_trip(
+        "w14.bsp",
+        |handle| {
+            spice::spk14b(
+                handle,
+                "TYPE 14",
+                common::SPACECRAFT,
+                common::TARGET,
+                "J2000",
+                0.0,
+                86400.0,
+                0,
+            );
+            spice::spk14a(
+                handle,
+                1,
+                &[43200.0, 43200.0, 100.0, 200.0, 300.0, 0.0, 0.0, 0.0],
+                &[0.0],
+            );
+            spice::spk14e(handle);
+        },
+        |_| {
+            let (state, _) = spice::spkezr("TEST_SPACECRAFT", 3600.0, "J2000", "NONE", "EARTH");
+            assert_slice_eq(&state[..3], &position, 1e-9);
+            assert_slice_eq(&state[3..], &[0.0; 3], 1e-12);
+        },
+    );
+
+    // Type 18, subtype 1, is Lagrange interpolation of six element state packets. A straight line
+    // is reproduced exactly by the first degree polynomial.
+    let epochs = (0..8)
+        .map(|index| index as f64 * 100.0)
+        .collect::<Vec<f64>>();
+    let packets = epochs
+        .iter()
+        .flat_map(|&t| [t, 2.0 * t, 3.0 * t, 1.0, 2.0, 3.0])
+        .collect::<Vec<f64>>();
+    round_trip(
+        "w18.bsp",
+        |handle| {
+            spice::spkw18(
+                handle,
+                1,
+                common::SPACECRAFT,
+                common::TARGET,
+                "J2000",
+                epochs[0],
+                epochs[7],
+                "TYPE 18",
+                1,
+                epochs.len() as i32,
+                &packets,
+                &epochs,
+            )
+        },
+        |_| {
+            let (state, _) = spice::spkezr("TEST_SPACECRAFT", 250.0, "J2000", "NONE", "EARTH");
+            assert_slice_eq(&state, &[250.0, 500.0, 750.0, 1.0, 2.0, 3.0], 1e-9);
+        },
+    );
+
+    // Type 20 holds Chebyshev coefficients for the velocity and the position at each interval
+    // midpoint, over intervals measured in Julian days from a Julian date. A velocity of zero
+    // leaves the position at the midpoint value.
+    round_trip(
+        "w20.bsp",
+        |handle| {
+            spice::spkw20(
+                handle,
+                common::SPACECRAFT,
+                common::TARGET,
+                "J2000",
+                0.0,
+                86400.0,
+                "TYPE 20",
+                1.0,
+                1,
+                0,
+                &[0.0, 100.0, 0.0, 200.0, 0.0, 300.0],
+                1.0,
+                1.0,
+                spice::j2000(),
+                0.0,
+            )
+        },
+        |_| {
+            let (state, _) = spice::spkezr("TEST_SPACECRAFT", 43200.0, "J2000", "NONE", "EARTH");
+            assert_slice_eq(&state[..3], &position, 1e-9);
+            assert_slice_eq(&state[3..], &[0.0; 3], 1e-12);
+        },
+    );
+
+    common::unload();
+}
+
+/// A two-line element set, and the geophysical constants its propagator wants.
+const TLE: [&str; 2] = [
+    "1 43908U 18111AJ  20146.60805006  .00000806  00000-0  34965-4 0  9999",
+    "2 43908  97.2676  47.2136 0020001 220.6050 139.3698 15.24999521 78544",
+];
+const GEOPHS: [f64; 8] = [
+    1.082616e-3,
+    -2.53881e-6,
+    -1.65597e-6,
+    7.43669161e-2,
+    120.0,
+    78.0,
+    6378.135,
+    1.0,
+];
+
+#[test]
+#[serial]
+fn spk_two_line_element_writer() {
+    common::load();
+
+    let (epoch, elements) = spice::getelm(1957, &TLE);
+    common::assert_ok("getelm");
+    let expected = spice::evsgp4(epoch, GEOPHS, elements);
+
+    // Type 10 stores the element set itself, and evaluates it with the same propagator.
+    round_trip(
+        "w10.bsp",
+        |handle| {
+            spice::spkw10(
+                handle,
+                common::SPACECRAFT,
+                common::TARGET,
+                "J2000",
+                epoch - 3600.0,
+                epoch + 3600.0,
+                "TYPE 10",
+                &GEOPHS,
+                1,
+                &elements,
+                &[epoch],
+            )
+        },
+        |_| {
+            // `evsgp4` reports the state in the true equator and equinox of date, which the type
+            // 10 reader turns into the frame the segment declares. So the two differ by the
+            // rotation between the two frames, and agree on everything that rotation preserves.
+            let (state, _) = spice::spkezr("TEST_SPACECRAFT", epoch, "J2000", "NONE", "EARTH");
+            let written = (
+                [state[0], state[1], state[2]],
+                [state[3], state[4], state[5]],
+            );
+            let propagated = (
+                [expected[0], expected[1], expected[2]],
+                [expected[3], expected[4], expected[5]],
+            );
+            assert_relative_eq!(
+                spice::vnorm(written.0),
+                spice::vnorm(propagated.0),
+                epsilon = 1e-6
+            );
+            // The frame turns as well, so the speeds agree to a little less than the distances.
+            assert_relative_eq!(
+                spice::vnorm(written.1),
+                spice::vnorm(propagated.1),
+                epsilon = 1e-6
+            );
+
+            // The angle between the position and the velocity survives the change of frame, as
+            // anything rigid must, which is what says the orbit itself is the same one.
+            assert_relative_eq!(
+                spice::vsep(written.0, written.1),
+                spice::vsep(propagated.0, propagated.1),
+                epsilon = 1e-6
+            );
+
+            // And the two frames are two decades of precession apart, no more.
+            let turned = spice::vsep(written.0, propagated.0);
+            assert!(
+                (1e-4..1e-2).contains(&turned),
+                "expected a small rotation, got {} degrees",
+                turned.to_degrees()
+            );
+        },
+    );
+
+    common::unload();
+}
+
+#[test]
+#[serial]
+fn spk_segment_subset() {
+    common::load();
+
+    // The first segment of the test ephemeris, and its summary, which is what addresses it.
+    let source = spice::dafopr(&common::kernel("test.bsp"));
+    spice::dafbfs(source);
+    assert!(spice::daffna());
+    let mut summary = spice::dafgs();
+    let ident = spice::dafgn(spice::MAX_LEN_OUT as i32);
+    assert_eq!(ident, "TEST ORBIT");
+
+    // Copy a day either side of the epoch into a file of its own.
+    let path = common::kernel("subset.bsp");
+    let _ = std::fs::remove_file(&path);
+    let target = spice::spkopn(&path, "rust-spice subset", 0);
+    spice::spksub(source, &mut summary, &ident, -86400.0, 86400.0, target);
+    common::assert_ok("spksub");
+    spice::spkcls(target);
+    spice::dafcls(source);
+
+    // It covers what it was asked for, and agrees with the file it came from.
+    let coverage = spice::spkcov(&path, common::TARGET);
+    assert_relative_eq!(coverage.get(0).unwrap(), -86400.0, epsilon = 1e-6);
+    assert_relative_eq!(coverage.get(1).unwrap(), 86400.0, epsilon = 1e-6);
+
+    let (whole, _) = spice::spkezr("EARTH", common::EPOCH, "J2000", "NONE", "SUN");
+    spice::kclear();
+    spice::furnsh(&path);
+    let (part, _) = spice::spkezr("EARTH", common::EPOCH, "J2000", "NONE", "SUN");
+    common::assert_ok("reading the subset back");
+    assert_slice_eq(&part, &whole, 1e-9);
+
+    common::unload();
+    let _ = std::fs::remove_file(&path);
 }
