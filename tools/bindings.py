@@ -6,7 +6,7 @@ cannot run there. Nothing is linked, so the result can be documented and type ch
 
 Run it after a `cargo build`, which is what puts the generated bindings under `target/`.
 """
-import glob, os, pathlib, re, sys
+import glob, os, pathlib, re, subprocess, sys
 
 HEADER = '''/*!
 The CSPICE API, declared rather than generated.
@@ -56,7 +56,10 @@ def main():
     out = pathlib.Path('rust-spice/src/unlinked.rs')
     out.write_text(HEADER.format(version=version.group(1) if version else 'unknown',
                                  toolkit=toolkit) + body)
-    print(f'{out}: {len(body.splitlines())} lines, {out.stat().st_size // 1024} KiB')
+    # `cargo fmt` covers the file like any other, so write it the way rustfmt wants it in the first
+    # place: otherwise formatting it would look like the copy had drifted.
+    subprocess.run(['rustfmt', '--edition', '2021', str(out)], check=True)
+    print(f'{out}: {len(out.read_text().splitlines())} lines, {out.stat().st_size // 1024} KiB')
 
 
 main()
