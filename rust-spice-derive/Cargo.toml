@@ -1,6 +1,6 @@
 [package]
 name = "rust-spice-derive"
-version = "1.0.1"
+version = "1.0.0"
 authors = ["Grégoire Henry <greg.henry@mail.com>"]
 edition = "2021"
 rust-version = "1.70"
