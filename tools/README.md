@@ -54,9 +54,9 @@ routines it removed are the ones that had to be written by hand.
 
 ## Traps worth knowing about
 
-+ `prefix_c` is declared in `SpiceZpr.h` but is not compiled into the library, so it cannot be
-  called at all. It is the only one; the toolkit is 648 callable routines, not the 649 the headers
-  advertise.
++ The headers declare 649 `*_c` functions. Four are private internals named `zz*`, and `prefix_c`
+  is declared in `SpiceZpr.h` but is not compiled into the library, so it cannot be called at all.
+  The toolkit is 644 callable routines, not the 649 the headers advertise.
 + `dskd02` and `dski02` index their items from **zero**, unlike almost everything else.
 + `szpool` reports the pool's own limits, not the size of a variable. `dtpool` does that.
 + The set ordinals (`ordc`, `ordd`, `ordi`) count from zero and return `-1` when absent.

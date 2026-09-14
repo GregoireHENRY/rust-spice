@@ -6,22 +6,18 @@ An idiomatic interface in Rust to CSPICE.
 Below you will find the index of the CSPICE functions that are wrapped with an idiomatic Rust
 interface.
 
-It takes a long time to correctly wrap all functions of the API. Raise an issue to ask a specific
-function to be implemented and we will do it immediately. Pull requests are warmly welcomed to help
-speed up this process (do not forget to include a proper documentation and a test).
-
-In the meantime, if you are in a rush and need quickly to use a function not implemented with the
-Rust interface, use the unsafe C functions [here][crate::c#functions]. You can find some inspiration
-in the source of this lib to deal with the FFI types and unsafe code.
+Every routine of the toolkit is there. Should you want to reach past them anyway, the unsafe C
+functions are [here][crate::c#functions].
 
 Functions come in two flavours. [`raw`] mirrors CSPICE argument for argument; [`neat`] wraps the
 ones whose C signature asks for a buffer size, or for a caller allocated [cell],
 so that Rust can size them for you. The index points at the flavour you most likely want, and each
 page links to the other.
 
-One CSPICE routine is missing from the index: `prefix_c` is declared in `SpiceZpr.h` but is not
-compiled into the library NAIF ships, so it cannot be called at all. That leaves 648 routines to
-wrap, not 649.
+The headers of CSPICE N0067 declare 649 `*_c` functions. Four of them are private internals whose
+names begin with `zz`, and `prefix_c` is declared in `SpiceZpr.h` but is not compiled into the
+library NAIF ships, so it cannot be called at all. That leaves 644, and the index below lists all
+of them.
 
 CSPICE reports failures through its own error state, and by default it prints to the screen then
 **terminates the process**. [`errors`] wraps the routines that control it, and adds three helpers of

@@ -18,7 +18,7 @@
 [Requirements](#requirements) |
 [Usage](#usage) |
 [In action](#in-action) |
-[In development](#in-development) |
+[Coverage](#coverage) |
 [Multi-threaded usage](#multi-threaded-usage) |
 [Roadmap](#roadmap) |
 [Contributors](#contributors) |
@@ -137,21 +137,22 @@ spice::raw::spkobj("/path/to/ephemeris.bsp", &mut ids);
 spice::kclear();
 ```
 
-## In development
+## Coverage
 
-Developing an idiomatic interface for Spice in Rust takes time, and not all
-functions are implemented yet: 562 of the 648 routines CSPICE ships are
-wrapped. They cover ephemerides, orientation, shape models, frames, time and
+The whole toolkit is wrapped: all 644 routines of CSPICE N0067 that can be
+called. They cover ephemerides, orientation, shape models, frames, time and
 spacecraft clocks, coordinates, vector and matrix algebra, rotations and
 quaternions, planes and ellipses, two-body orbits, two-line elements, cells,
-sets and windows, the kernel pool and error handling. Windows, sets and the DAF, DAS
-and DLA file layers are complete; the events kernel (`ek*`) is not started, and
-of the geometry finder (`gf*`) only the occultation search is there. In the
-[documentation online][doc link], a complete guide details which functions are
-available; everything it lists is now implemented. If yours is not there, you
-can always use the unsafe API which contains all [cspice functions][cspice api].
+sets and windows, the geometry finder, events kernels, the kernel pool and
+error handling. The [documentation online][doc link] indexes every one of them,
+and every one of them is called by a test.
 
-For instance, with the unsafe API, the example above would be,
+The headers declare 649 `*_c` functions: four are private internals whose names
+begin with `zz`, and `prefix_c` is declared but never compiled into the library
+NAIF ships, so it cannot be called at all.
+
+The unsafe [cspice functions][cspice api] are still there for anything you
+would rather drive yourself. The example above would be,
 
 ```rust,no_run
 use spice;
@@ -185,9 +186,7 @@ unsafe {
 }
 ```
 
-Much less friendly.. yet it is available. I would love some help in order to
-complete the idiomatic development. You can raise an issue or propose a pull
-request for the implementation of a specific function.
+Much less friendly.. yet it is available.
 
 ## Multi-threaded usage
 
@@ -225,11 +224,12 @@ sl.kclear();
 
 ## Roadmap
 
-+ provide a packaging of the test assets
-+ complete most-used API
-+ complete whole API
-+ refactoring of the procedural macros
-+ refactoring of Cell
+Done: the test suite builds the kernels it needs rather than shipping them, the
+whole API is wrapped, the procedural macros were rewritten, and `Cell` owns its
+storage.
+
+Next: idiomatic forms for the routines that still ask the caller for a buffer
+size, and a guard that can be shared rather than moved.
 
 ## Contributors
 
@@ -259,9 +259,9 @@ Licensed under the [Apache License, Version 2.0][license link].
 [pre-commit badge]: https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white
 [coverage doc badge]: https://img.shields.io/badge/Documentation-100%25-brightgreen
 [coverage doc link]: https://docs.rs/crate/rust-spice
-[coverage test badge]: https://img.shields.io/badge/Tests-90%25-green
+[coverage test badge]: https://img.shields.io/badge/Tests-100%25-brightgreen
 [coverage test link]: https://docs.rs/crate/rust-spice
-[core tests link]: https://github.com/GregoireHENRY/rust-spice/tree/main/rust-spice/tests/core/mod.rs
+[core tests link]: https://github.com/GregoireHENRY/rust-spice/tree/main/rust-spice/tests
 [naif link]: https://naif.jpl.nasa.gov/naif
 [cspice api]: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/index.html
 [cspice install link]: https://naif.jpl.nasa.gov/naif/toolkit_C.html

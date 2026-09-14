@@ -9,6 +9,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
++ The rest of the toolkit. All 644 routines of CSPICE N0067 that can be called now have an
+  idiomatic wrapper, and every one of them is exercised by a test. The families this release
+  finishes are the geometry finder (`gf*`, thirty routines including the eight scalar searches, the
+  two field of view searches and the five that take callbacks), the events kernel (all thirty seven
+  `ek*`), and the fifteen odds and ends left over: `clearc`, `cleard`, `cleari`, `dasrdc`,
+  `dasudc`, `filld`, `filli`, `getcml`, `maxd`, `maxi`, `mind`, `mini`, `nthwd`, `prompt` and
+  `putcml`.
++ `core::ffi` names the nine C callback signatures the geometry finder takes, and the crate
+  re-exports them as `UdFunc`, `UdFuns`, `UdFunb`, `UdStep`, `UdRefn`, `UdRepi`, `UdRepu`,
+  `UdRepf` and `UdBail`. They are plain `extern "C" fn` types rather than closures, which is what
+  CSPICE can actually accept.
++ `EKATTDSC` and `EKSEGSUM` for the column attributes and segment summaries of an events kernel,
+  and the `EK_*` constants for its data types, expression classes and limits.
+
+### Fixed
+
++ `gfocce` passed the observer where CSPICE expects the aberration correction. Its `-Brief_I/O`
+  section lists the two in the other order from its own prototype.
++ `dasadc` passed CSPICE the number of lines where it wants the number of characters, so it wrote
+  the first substring and dropped the rest.
++ `nthwd` documented its index and the location it reports as counting from one. Both count from
+  zero, and the location is -1 when there is no such word.
+
 ## [0.8.0] - 2026-09-11
 
 ### Added
