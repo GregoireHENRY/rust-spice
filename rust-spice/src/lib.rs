@@ -32,6 +32,9 @@ pub(crate) use crate::core::*;
 
 // These items need to be exposed regardless of whether 'lock' is enabled or not
 pub use crate::core::cell::{Cell, CellItem, CELL_MAXID, CELL_MAX_LEN};
+pub use crate::core::ffi::{
+    UdBail, UdFunb, UdFunc, UdFuns, UdRefn, UdRepf, UdRepi, UdRepu, UdStep,
+};
 pub use crate::core::raw::{dsk02, ELLIPSE, PLANE};
 // GENERATED: the constants of `raw`, which `lock` would otherwise put out of reach.
 pub use crate::core::raw::{

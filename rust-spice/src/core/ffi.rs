@@ -27,6 +27,52 @@ use crate::MAX_LEN_OUT;
 use std::ffi::{CStr, CString};
 
 /* -------------------------------------------------------------------------------------------- */
+/* Callbacks                                                                                      */
+/* -------------------------------------------------------------------------------------------- */
+
+/*
+The geometry finder calls back into the caller's code. A Rust function can be handed to C as a
+pointer only if it is `extern "C"` and captures nothing, so these are plain function pointer types
+rather than closures: a closure that captured anything could not be represented, and pretending
+otherwise would need a hidden global to smuggle the captures through.
+*/
+
+/// A scalar function of time, writing its value through the pointer.
+pub type UdFunc = unsafe extern "C" fn(x: SpiceDouble, value: *mut SpiceDouble);
+
+/// A scalar quantity the geometry finder searches over; the same shape as [`UdFunc`].
+pub type UdFuns = UdFunc;
+
+/// Whether the quantity computed by a [`UdFuns`] is decreasing at an epoch.
+pub type UdFunb =
+    unsafe extern "C" fn(udfuns: Option<UdFuns>, x: SpiceDouble, xbool: *mut SpiceBoolean);
+
+/// The step to take from an epoch while searching.
+pub type UdStep = unsafe extern "C" fn(et: SpiceDouble, step: *mut SpiceDouble);
+
+/// Refine a bracketing interval towards a root.
+pub type UdRefn = unsafe extern "C" fn(
+    t1: SpiceDouble,
+    t2: SpiceDouble,
+    s1: SpiceBoolean,
+    s2: SpiceBoolean,
+    t: *mut SpiceDouble,
+);
+
+/// Begin a progress report over a confinement window.
+pub type UdRepi =
+    unsafe extern "C" fn(cnfine: *mut SpiceCell, srcpre: *mut SpiceChar, srcsuf: *mut SpiceChar);
+
+/// Update a progress report.
+pub type UdRepu = unsafe extern "C" fn(ivbeg: SpiceDouble, ivend: SpiceDouble, et: SpiceDouble);
+
+/// Finish a progress report.
+pub type UdRepf = unsafe extern "C" fn();
+
+/// Whether an interrupt has been requested, which stops a search.
+pub type UdBail = unsafe extern "C" fn() -> SpiceBoolean;
+
+/* -------------------------------------------------------------------------------------------- */
 /* Buffers                                                                                        */
 /* -------------------------------------------------------------------------------------------- */
 

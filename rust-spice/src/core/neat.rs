@@ -18,6 +18,7 @@ version is exposed for the rest.
 */
 
 use crate::core::cell::{Cell, CELL_MAXID};
+use crate::core::ffi::{UdFunb, UdFuns};
 use crate::raw;
 use crate::MAX_LEN_OUT;
 
@@ -563,6 +564,170 @@ pub fn gfoclt(
         cnfine,
         &mut result,
     );
+    result
+}
+
+/// Generate the neat forms of the searches that compare a quantity against a reference value.
+macro_rules! gf_search {
+    ($($name:ident($($arg:ident: $ty:ty),*), $doc:expr);* $(;)?) => {$(
+        #[doc = $doc]
+        ///
+        #[doc = concat!("See [`raw::", stringify!($name), "`] for the raw interface.")]
+        #[allow(clippy::too_many_arguments)]
+        #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+        pub fn $name(
+            $($arg: $ty,)*
+            relate: &str,
+            refval: f64,
+            adjust: f64,
+            step: f64,
+            cnfine: &mut Cell<f64>,
+        ) -> Cell<f64> {
+            let mut result = Cell::new(CELL_MAXWIN);
+            raw::$name(
+                $($arg,)* relate, refval, adjust, step, (CELL_MAXWIN / 2) as i32, cnfine,
+                &mut result,
+            );
+            result
+        }
+    )*};
+}
+
+gf_search! {
+    gfdist(target: &str, abcorr: &str, obsrvr: &str),
+        "Search for times when the distance to a target meets a condition.";
+    gfrr(target: &str, abcorr: &str, obsrvr: &str),
+        "Search for times when the range rate of a target meets a condition.";
+    gfpa(target: &str, illmn: &str, abcorr: &str, obsrvr: &str),
+        "Search for times when the phase angle of a target meets a condition.";
+    gfposc(
+        target: &str, frame: &str, abcorr: &str, obsrvr: &str, crdsys: &str, coord: &str
+    ),
+        "Search for times when a coordinate of a target's position meets a condition.";
+    gfsubc(
+        target: &str, fixref: &str, method: &str, abcorr: &str, obsrvr: &str, crdsys: &str,
+        coord: &str
+    ),
+        "Search for times when a coordinate of the sub-observer point meets a condition.";
+    gfsntc(
+        target: &str, fixref: &str, method: &str, abcorr: &str, obsrvr: &str, dref: &str,
+        dvec: [f64; 3], crdsys: &str, coord: &str
+    ),
+        "Search for times when a coordinate of a ray-surface intercept meets a condition.";
+    gfsep(
+        targ1: &str, shape1: &str, frame1: &str, targ2: &str, shape2: &str, frame2: &str,
+        abcorr: &str, obsrvr: &str
+    ),
+        "Search for times when the angular separation of two targets meets a condition.";
+    gfilum(
+        method: &str, angtyp: &str, target: &str, illmn: &str, fixref: &str, abcorr: &str,
+        obsrvr: &str, spoint: [f64; 3]
+    ),
+        "Search for times when an illumination angle at a surface point meets a condition.";
+}
+
+/**
+Search for times when a ray is in the field of view of an instrument.
+
+See [`raw::gfrfov`] for the raw interface.
+*/
+#[allow(clippy::too_many_arguments)]
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn gfrfov(
+    inst: &str,
+    raydir: [f64; 3],
+    rframe: &str,
+    abcorr: &str,
+    obsrvr: &str,
+    step: f64,
+    cnfine: &mut Cell<f64>,
+) -> Cell<f64> {
+    let mut result = Cell::new(CELL_MAXWIN);
+    raw::gfrfov(
+        inst,
+        raydir,
+        rframe,
+        abcorr,
+        obsrvr,
+        step,
+        cnfine,
+        &mut result,
+    );
+    result
+}
+
+/**
+Search for times when a target is in the field of view of an instrument.
+
+See [`raw::gftfov`] for the raw interface.
+*/
+#[allow(clippy::too_many_arguments)]
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn gftfov(
+    inst: &str,
+    target: &str,
+    tshape: &str,
+    tframe: &str,
+    abcorr: &str,
+    obsrvr: &str,
+    step: f64,
+    cnfine: &mut Cell<f64>,
+) -> Cell<f64> {
+    let mut result = Cell::new(CELL_MAXWIN);
+    raw::gftfov(
+        inst,
+        target,
+        tshape,
+        tframe,
+        abcorr,
+        obsrvr,
+        step,
+        cnfine,
+        &mut result,
+    );
+    result
+}
+
+/**
+Search for times when a scalar function the caller supplies meets a condition.
+
+See [`raw::gfuds`] for the raw interface.
+*/
+#[allow(clippy::too_many_arguments)]
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn gfuds(
+    udfuns: UdFuns,
+    udfunb: UdFunb,
+    relate: &str,
+    refval: f64,
+    adjust: f64,
+    step: f64,
+    cnfine: &mut Cell<f64>,
+) -> Cell<f64> {
+    let mut result = Cell::new(CELL_MAXWIN);
+    raw::gfuds(
+        udfuns,
+        udfunb,
+        relate,
+        refval,
+        adjust,
+        step,
+        (CELL_MAXWIN / 2) as i32,
+        cnfine,
+        &mut result,
+    );
+    result
+}
+
+/**
+Search for times when a boolean function the caller supplies is true.
+
+See [`raw::gfudb`] for the raw interface.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn gfudb(udfuns: UdFuns, udfunb: UdFunb, step: f64, cnfine: &mut Cell<f64>) -> Cell<f64> {
+    let mut result = Cell::new(CELL_MAXWIN);
+    raw::gfudb(udfuns, udfunb, step, cnfine, &mut result);
     result
 }
 

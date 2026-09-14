@@ -8,7 +8,7 @@ CSPICE = pathlib.Path(os.environ.get('CSPICE_DIR', '')) / 'src' / 'cspice'
 names = json.load(open(sys.argv[1]))
 raw = pathlib.Path('rust-spice/src/core/raw.rs').read_text()
 for n in names:
-    m = re.search(rf'pub fn {n}\((.*?)\)\s*(->[^{{]*)?\{{', raw, re.S)
+    m = re.search(rf'pub fn {n}(?:<[^(]*>)?\((.*?)\)\s*(->[^{{]*)?\{{', raw, re.S)
     if not m:
         print(f"### {n}: not found"); continue
     sig = ' '.join((m.group(1) + ' ' + (m.group(2) or '')).split())

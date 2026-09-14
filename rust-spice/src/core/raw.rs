@@ -12,6 +12,7 @@ declares them. Wrappers that need an explicit buffer size, or a caller allocated
 use crate::c::{SpiceChar, SpiceDouble, SpiceInt};
 use crate::core::cell::{Cell, CellItem};
 use crate::core::ffi::{from_cbuf, from_strided, to_cstring, to_strided};
+use crate::core::ffi::{UdBail, UdFunb, UdFunc, UdFuns, UdRefn, UdRepf, UdRepi, UdRepu, UdStep};
 use spice_derive::cspice_proc;
 
 #[cfg(any(feature = "lock", doc))]
@@ -7056,6 +7057,535 @@ pub fn kxtrct<S: AsRef<str>>(
         )
     };
     (from_cbuf(&buffer), found != 0, from_cbuf(&substr))
+}
+
+/* -------------------------------------------------------------------------------------------- */
+/* Geometry finder                                                                                */
+/* -------------------------------------------------------------------------------------------- */
+
+/*
+Every search takes a confinement window to search within and a window to report the answer in. The
+confinement window is an input that CSPICE also reads back, so it is taken by `&mut`; the result is
+cleared and filled. Each has a neat version that allocates the result for you.
+*/
+
+/// Generate the searches that compare a scalar quantity against a reference value.
+macro_rules! gf_search {
+    ($($name:ident($($arg:ident: $ty:ty),*) => $cname:ident, $doc:expr);* $(;)?) => {$(
+        #[doc = $doc]
+        ///
+        /// `relate` is one of `"="`, `"<"`, `">"`, `"LOCMIN"`, `"ABSMIN"`, `"LOCMAX"` or
+        /// `"ABSMAX"`; `nintvls` is the room to make in `result`, in intervals.
+        #[allow(clippy::too_many_arguments)]
+        pub fn $name(
+            $($arg: $ty,)*
+            relate: &str,
+            refval: f64,
+            adjust: f64,
+            step: f64,
+            nintvls: i32,
+            cnfine: &mut Cell<f64>,
+            result: &mut Cell<f64>,
+        ) {
+            $(let $arg = crate::core::ffi::In::new($arg);)*
+            let relate = to_cstring(relate);
+            #[allow(unused_mut)]
+            let ($(mut $arg,)*) = ($($arg,)*);
+            let cnfine = cnfine.as_mut_ptr();
+            let result = result.as_mut_ptr();
+            unsafe {
+                crate::c::$cname(
+                    $($arg.raw() as _,)*
+                    relate.as_ptr() as *mut SpiceChar,
+                    refval,
+                    adjust,
+                    step,
+                    nintvls,
+                    cnfine,
+                    result,
+                );
+            }
+        }
+    )*};
+}
+
+gf_search! {
+    gfdist(target: &str, abcorr: &str, obsrvr: &str) => gfdist_c,
+        "Search for times when the distance to a target meets a condition.";
+    gfrr(target: &str, abcorr: &str, obsrvr: &str) => gfrr_c,
+        "Search for times when the range rate of a target meets a condition.";
+    gfpa(target: &str, illmn: &str, abcorr: &str, obsrvr: &str) => gfpa_c,
+        "Search for times when the phase angle of a target meets a condition.";
+    gfposc(
+        target: &str, frame: &str, abcorr: &str, obsrvr: &str, crdsys: &str, coord: &str
+    ) => gfposc_c,
+        "Search for times when a coordinate of a target's position meets a condition.";
+    gfsubc(
+        target: &str, fixref: &str, method: &str, abcorr: &str, obsrvr: &str, crdsys: &str,
+        coord: &str
+    ) => gfsubc_c,
+        "Search for times when a coordinate of the sub-observer point meets a condition.";
+    gfsntc(
+        target: &str, fixref: &str, method: &str, abcorr: &str, obsrvr: &str, dref: &str,
+        dvec: [f64; 3], crdsys: &str, coord: &str
+    ) => gfsntc_c,
+        "Search for times when a coordinate of a ray-surface intercept meets a condition.";
+    gfsep(
+        targ1: &str, shape1: &str, frame1: &str, targ2: &str, shape2: &str, frame2: &str,
+        abcorr: &str, obsrvr: &str
+    ) => gfsep_c,
+        "Search for times when the angular separation of two targets meets a condition.";
+    gfilum(
+        method: &str, angtyp: &str, target: &str, illmn: &str, fixref: &str, abcorr: &str,
+        obsrvr: &str, spoint: [f64; 3]
+    ) => gfilum_c,
+        "Search for times when an illumination angle at a surface point meets a condition.";
+}
+
+cspice_proc! {
+    /**
+    Search for times when a ray is in the field of view of an instrument.
+    */
+    #[allow(clippy::too_many_arguments)]
+    pub fn gfrfov(
+        inst: &str,
+        raydir: [f64; 3],
+        rframe: &str,
+        abcorr: &str,
+        obsrvr: &str,
+        step: f64,
+        cnfine: &mut Cell<f64>,
+        result: &mut Cell<f64>
+    ) {
+    }
+}
+
+cspice_proc! {
+    /**
+    Search for times when a target is in the field of view of an instrument.
+    */
+    #[allow(clippy::too_many_arguments)]
+    pub fn gftfov(
+        inst: &str,
+        target: &str,
+        tshape: &str,
+        tframe: &str,
+        abcorr: &str,
+        obsrvr: &str,
+        step: f64,
+        cnfine: &mut Cell<f64>,
+        result: &mut Cell<f64>
+    ) {
+    }
+}
+
+cspice_proc! {
+    /**
+    Set the step size the geometry finder takes between samples.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn gfsstp(step: f64) {}
+}
+
+cspice_proc! {
+    /**
+    The step to take from an epoch, as set by [`gfsstp`].
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn gfstep(time: f64) -> f64 {}
+}
+
+cspice_proc! {
+    /**
+    Set the convergence tolerance the geometry finder uses, in seconds.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn gfstol(value: f64) {}
+}
+
+cspice_proc! {
+    /**
+    Refine a bracketing interval by bisection.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn gfrefn(t1: f64, t2: f64, s1: bool, s2: bool) -> f64 {}
+}
+
+cspice_proc! {
+    /**
+    Whether an interrupt has been requested; see [`gfinth`].
+    */
+    #[return_output]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn gfbail() -> bool {}
+}
+
+cspice_proc! {
+    /**
+    Clear the interrupt handler installed by [`gfinth`].
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn gfclrh() {}
+}
+
+cspice_proc! {
+    /**
+    Install an interrupt handler for the signal `sigcode`, so a search can be stopped.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn gfinth(sigcode: i32) {}
+}
+
+cspice_proc! {
+    /**
+    Begin the default progress report over a confinement window.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn gfrepi(window: &mut Cell<f64>, begmss: &str, endmss: &str) {}
+}
+
+cspice_proc! {
+    /**
+    Update the default progress report.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn gfrepu(ivbeg: f64, ivend: f64, time: f64) {}
+}
+
+cspice_proc! {
+    /**
+    Finish the default progress report.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn gfrepf() {}
+}
+
+cspice_proc! {
+    /**
+    A placeholder scalar function, for the searches that want one but do not use it.
+    */
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn udf(x: f64) -> f64 {}
+}
+
+/**
+Whether a scalar function is decreasing at `x`, by a central difference over `dx`.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn uddc(udfunc: UdFunc, x: f64, dx: f64) -> bool {
+    let mut isdecr = 0;
+    unsafe { crate::c::uddc_c(Some(udfunc), x, dx, &mut isdecr) };
+    isdecr != 0
+}
+
+/**
+The derivative of a scalar function at `x`, by a central difference over `dx`.
+*/
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn uddf(udfunc: UdFunc, x: f64, dx: f64) -> f64 {
+    let mut deriv = 0.0;
+    unsafe { crate::c::uddf_c(Some(udfunc), x, dx, &mut deriv) };
+    deriv
+}
+
+/**
+Search for times when a scalar function the caller supplies meets a condition.
+
+`udfuns` computes the quantity and `udfunb` says whether it is decreasing; [`uddc`] can be used to
+build the second from the first.
+*/
+#[allow(clippy::too_many_arguments)]
+pub fn gfuds(
+    udfuns: UdFuns,
+    udfunb: UdFunb,
+    relate: &str,
+    refval: f64,
+    adjust: f64,
+    step: f64,
+    nintvls: i32,
+    cnfine: &mut Cell<f64>,
+    result: &mut Cell<f64>,
+) {
+    let relate = to_cstring(relate);
+    let cnfine = cnfine.as_mut_ptr();
+    let result = result.as_mut_ptr();
+    unsafe {
+        crate::c::gfuds_c(
+            Some(udfuns),
+            Some(udfunb),
+            relate.as_ptr() as *mut SpiceChar,
+            refval,
+            adjust,
+            step,
+            nintvls,
+            cnfine,
+            result,
+        );
+    }
+}
+
+/**
+Search for times when a boolean function the caller supplies is true.
+*/
+pub fn gfudb(
+    udfuns: UdFuns,
+    udfunb: UdFunb,
+    step: f64,
+    cnfine: &mut Cell<f64>,
+    result: &mut Cell<f64>,
+) {
+    let cnfine = cnfine.as_mut_ptr();
+    let result = result.as_mut_ptr();
+    unsafe { crate::c::gfudb_c(Some(udfuns), Some(udfunb), step, cnfine, result) };
+}
+
+/**
+Search for times when an occultation occurs, with the search progress and stepping under the
+caller's control.
+
+[`crate::neat::gfoclt`] is the form to reach for unless the stepping needs to be customised.
+*/
+#[allow(clippy::too_many_arguments)]
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn gfocce(
+    occtyp: &str,
+    front: &str,
+    fshape: &str,
+    fframe: &str,
+    back: &str,
+    bshape: &str,
+    bframe: &str,
+    abcorr: &str,
+    obsrvr: &str,
+    tol: f64,
+    udstep: UdStep,
+    udrefn: UdRefn,
+    rpt: bool,
+    udrepi: UdRepi,
+    udrepu: UdRepu,
+    udrepf: UdRepf,
+    bail: bool,
+    udbail: UdBail,
+    cnfine: &mut Cell<f64>,
+    result: &mut Cell<f64>,
+) {
+    let occtyp = to_cstring(occtyp);
+    let front = to_cstring(front);
+    let fshape = to_cstring(fshape);
+    let fframe = to_cstring(fframe);
+    let back = to_cstring(back);
+    let bshape = to_cstring(bshape);
+    let bframe = to_cstring(bframe);
+    let abcorr = to_cstring(abcorr);
+    let obsrvr = to_cstring(obsrvr);
+    let cnfine = cnfine.as_mut_ptr();
+    let result = result.as_mut_ptr();
+    unsafe {
+        crate::c::gfocce_c(
+            occtyp.as_ptr() as *mut SpiceChar,
+            front.as_ptr() as *mut SpiceChar,
+            fshape.as_ptr() as *mut SpiceChar,
+            fframe.as_ptr() as *mut SpiceChar,
+            back.as_ptr() as *mut SpiceChar,
+            bshape.as_ptr() as *mut SpiceChar,
+            bframe.as_ptr() as *mut SpiceChar,
+            abcorr.as_ptr() as *mut SpiceChar,
+            obsrvr.as_ptr() as *mut SpiceChar,
+            tol,
+            Some(udstep),
+            Some(udrefn),
+            rpt as crate::c::SpiceBoolean,
+            Some(udrepi),
+            Some(udrepu),
+            Some(udrepf),
+            bail as crate::c::SpiceBoolean,
+            Some(udbail),
+            cnfine,
+            result,
+        );
+    }
+}
+
+/**
+Search for times when a target or ray is in the field of view of an instrument, with the search
+progress and stepping under the caller's control.
+
+[`gftfov`] and [`gfrfov`] are the forms to reach for unless the stepping needs to be customised.
+*/
+#[allow(clippy::too_many_arguments)]
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn gffove(
+    inst: &str,
+    tshape: &str,
+    raydir: [f64; 3],
+    target: &str,
+    tframe: &str,
+    abcorr: &str,
+    obsrvr: &str,
+    tol: f64,
+    udstep: UdStep,
+    udrefn: UdRefn,
+    rpt: bool,
+    udrepi: UdRepi,
+    udrepu: UdRepu,
+    udrepf: UdRepf,
+    bail: bool,
+    udbail: UdBail,
+    cnfine: &mut Cell<f64>,
+    result: &mut Cell<f64>,
+) {
+    let inst = to_cstring(inst);
+    let tshape = to_cstring(tshape);
+    let target = to_cstring(target);
+    let tframe = to_cstring(tframe);
+    let abcorr = to_cstring(abcorr);
+    let obsrvr = to_cstring(obsrvr);
+    let mut raydir = raydir;
+    let cnfine = cnfine.as_mut_ptr();
+    let result = result.as_mut_ptr();
+    unsafe {
+        crate::c::gffove_c(
+            inst.as_ptr() as *mut SpiceChar,
+            tshape.as_ptr() as *mut SpiceChar,
+            raydir.as_mut_ptr(),
+            target.as_ptr() as *mut SpiceChar,
+            tframe.as_ptr() as *mut SpiceChar,
+            abcorr.as_ptr() as *mut SpiceChar,
+            obsrvr.as_ptr() as *mut SpiceChar,
+            tol,
+            Some(udstep),
+            Some(udrefn),
+            rpt as crate::c::SpiceBoolean,
+            Some(udrepi),
+            Some(udrepu),
+            Some(udrepf),
+            bail as crate::c::SpiceBoolean,
+            Some(udbail),
+            cnfine,
+            result,
+        );
+    }
+}
+
+/**
+Search for times when a geometric quantity named by a string meets a condition.
+
+The quantity and its parameters are given by name, which is what makes this the most general of the
+searches and the most awkward to call; the specific searches above are easier where they apply.
+*/
+#[allow(clippy::too_many_arguments)]
+#[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+pub fn gfevnt<S: AsRef<str>, T: AsRef<str>>(
+    udstep: UdStep,
+    udrefn: UdRefn,
+    gquant: &str,
+    qpnams: &[S],
+    qcpars: &[T],
+    qdpars: &[f64],
+    qipars: &[i32],
+    qlpars: &[bool],
+    op: &str,
+    refval: f64,
+    tol: f64,
+    adjust: f64,
+    rpt: bool,
+    udrepi: UdRepi,
+    udrepu: UdRepu,
+    udrepf: UdRepf,
+    nintvls: i32,
+    bail: bool,
+    udbail: UdBail,
+    cnfine: &mut Cell<f64>,
+    result: &mut Cell<f64>,
+) {
+    let gquant = to_cstring(gquant);
+    let op = to_cstring(op);
+    let (names, namelen) = to_strided(qpnams);
+    let (values, valuelen) = to_strided(qcpars);
+    let lenvals = namelen.max(valuelen);
+    // Both string arrays are read with the same stride, so they have to be packed with it.
+    let (names, _) = if namelen == lenvals {
+        (names, namelen)
+    } else {
+        repack(qpnams, lenvals)
+    };
+    let (values, _) = if valuelen == lenvals {
+        (values, valuelen)
+    } else {
+        repack(qcpars, lenvals)
+    };
+    // CSPICE reads one element of each of the three numeric arrays per parameter name, whether or
+    // not the quantity uses it, so they are padded rather than passed at the length given.
+    let count = qpnams.len().max(1);
+    let mut reals = qdpars.to_vec();
+    let mut ints = qipars.to_vec();
+    let mut flags = qlpars
+        .iter()
+        .map(|&flag| flag as crate::c::SpiceBoolean)
+        .collect::<Vec<_>>();
+    reals.resize(count, 0.0);
+    ints.resize(count, 0);
+    flags.resize(count, 0);
+    let cnfine = cnfine.as_mut_ptr();
+    let result = result.as_mut_ptr();
+
+    unsafe {
+        crate::c::gfevnt_c(
+            Some(udstep),
+            Some(udrefn),
+            gquant.as_ptr() as *mut SpiceChar,
+            qpnams.len() as SpiceInt,
+            lenvals as SpiceInt,
+            names.as_ptr().cast(),
+            values.as_ptr().cast(),
+            reals.as_ptr() as *mut SpiceDouble,
+            ints.as_ptr() as *mut SpiceInt,
+            flags.as_ptr() as *mut crate::c::SpiceBoolean,
+            op.as_ptr() as *mut SpiceChar,
+            refval,
+            tol,
+            adjust,
+            rpt as crate::c::SpiceBoolean,
+            Some(udrepi),
+            Some(udrepu),
+            Some(udrepf),
+            nintvls,
+            bail as crate::c::SpiceBoolean,
+            Some(udbail),
+            cnfine,
+            result,
+        );
+    }
+}
+
+/// Pack strings at a stride the caller chooses, rather than at the natural one.
+fn repack<S: AsRef<str>>(values: &[S], stride: usize) -> (Vec<SpiceChar>, usize) {
+    let mut buffer = vec![0 as SpiceChar; values.len().max(1) * stride];
+    for (index, value) in values.iter().enumerate() {
+        let slot = &mut buffer[index * stride..(index + 1) * stride];
+        for (target, byte) in slot.iter_mut().zip(value.as_ref().as_bytes()) {
+            *target = *byte as SpiceChar;
+        }
+    }
+    (buffer, stride)
+}
+
+cspice_proc! {
+    /**
+    The largest integer CSPICE represents.
+    */
+    #[return_output]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn intmax() -> i32 {}
+}
+
+cspice_proc! {
+    /**
+    The smallest integer CSPICE represents.
+    */
+    #[return_output]
+    #[cfg_attr(any(feature = "lock", doc), impl_for(SpiceLock))]
+    pub fn intmin() -> i32 {}
 }
 
 /* -------------------------------------------------------------------------------------------- */
