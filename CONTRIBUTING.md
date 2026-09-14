@@ -18,17 +18,24 @@ git clone git@github.com:USERNAME/rust-spice.git
 cd rust-spice
 ```
 
-**rust-spice** uses [`pre-commit`][pre-commit url] to make sure that you don't
-accidentally commit code that does not follow the coding style. The codebase
-will be check against the run of the tests, the build of the documentation, the
-preparation of publication. But also the `fmt`, `check` and `clippy` tools from
-`cargo`, and few other git related and filesystem checks. These can be seen in
-the [pre-commit config file][pre-commit file]. You can install the hook script
-that will check that everything is in order:
+You will also need the [CSPICE toolkit][cspice install link] and the
+`CSPICE_DIR` environment variable pointing at it; on Linux and macOS,
+[`.github/install-cspice.sh`][install script link] does that for you.
+
+These are the checks [CI][ci link] runs on every pull request, and running them
+before you push saves a round trip:
 
 ```sh
-pre-commit install
+cargo fmt --all --check
+cargo clippy --all --all-targets -- --deny warnings
+cargo clippy --package rust-spice --features lock --all-targets -- --deny warnings
+cargo test --all
+cargo test --package rust-spice --features lock
+RUSTDOCFLAGS='--deny warnings' cargo doc --all --no-deps
 ```
+
+The test suite writes the kernels it needs into a temporary directory as it
+starts, so there is nothing to download and nothing to configure.
 
 ### Pull requests
 
@@ -46,6 +53,7 @@ changed or added code.
 *Thank you for your time contributing!!*
 
 [fork guide]: https://guides.github.com/activities/forking/
-[pre-commit url]: https://pre-commit.com
-[pre-commit file]: https://raw.githubusercontent.com/GregoireHENRY/rust-spice/main/.pre-commit-config.yaml
+[ci link]: https://github.com/GregoireHENRY/rust-spice/blob/main/.github/workflows/ci.yml
+[cspice install link]: https://naif.jpl.nasa.gov/naif/toolkit_C.html
+[install script link]: https://github.com/GregoireHENRY/rust-spice/blob/main/.github/install-cspice.sh
 [crate url]: https://crates.io/crates/rust-spice

@@ -6,7 +6,6 @@
 [![crate badge]][crate link]
 [![doc badge]][doc link]
 [![license badge]][license link]
-[![pre-commit badge]][pre-commit link]
 [![coverage doc badge]][coverage doc link]
 [![coverage test badge]][coverage test link]
 
@@ -262,8 +261,6 @@ Licensed under the [Apache License, Version 2.0][license link].
 [doc badge]: https://docs.rs/rust-spice/badge.svg
 [license link]: https://raw.githubusercontent.com/GregoireHENRY/rust-spice/main/LICENSE
 [license badge]: https://img.shields.io/badge/License-Apache%202.0-blue.svg
-[pre-commit link]: https://pre-commit.com
-[pre-commit badge]: https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white
 [coverage doc badge]: https://img.shields.io/badge/Documentation-100%25-brightgreen
 [coverage doc link]: https://docs.rs/crate/rust-spice
 [coverage test badge]: https://img.shields.io/badge/Tests-100%25-brightgreen
